@@ -1,0 +1,99 @@
+/* 仪表板样式 */
+
+/* 统计卡片样式 */
+.stats-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    overflow: hidden;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.stats-card .card-body {
+    padding: 1.5rem;
+}
+
+.stats-icon {
+    opacity: 0.7;
+}
+
+.stats-card .display-6 {
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+/* 图表容器样式 */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* 建议列表样式 */
+.suggestions-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.suggestion-item {
+    transition: all 0.2s ease;
+}
+
+.suggestion-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none !important;
+}
+
+/* 表格样式 */
+.table th {
+    border-top: none;
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* 徽章样式 */
+.badge {
+    font-weight: 500;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+}
+
+/* 刷新按钮动画 */
+#refreshBtn i {
+    transition: transform 0.5s ease;
+}
+
+#refreshBtn.refreshing i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .stats-card .display-6 {
+        font-size: 1.5rem;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .suggestions-list {
+        max-height: 300px;
+    }
+}

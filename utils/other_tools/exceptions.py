@@ -45,3 +45,31 @@ class SendMessageError(MyBaseFailure):
 
 class ValueNotFoundError(MyBaseFailure):
     pass
+
+
+class APIParserError(MyBaseFailure):
+    pass
+
+
+class DependencyAnalysisError(MyBaseFailure):
+    pass
+
+
+class TestGenerationError(MyBaseFailure):
+    pass
+
+
+class AssertionGenerationError(MyBaseFailure):
+    pass
+
+
+class DataPreparationError(MyBaseFailure):
+    pass
+
+
+class ReportGenerationError(MyBaseFailure):
+    pass
+
+
+class CoverageScoringError(MyBaseFailure):
+    pass

@@ -1,0 +1,295 @@
+/* 测试用例页面样式 */
+
+/* 测试用例卡片 */
+.test-case-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border-left: 4px solid #6c757d;
+}
+
+.test-case-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.test-case-card.passed {
+    border-left-color: #28a745;
+}
+
+.test-case-card.failed {
+    border-left-color: #dc3545;
+}
+
+.test-case-card.skipped {
+    border-left-color: #ffc107;
+}
+
+.test-case-card.running {
+    border-left-color: #17a2b8;
+    position: relative;
+    overflow: hidden;
+}
+
+.test-case-card.running::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #17a2b8, #34ce57);
+    animation: running-progress 1.5s infinite linear;
+}
+
+@keyframes running-progress {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* 测试用例列表项 */
+.test-case-item {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    transition: background-color 0.2s;
+}
+
+.test-case-item:last-child {
+    border-bottom: none;
+}
+
+.test-case-item:hover {
+    background-color: #f8f9fa;
+}
+
+.test-case-item .test-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.test-case-item .test-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.test-case-item .test-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.test-case-item .test-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+/* 网格视图 */
+.test-case-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.test-case-grid .test-case-card {
+    height: 100%;
+}
+
+/* 状态徽章 */
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+}
+
+.status-badge.passed {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.status-badge.failed {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.status-badge.skipped {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.status-badge.running {
+    background-color: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+}
+
+/* 类型徽章 */
+.type-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.type-badge.basic {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+}
+
+.type-badge.scenario {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
+}
+
+.type-badge.boundary {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.type-badge.exception {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+/* 代码高亮 */
+.code-container {
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    overflow: auto;
+    max-height: 400px;
+}
+
+.code-container pre {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+}
+
+/* 测试结果 */
+.test-result-item {
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.test-result-item.passed {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-left: 3px solid #28a745;
+}
+
+.test-result-item.failed {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-left: 3px solid #dc3545;
+}
+
+.test-result-item.skipped {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-left: 3px solid #ffc107;
+}
+
+.test-result-item .result-message {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.test-result-item .result-timestamp {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* 测试运行进度 */
+.run-progress-container {
+    margin: 1rem 0;
+}
+
+.run-progress-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.run-progress-item .test-name {
+    flex: 1;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 1rem;
+}
+
+.run-progress-item .progress {
+    width: 100px;
+    height: 0.5rem;
+}
+
+.run-progress-item .status-icon {
+    margin-left: 0.5rem;
+    font-size: 1rem;
+}
+
+/* 空状态 */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.empty-state .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state .empty-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state .empty-description {
+    margin-bottom: 1.5rem;
+}
+
+/* 加载状态 */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+}
+
+.loading-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 0.25rem solid #f8f9fa;
+    border-top: 0.25rem solid #0d6efd;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .test-case-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .test-case-item .test-meta {
+        flex-direction: column;
+    }
+    
+    .test-case-item .test-actions {
+        margin-top: 0.5rem;
+    }
+}

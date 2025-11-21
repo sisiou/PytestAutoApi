@@ -1,0 +1,401 @@
+/* 覆盖度报告页面样式 */
+
+/* 覆盖度圆形进度条 */
+.coverage-circle {
+    position: relative;
+    display: inline-block;
+    margin: 10px auto;
+}
+
+.coverage-circle svg {
+    transform: rotate(-90deg);
+}
+
+.coverage-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+/* 覆盖度热力图 */
+#coverageHeatmap {
+    overflow-x: auto;
+}
+
+.heatmap-container {
+    min-width: 800px;
+}
+
+.heatmap-row {
+    display: flex;
+    align-items: center;
+}
+
+.heatmap-label {
+    width: 120px;
+    padding: 8px;
+    font-weight: 500;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.heatmap-cells {
+    display: flex;
+    flex: 1;
+}
+
+.heatmap-cell {
+    width: 40px;
+    height: 40px;
+    margin: 2px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: white;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.heatmap-cell:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
+
+.heatmap-legend {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.heatmap-legend-item {
+    display: flex;
+    align-items: center;
+    margin: 0 10px;
+}
+
+.heatmap-legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+
+/* 覆盖度状态徽章 */
+.coverage-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.coverage-high {
+    background-color: rgba(25, 135, 84, 0.2);
+    color: #198754;
+}
+
+.coverage-medium {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.coverage-low {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+/* 覆盖度表格 */
+.coverage-table {
+    font-size: 0.9rem;
+}
+
+.coverage-table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.coverage-table td {
+    vertical-align: middle;
+}
+
+.coverage-progress {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #e9ecef;
+}
+
+.coverage-progress-bar {
+    height: 100%;
+    transition: width 1s ease-in-out;
+}
+
+/* 未覆盖部分样式 */
+.uncovered-item {
+    padding: 12px 15px;
+    border-left: 4px solid #dc3545;
+    margin-bottom: 8px;
+    background-color: rgba(220, 53, 69, 0.05);
+    border-radius: 0 4px 4px 0;
+}
+
+.uncovered-item:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.uncovered-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.uncovered-description {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.uncovered-priority {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-left: 10px;
+}
+
+.priority-high {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.priority-medium {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.priority-low {
+    background-color: rgba(25, 135, 84, 0.2);
+    color: #198754;
+}
+
+/* 覆盖度图表容器 */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .coverage-circle {
+        margin-bottom: 20px;
+    }
+    
+    .heatmap-container {
+        min-width: 600px;
+    }
+    
+    .heatmap-cell {
+        width: 30px;
+        height: 30px;
+        font-size: 0.65rem;
+    }
+    
+    .heatmap-label {
+        width: 80px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .coverage-circle svg {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .coverage-text {
+        font-size: 1.2rem;
+    }
+    
+    .heatmap-container {
+        min-width: 500px;
+    }
+    
+    .heatmap-cell {
+        width: 25px;
+        height: 25px;
+    }
+    
+    .heatmap-label {
+        width: 70px;
+        font-size: 0.75rem;
+    }
+}
+
+/* 加载动画 */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #0d6efd;
+    animation: spin 1s ease-in-out infinite;
+}
+
+/* 按钮加载状态 */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+/* 空状态 */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.empty-state h5 {
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    margin-bottom: 20px;
+}
+
+/* 工具提示样式 */
+.tooltip-inner {
+    max-width: 250px;
+    text-align: left;
+}
+
+/* 报告预览 */
+.report-preview {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    background-color: #f8f9fa;
+}
+
+.report-preview h5 {
+    margin-top: 0;
+    color: #495057;
+}
+
+.report-preview-section {
+    margin-bottom: 20px;
+}
+
+.report-preview-section:last-child {
+    margin-bottom: 0;
+}
+
+.report-preview-title {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #343a40;
+}
+
+.report-preview-content {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* 覆盖度详情卡片 */
+.coverage-detail-card {
+    border-left: 4px solid #0d6efd;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.coverage-detail-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.coverage-detail-card.high {
+    border-left-color: #198754;
+}
+
+.coverage-detail-card.medium {
+    border-left-color: #ffc107;
+}
+
+.coverage-detail-card.low {
+    border-left-color: #dc3545;
+}
+
+/* 覆盖度趋势图选择器 */
+.trend-selector {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.trend-selector .btn {
+    margin: 0 5px;
+}
+
+/* 覆盖度对比 */
+.coverage-comparison {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.coverage-comparison-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+}
+
+.coverage-comparison-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.coverage-comparison-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.coverage-comparison-arrow {
+    font-size: 1.2rem;
+    margin: 0 10px;
+}
+
+.coverage-comparison-arrow.up {
+    color: #198754;
+}
+
+.coverage-comparison-arrow.down {
+    color: #dc3545;
+}
