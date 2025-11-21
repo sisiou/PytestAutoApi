@@ -9,12 +9,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "7d83cfec3a3b4a82",
+      "uid" : "5fcef5bbe207c45e",
       "status" : "passed",
       "time" : {
-        "start" : 1675997462385,
-        "stop" : 1675997462695,
-        "duration" : 310
+        "start" : 1763702930169,
+        "stop" : 1763702933582,
+        "duration" : 3413
       }
     } ]
   },
@@ -28,12 +28,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "c0a50abe12b22859",
+      "uid" : "d0a368164145daad",
       "status" : "passed",
       "time" : {
-        "start" : 1675997460633,
-        "stop" : 1675997460897,
-        "duration" : 264
+        "start" : 1763702914214,
+        "stop" : 1763702916788,
+        "duration" : 2574
       }
     } ]
   },
@@ -47,12 +47,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "8a9698c1054d5275",
+      "uid" : "5702e5429c9bc22e",
       "status" : "passed",
       "time" : {
-        "start" : 1675997457090,
-        "stop" : 1675997457227,
-        "duration" : 137
+        "start" : 1763702903164,
+        "stop" : 1763702905727,
+        "duration" : 2563
       }
     } ]
   },
@@ -66,51 +66,53 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "ac42a9d9287e5d83",
+      "uid" : "878843e493ebd447",
       "status" : "skipped",
       "statusDetails" : "Skipped",
       "time" : {
-        "start" : 1675997459709,
-        "stop" : 1675997459709,
+        "start" : 1763702910533,
+        "stop" : 1763702910533,
         "duration" : 0
-      }
-    } ]
-  },
-  "a89bc2e4b5872074bfcf6030fb832d39" : {
-    "statistic" : {
-      "failed" : 0,
-      "broken" : 0,
-      "skipped" : 0,
-      "passed" : 1,
-      "unknown" : 0,
-      "total" : 1
-    },
-    "items" : [ {
-      "uid" : "e0899b29a9c0f4ca",
-      "status" : "passed",
-      "time" : {
-        "start" : 1675997456245,
-        "stop" : 1675997456410,
-        "duration" : 165
       }
     } ]
   },
   "7a79f04cd478ab96b4e3403bc5cb9b64" : {
     "statistic" : {
       "failed" : 0,
-      "broken" : 0,
+      "broken" : 1,
       "skipped" : 0,
-      "passed" : 1,
+      "passed" : 0,
       "unknown" : 0,
       "total" : 1
     },
     "items" : [ {
-      "uid" : "a5b1b4d709b527d8",
-      "status" : "passed",
+      "uid" : "5fabc45d9b7a744d",
+      "status" : "broken",
+      "statusDetails" : "utils.other_tools.exceptions.ValueNotFoundError: 缓存设置失败，程序中未检测到需要缓存的数据。请求参数: {\"errorCode\":-1001,\"errorMsg\":\"请先登录！\"}提取的 jsonpath 内容: $.data.id",
       "time" : {
-        "start" : 1675997463710,
-        "stop" : 1675997464106,
-        "duration" : 396
+        "start" : 1763702937114,
+        "stop" : 1763702939479,
+        "duration" : 2365
+      }
+    } ]
+  },
+  "a89bc2e4b5872074bfcf6030fb832d39" : {
+    "statistic" : {
+      "failed" : 1,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 0,
+      "unknown" : 0,
+      "total" : 1
+    },
+    "items" : [ {
+      "uid" : "70e7ffb2bab6c108",
+      "status" : "failed",
+      "statusDetails" : "AssertionError",
+      "time" : {
+        "start" : 1763702896895,
+        "stop" : 1763702900176,
+        "duration" : 3281
       }
     } ]
   },
@@ -124,12 +126,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "a93189e896f11e87",
+      "uid" : "33dc2ca3555a9adf",
       "status" : "skipped",
       "statusDetails" : "Skipped",
       "time" : {
-        "start" : 1675997457234,
-        "stop" : 1675997457234,
+        "start" : 1763702905728,
+        "stop" : 1763702905728,
         "duration" : 0
       }
     } ]
@@ -137,19 +139,20 @@
   "112ba6cd5147d71baaef4374c26f990a" : {
     "statistic" : {
       "failed" : 0,
-      "broken" : 0,
+      "broken" : 1,
       "skipped" : 0,
-      "passed" : 1,
+      "passed" : 0,
       "unknown" : 0,
       "total" : 1
     },
     "items" : [ {
-      "uid" : "fea02241d7e3ae11",
-      "status" : "passed",
+      "uid" : "ea1cc0accd79925b",
+      "status" : "broken",
+      "statusDetails" : "utils.other_tools.exceptions.ValueNotFoundError: 缓存设置失败，程序中未检测到需要缓存的数据。请求参数: {\"errorCode\":-1001,\"errorMsg\":\"请先登录！\"}提取的 jsonpath 内容: $.data.id",
       "time" : {
-        "start" : 1675997456415,
-        "stop" : 1675997457079,
-        "duration" : 664
+        "start" : 1763702900226,
+        "stop" : 1763702903152,
+        "duration" : 2926
       }
     } ]
   },
@@ -163,12 +166,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "d8dc1574c3062c54",
+      "uid" : "1833c57630cf88a6",
       "status" : "passed",
       "time" : {
-        "start" : 1675997461771,
-        "stop" : 1675997462377,
-        "duration" : 606
+        "start" : 1763702926702,
+        "stop" : 1763702930167,
+        "duration" : 3465
       }
     } ]
   },
@@ -182,31 +185,32 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "ac5dd04e7976ba68",
+      "uid" : "c9aee84282cf5b4b",
       "status" : "passed",
       "time" : {
-        "start" : 1675997461473,
-        "stop" : 1675997461761,
-        "duration" : 288
+        "start" : 1763702922799,
+        "stop" : 1763702926699,
+        "duration" : 3900
       }
     } ]
   },
   "8dc337090b769ee2123d6c056f9f9f43" : {
     "statistic" : {
-      "failed" : 0,
+      "failed" : 1,
       "broken" : 0,
       "skipped" : 0,
-      "passed" : 1,
+      "passed" : 0,
       "unknown" : 0,
       "total" : 1
     },
     "items" : [ {
-      "uid" : "5e7090359d8614f1",
-      "status" : "passed",
+      "uid" : "11bd7c06a92ef6be",
+      "status" : "failed",
+      "statusDetails" : "AssertionError",
       "time" : {
-        "start" : 1675997457261,
-        "stop" : 1675997459702,
-        "duration" : 2441
+        "start" : 1763702905733,
+        "stop" : 1763702910523,
+        "duration" : 4790
       }
     } ]
   },
@@ -220,12 +224,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "8a9d699461fd27da",
+      "uid" : "886ba0d5c4f4996",
       "status" : "passed",
       "time" : {
-        "start" : 1675997461166,
-        "stop" : 1675997461459,
-        "duration" : 293
+        "start" : 1763702920191,
+        "stop" : 1763702922796,
+        "duration" : 2605
       }
     } ]
   },
@@ -239,31 +243,32 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "13d0fb5e1ff7919f",
+      "uid" : "39576aecfdbd6418",
       "status" : "passed",
       "time" : {
-        "start" : 1675997462707,
-        "stop" : 1675997463703,
-        "duration" : 996
+        "start" : 1763702933585,
+        "stop" : 1763702937112,
+        "duration" : 3527
       }
     } ]
   },
   "50546d53f6058092b6fcaac1ce4c98ab" : {
     "statistic" : {
-      "failed" : 0,
+      "failed" : 1,
       "broken" : 0,
       "skipped" : 0,
-      "passed" : 1,
+      "passed" : 0,
       "unknown" : 0,
       "total" : 1
     },
     "items" : [ {
-      "uid" : "b3f07baf8c77a0aa",
-      "status" : "passed",
+      "uid" : "143c7082fb5e8623",
+      "status" : "failed",
+      "statusDetails" : "AssertionError",
       "time" : {
-        "start" : 1675997459721,
-        "stop" : 1675997460624,
-        "duration" : 903
+        "start" : 1763702910535,
+        "stop" : 1763702914205,
+        "duration" : 3670
       }
     } ]
   },
@@ -277,12 +282,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "38de3157d6736ed6",
+      "uid" : "9caacb9f6fc86422",
       "status" : "passed",
       "time" : {
-        "start" : 1675997460905,
-        "stop" : 1675997461155,
-        "duration" : 250
+        "start" : 1763702916791,
+        "stop" : 1763702920188,
+        "duration" : 3397
       }
     } ]
   }

@@ -1,0 +1,711 @@
+/* 系统设置页面样式 */
+
+/* 侧边栏样式 */
+.sidebar {
+    position: fixed;
+    top: 56px;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #333;
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+    margin: 0.125rem 0.75rem;
+}
+
+.sidebar .nav-link:hover {
+    color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.sidebar .nav-link.active {
+    color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.sidebar .nav-link i {
+    width: 20px;
+    text-align: center;
+}
+
+/* 主内容区样式 */
+main {
+    margin-top: 1rem;
+}
+
+/* 卡片样式 */
+.card {
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* 表单样式 */
+.form-label {
+    font-weight: 500;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* 复选框样式 */
+.form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.form-check-input:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* 按钮样式 */
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0069d9;
+    border-color: #0062cc;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+/* 模态框样式 */
+.modal-content {
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+}
+
+/* 选项卡样式 */
+.nav-pills .nav-link.active {
+    background-color: #007bff;
+}
+
+/* 响应式调整 */
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: static;
+        height: auto;
+        padding: 0;
+    }
+    
+    main {
+        margin-top: 0;
+    }
+}
+
+/* 动画效果 */
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* 加载状态 */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8) url('../img/spinner.gif') no-repeat center;
+    z-index: 1000;
+}
+
+/* 成功提示 */
+.success-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    background-color: #28a745;
+    color: white;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1050;
+    animation: fadeInOut 3s forwards;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-20px); }
+    20% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* 错误提示 */
+.error-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1050;
+    animation: fadeInOut 3s forwards;
+}
+
+/* 警告提示 */
+.warning-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    background-color: #ffc107;
+    color: #212529;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1050;
+    animation: fadeInOut 3s forwards;
+}
+
+/* 进度条样式 */
+.progress {
+    height: 0.75rem;
+}
+
+/* 密码强度指示器 */
+.password-strength {
+    height: 5px;
+    border-radius: 3px;
+    margin-top: 5px;
+    transition: width 0.3s ease;
+}
+
+.password-strength.weak {
+    width: 33%;
+    background-color: #dc3545;
+}
+
+.password-strength.medium {
+    width: 66%;
+    background-color: #ffc107;
+}
+
+.password-strength.strong {
+    width: 100%;
+    background-color: #28a745;
+}
+
+/* 文件上传区域 */
+.file-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.25rem;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.file-upload-area.dragover {
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+/* 备份文件列表 */
+.backup-file-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.backup-file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.backup-file-item:last-child {
+    border-bottom: none;
+}
+
+.backup-file-info {
+    flex-grow: 1;
+}
+
+.backup-file-name {
+    font-weight: 500;
+}
+
+.backup-file-date {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.backup-file-size {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.backup-file-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* 开关样式 */
+.form-switch .form-check-input {
+    width: 3em;
+    background-color: #dee2e6;
+    border-color: #dee2e6;
+}
+
+.form-switch .form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* 代码编辑器样式 */
+.code-editor {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    min-height: 200px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* 颜色选择器样式 */
+.color-picker {
+    width: 50px;
+    height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+/* 范围滑块样式 */
+.form-range::-webkit-slider-thumb {
+    background: #007bff;
+}
+
+.form-range::-moz-range-thumb {
+    background: #007bff;
+}
+
+/* 标签样式 */
+.tag {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+    background-color: #e9ecef;
+    color: #495057;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+/* 分页样式 */
+.pagination .page-link {
+    color: #007bff;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* 表格样式 */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+/* 工具提示样式 */
+.tooltip {
+    font-size: 0.875rem;
+}
+
+/* 下拉菜单样式 */
+.dropdown-menu {
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);
+}
+
+/* 输入组样式 */
+.input-group-text {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+/* 浮动标签样式 */
+.form-floating > label {
+    color: #6c757d;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    color: #007bff;
+}
+
+/* 列表组样式 */
+.list-group-item {
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.list-group-item:first-child {
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+}
+
+.list-group-item:last-child {
+    border-bottom-left-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+/* 徽章样式 */
+.badge {
+    font-weight: 500;
+}
+
+/* 警告框样式 */
+.alert {
+    border: none;
+    border-radius: 0.25rem;
+}
+
+.alert-dismissible .btn-close {
+    padding: 0.75rem 1rem;
+}
+
+/* 进度环样式 */
+.progress-ring {
+    position: relative;
+    display: inline-block;
+    width: 120px;
+    height: 120px;
+}
+
+.progress-ring svg {
+    transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+    fill: transparent;
+    stroke-width: 8;
+}
+
+.progress-ring-bg {
+    stroke: #e9ecef;
+}
+
+.progress-ring-fill {
+    stroke: #007bff;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.35s;
+}
+
+.progress-ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* 时间线样式 */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -23px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #007bff;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #e9ecef;
+}
+
+.timeline-item.success::before {
+    background-color: #28a745;
+}
+
+.timeline-item.warning::before {
+    background-color: #ffc107;
+}
+
+.timeline-item.danger::before {
+    background-color: #dc3545;
+}
+
+.timeline-content {
+    background-color: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 0.25rem;
+    padding: 1rem;
+}
+
+.timeline-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-date {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* 统计卡片样式 */
+.stats-card {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.stats-card .stats-title {
+    font-size: 0.875rem;
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+}
+
+.stats-card .stats-value {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.stats-card .stats-change {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.stats-card.success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.stats-card.warning {
+    background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%);
+}
+
+.stats-card.danger {
+    background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
+}
+
+/* 设置组样式 */
+.settings-group {
+    margin-bottom: 2rem;
+}
+
+.settings-group-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.settings-item {
+    margin-bottom: 1.5rem;
+}
+
+.settings-item-title {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.settings-item-description {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.75rem;
+}
+
+/* 高级设置样式 */
+.advanced-settings {
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.advanced-settings-toggle {
+    cursor: pointer;
+    user-select: none;
+}
+
+.advanced-settings-toggle i {
+    transition: transform 0.2s ease;
+}
+
+.advanced-settings-toggle.collapsed i {
+    transform: rotate(-90deg);
+}
+
+/* 设置导入导出样式 */
+.import-export-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.25rem;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.import-export-area:hover {
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.import-export-area.dragover {
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+    transform: scale(1.01);
+}
+
+.import-export-icon {
+    font-size: 3rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.import-export-area:hover .import-export-icon {
+    color: #007bff;
+}
+
+.import-export-text {
+    margin-bottom: 1rem;
+}
+
+.import-export-hint {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* 文件信息显示区域 */
+.file-info-container {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    border: 1px solid #e9ecef;
+}
+
+.file-info-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.file-info-label {
+    font-weight: 500;
+}
+
+.file-info-value {
+    color: #6c757d;
+}
+
+.file-info-icon {
+    margin-right: 0.5rem;
+    color: #007bff;
+}
+
+/* 响应式调整 */
+@media (max-width: 991.98px) {
+    .sidebar {
+        position: static;
+        height: auto;
+        padding: 0;
+        margin-bottom: 1rem;
+    }
+    
+    main {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .stats-card {
+        padding: 1rem;
+    }
+    
+    .stats-card .stats-value {
+        font-size: 1.5rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
