@@ -20,7 +20,7 @@ def get_all_files(file_path, yaml_data_switch=False) -> list:
         for _file_path in files:
             path = os.path.join(root, _file_path)
             if yaml_data_switch:
-                if 'yaml' in path or '.yml' in path:
+                if path.endswith((".yaml", ".yml")):
                     filename.append(path)
             else:
                 filename.append(path)

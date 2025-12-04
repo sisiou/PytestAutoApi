@@ -25,7 +25,7 @@ class SwaggerForYaml:
         :return:
         """
         try:
-            with open('./test_zht/swagger.json', "r", encoding='utf-8') as f:
+            with open('./interfacetest/userInfo.json', "r", encoding='utf-8') as f:
                 row_data = json.load(f)
                 return row_data
         except FileNotFoundError:
@@ -132,7 +132,8 @@ class SwaggerForYaml:
             os.makedirs(_dir_path)
         except FileExistsError:
             ...
-        with open(_file_path, "a", encoding="utf-8") as file:
+        # 使用写入模式（"w"）而不是追加模式（"a"），避免重复内容
+        with open(_file_path, "w", encoding="utf-8") as file:
             yaml.dump(data, file, Dumper=yaml.RoundTripDumper, allow_unicode=True)
             file.write('\n')
 

@@ -1,0 +1,148 @@
+case_common:
+  allureEpic: 发送消息
+  allureFeature: "['消息']"
+  allureStory: 发送消息
+01_open-apis_im_v1_messages:
+  host: https://open.feishu.cn
+  url: /open-apis/im/v1/messages?receive_id_type=user_id
+  method: post
+  detail: 测试发送消息 - 文本成功
+  headers: &id001
+    Content-Type: application/json; charset=utf-8
+    Authorization: Bearer t-g104c4m92IRIY6OW464BI4X2BVH7J7J5G776UK75
+  requestType: json
+  is_run:
+  data:
+    receive_id: 49e646d6
+    msg_type: text
+    content: '{"text": "test content"}'
+    uuid: a0d69e20-1dd1-458b-k525-dfeca4015204
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+02_open-apis_im_v1_messages:
+  host: https://open.feishu.cn
+  url: /open-apis/im/v1/messages?receive_id_type=user_id
+  method: post
+  detail: 测试发送消息 - 卡片成功
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    receive_id: 49e646d6
+    msg_type: interactive
+    content: '{"elements": [{"tag": "markdown", "content": "自动化测试卡片\n\n这是一条由测试脚本发送的卡片消息"}]}'
+    uuid: a0d69e20-1dd1-458b-k525-dfeca4015204
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+03_open-apis_im_v1_messages:
+  host: https://open.feishu.cn
+  url: /open-apis/im/v1/messages?receive_id_type=user_id
+  method: post
+  detail: 测试发送消息 - 无效接收人
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    receive_id: invalid_receive_id_for_test
+    msg_type: text
+    content: '{"text": "test content"}'
+    uuid: a0d69e20-1dd1-458b-k525-dfeca4015204
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 99992360
+  sql:
+04_open-apis_im_v1_messages:
+  host: https://open.feishu.cn
+  url: /open-apis/im/v1/messages?receive_id_type=user_id
+  method: post
+  detail: 测试发送消息 - 非法消息类型
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    receive_id: 49e646d6
+    msg_type: invalid_type_for_test
+    content: '{"text":"test content"}'
+    uuid: a0d69e20-1dd1-458b-k525-dfeca4015204
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 230001
+  sql:
+05_open-apis_im_v1_messages:
+  host: https://open.feishu.cn
+  url: /open-apis/im/v1/messages?receive_id_type=user_id
+  method: post
+  detail: 测试发送消息 - 缺少内容字段
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    receive_id: 49e646d6
+    msg_type: text
+    uuid: a0d69e20-1dd1-458b-k525-dfeca4015204
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 99992402
+  sql:
+06_open-apis_im_v1_messages:
+  host: https://open.feishu.cn
+  url: /open-apis/im/v1/messages?receive_id_type=user_id
+  method: post
+  detail: 测试发送消息 - 内容为空
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    receive_id: 49e646d6
+    msg_type: text
+    content: ''
+    uuid: a0d69e20-1dd1-458b-k525-dfeca4015204
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 230001
+  sql:
+07_open-apis_im_v1_messages:
+  host: https://open.feishu.cn
+  url: /open-apis/im/v1/messages?receive_id_type=user_id
+  method: post
+  detail: 测试发送消息 - 内容非JSON
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    receive_id: 49e646d6
+    msg_type: text
+    content: not_a_json_string_for_test
+    uuid: a0d69e20-1dd1-458b-k525-dfeca4015204
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 230001
+  sql:
+08_open-apis_im_v1_messages:
+  host: https://open.feishu.cn
+  url: /open-apis/im/v1/messages?receive_id_type=user_id
+  method: post
+  detail: 测试发送消息 - 非法卡片内容
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    receive_id: 49e646d6
+    msg_type: interactive
+    content: '{"invalid_card": true, "elements": "not_a_list"}'
+    uuid: a0d69e20-1dd1-458b-k525-dfeca4015204
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 230099
+  sql:
+

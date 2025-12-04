@@ -1,0 +1,136 @@
+case_common:
+  allureEpic: 创建共享日历
+  allureFeature: "['日历']"
+  allureStory: 创建共享日历
+01_open-apis_calendar_v4_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: 测试创建共享日历 - 私有日历成功
+  headers: &id001
+    Content-Type: application/json; charset=utf-8
+    Authorization: Bearer t-g104c4nFFXMCQJGOCMSMF45WZZKTS7RJC5RMG74A
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+02_open-apis_calendar_v4_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: 测试创建共享日历 - 公开日历成功
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: public
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+03_open-apis_calendar_v4_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: 测试创建共享日历 - 缺少标题字段默认成功
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    description: 使用开放接口创建日历
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+04_open-apis_calendar_v4_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: 测试创建共享日历 - 标题超长
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    summary: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    description: 使用开放接口创建日历
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 99992402
+  sql:
+05_open-apis_calendar_v4_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: 测试创建共享日历 - 非法权限类型
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: invalid_permission_for_test
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 99992402
+  sql:
+06_open-apis_calendar_v4_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: 测试创建共享日历 - 描述超长
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 99992402
+  sql:
+07_open-apis_calendar_v4_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: 测试创建共享日历 - 颜色越界
+  headers: *id001
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: private
+    color: 2147483648
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 9499
+  sql:
+
