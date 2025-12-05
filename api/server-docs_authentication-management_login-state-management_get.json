@@ -1,0 +1,374 @@
+{
+  "code": 0,
+  "msg": "succeeded",
+  "data": {
+    "fullPath": "/uAjLw4CM/ukTMukTMukTM/reference/authen-v1/user_info/get",
+    "id": "7180265937329537028",
+    "directoryId": "7182045894962921473",
+    "content": "# 获取用户信息\n\n通过 `user_access_token` 获取相关用户信息。{尝试一下}(url=/api/tools/api_explore/api_explore_config?project=authen&version=v1&resource=user_info&method=get)\n\n:::html\n<md-alert type=\"error\">\n\n</md-alert>\n:::\n\n:::html\n<md-alert type=\"warn\">\n手机号和邮箱信息为管理员导入的用户联系方式，未经过用户本人实时验证，不建议开发者直接将其作为业务系统的登录凭证。如使用，务必自行认证。\n</md-alert>\n:::\n\n:::html\n<md-alert type=\"tip\">\n\n</md-alert>\n:::\n\n\n\n## 请求\n:::html\n<md-table>\n  <md-thead>\n  <tr>\n      <md-th>基本</md-th>\n      <md-th></md-th>\n  </tr>\n  </md-thead>\n  <md-tbody>\n    <md-tr>\n      <md-th>HTTP URL</md-th>\n      <md-td>https://open.feishu.cn/open-apis/authen/v1/user_info</md-td>\n    </md-tr>\n    <md-tr>\n      <md-th>HTTP Method</md-th>\n      <md-td>GET</md-td>\n    </md-tr>\n    <md-tr>\n      <md-th>接口频率限制</md-th>\n      <md-td>[特殊频控](/ssl:ttdoc/ukTMukTMukTM/uUzN04SN3QjL1cDN)</md-td>\n    </md-tr>\n    <md-tr>\n      <md-th>支持的应用类型</md-th>\n      <md-td>\n      <md-app-support types=\"custom,isv\"></md-app-support>\n      </md-td>\n    </md-tr>\n    <md-tr>\n      <md-th>\n            权限要求\n            <md-tooltip type=\"info\">调用该 API 所需的权限。开启其中任意一项权限即可调用</md-tooltip>\n            \n      </md-th>\n      <md-td>\n            无\n      </md-td>\n    </md-tr>\n    <md-tr>\n      <md-th>\n            字段权限要求\n      </md-th>\n      <md-td>\n        <md-alert type=\"tip\" icon=\"none\">\n        该接口返回体中存在下列敏感字段，仅当开启对应的权限后才会返回；如果无需获取这些字段，则不建议申请\n        </md-alert>\n        <md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n        <md-perm name=\"contact:user.employee_id:readonly\" desc=\"获取用户 user ID\" support_app_types=\"custom\" tags=\"\">获取用户 user ID</md-perm>\n        <md-perm name=\"contact:user.phone:readonly\" desc=\"获取用户手机号\" support_app_types=\"custom\" tags=\"\">获取用户手机号</md-perm>\n        <md-perm name=\"contact:user.email:readonly\" desc=\"获取用户邮箱信息\" support_app_types=\"custom\" tags=\"\">获取用户邮箱信息</md-perm>\n        <md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n        <md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n        <md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n      </md-td>\n    </md-tr>\n  </md-tbody>\n</md-table>\n:::\n### 请求头\n:::html\n<md-table>\n  <md-thead>\n    <md-tr>\n      <md-th style=\"width: 35%;\">名称</md-th>\n      <md-th style=\"width: 13%;\">类型</md-th>\n       <md-th style=\"width: 15%;\" filters=\"是,否\" >必填</md-th>\n      <md-th  style=\"width: 37%;\">描述</md-th>\n    </md-tr>\n  </md-thead>\n  <md-tbody>\n    <md-tr>\n      <md-td>Authorization</md-td>\n      <md-td>string</md-td>\n      <md-td>是</md-td>\n      \t<md-td>\n<md-tag mode=\"inline\" type=\"token-user\">user_access_token</md-tag>\n\n**值格式**：\"Bearer `access_token`\"\n\n**示例值**：\"Bearer u-7f1bcd13fc57d46bac21793a18e560\"\n\n[了解更多：如何选择与获取 access token](/ssl:ttdoc/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-choose-which-type-of-token-to-use)\n\n</md-td>\n</md-tr>\n</md-tbody>\n</md-table>\n:::\n\n\n\n\n\n## 响应\n\n\n\n\n\n### 响应体\n:::html\n<md-dt-table>\n  <md-dt-thead>\n      <md-dt-tr>\n      <md-dt-th style=\"width: 35%;\">名称</md-dt-th>\n      <md-dt-th style=\"width: 13%;\">类型</md-dt-th>\n      <md-dt-th style=\"width: 52%;\">描述</md-dt-th>\n      </md-dt-tr>\n  </md-dt-thead>\n  <md-dt-tbody>\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >code</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t错误码，非 0 表示失败\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >msg</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t错误描述\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >data</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >user_info</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t\\-\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >name</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户姓名\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >en_name</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户英文名称\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >avatar_url</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户头像\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >avatar_thumb</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户头像 72x72\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >avatar_middle</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户头像 240x240\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >avatar_big</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户头像 640x640\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >open_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户在应用内的唯一标识\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >union_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户对ISV的唯一标识，对于同一个ISV，用户在其名下所有应用的union_id相同\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >email</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户邮箱。邮箱信息为管理员导入的用户联系方式，未经过用户本人实时验证，不建议开发者直接将其作为业务系统的登录凭证。如使用，务必自行认证。\n\n**字段权限要求**：\n<md-perm name=\"contact:user.email:readonly\" desc=\"获取用户邮箱信息\" support_app_types=\"custom\" tags=\"\">获取用户邮箱信息</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >enterprise_email</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t企业邮箱，请先确保已在管理后台启用飞书邮箱服务\n\n**字段权限要求**：\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >user_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户 user_id\n\n**字段权限要求**：\n<md-perm name=\"contact:user.employee_id:readonly\" desc=\"获取用户 user ID\" support_app_types=\"custom\" tags=\"\">获取用户 user ID</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >mobile</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户手机号。手机号信息为管理员导入的用户联系方式，未经过用户本人实时验证，不建议开发者直接将其作为业务系统的登录凭证。如使用，务必自行认证。\n\n**字段权限要求**：\n<md-perm name=\"contact:user.phone:readonly\" desc=\"获取用户手机号\" support_app_types=\"custom\" tags=\"\">获取用户手机号</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >tenant_key</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t当前企业标识\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >employee_no</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户工号\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n  </md-dt-tbody>\n</md-dt-table>\n:::\n\n\n\n### 响应体示例\n:::html\n<md-code-json>\n{\n    \"code\": 0,\n    \"msg\": \"success\",\n    \"data\": {\n        \"name\": \"zhangsan\",\n        \"en_name\": \"zhangsan\",\n        \"avatar_url\": \"www.feishu.cn/avatar/icon\",\n        \"avatar_thumb\": \"www.feishu.cn/avatar/icon_thumb\",\n        \"avatar_middle\": \"www.feishu.cn/avatar/icon_middle\",\n        \"avatar_big\": \"www.feishu.cn/avatar/icon_big\",\n        \"open_id\": \"ou-caecc734c2e3328a62489fe0648c4b98779515d3\",\n        \"union_id\": \"on-d89jhsdhjsajkda7828enjdj328ydhhw3u43yjhdj\",\n        \"email\": \"zhangsan@feishu.cn\",\n        \"enterprise_email\": \"demo@mail.com\",\n        \"user_id\": \"5d9bdxxx\",\n        \"mobile\": \"+86130002883xx\",\n        \"tenant_key\": \"736588c92lxf175d\",\n\t\t\"employee_no\": \"111222333\"\n    }\n}\n</md-code-json>\n:::\n\n\n\n### 错误码\n:::html\n<md-table>\n    <md-thead>\n        <md-tr>\n            <md-th style=\"width: 15%;\">HTTP状态码</md-th>\n            <md-th style=\"width: 15%;\">错误码</md-th>\n            <md-th style=\"width: 30%;\">描述</md-th>\n            <md-th style=\"width: 30%;\">排查建议</md-th>\n        </md-tr>\n    </md-thead>\n  <md-tbody>\n\n<md-tr>\n  <md-td>200</md-td>\n  <md-td>20001</md-td>\n  <md-td>Invalid request. Please check request param</md-td>\n  <md-td>参数错误，请检查请求参数。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>200</md-td>\n  <md-td>20005</md-td>\n  <md-td>The user access token passed is invalid. Please check the value</md-td>\n  <md-td>提供的 `user_access_token` 无效，请使用有效的 `user_access_token`。相关文档：[获取 user_access_token](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/authentication-management/access-token/get-user-access-token)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>200</md-td>\n  <md-td>20008</md-td>\n  <md-td>User not exist</md-td>\n  <md-td>用户不存在，无法获取信息。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>200</md-td>\n  <md-td>20021</md-td>\n  <md-td>User resigned</md-td>\n  <md-td>用户离职，无法获取信息。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>200</md-td>\n  <md-td>20022</md-td>\n  <md-td>User frozen</md-td>\n  <md-td>用户被冻结，无法获取信息。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>200</md-td>\n  <md-td>20023</md-td>\n  <md-td>User not registered</md-td>\n  <md-td>用户没有完成注册，无法获取信息。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>500</md-td>\n  <md-td>20050</md-td>\n  <md-td>System error</md-td>\n  <md-td>系统错误，请重试。</md-td>\n</md-tr>\n\n\n  </md-tbody>\n</md-table>\n:::\n\n\n\n\n",
+    "templateName": "API_V1",
+    "redirectUri": "",
+    "bizScope": "6999845508004986900",
+    "name": "获取用户信息",
+    "type": "ReferenceDocumentType",
+    "title": "",
+    "updateTime": 1753149455000,
+    "allVisible": true,
+    "visibleTag": "All",
+    "schema": {
+      "title": "获取用户信息",
+      "description": "通过 `user_access_token` 获取相关用户信息。",
+      "tips": [
+        {
+          "tipInfo": "",
+          "tipLevel": "error"
+        },
+        {
+          "tipInfo": "手机号和邮箱信息为管理员导入的用户联系方式，未经过用户本人实时验证，不建议开发者直接将其作为业务系统的登录凭证。如使用，务必自行认证。",
+          "tipLevel": "warn"
+        },
+        {
+          "tipInfo": "",
+          "tipLevel": "tip"
+        }
+      ],
+      "apiSchema": {
+        "id": "project=authen&version=v1&resource=user_info&method=get",
+        "apiChargingStrategy": {
+          "featureKey": "",
+          "chargingMethod": "none",
+          "usageType": "",
+          "unitEquityPoint": ""
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "php-guzzle": {
+                  "value": "<?php\n$client = new Client();\n$headers = [\n  'Authorization' => 'Bearer t-7f1b******8e560',\n  'Content-Type' => 'application/json'\n];\n$body = 'null';\n$request = new Request('GET', 'https://open.feishu.cn/open-apis/authen/v1/user_info', $headers, $body);\n$res = $client->sendAsync($request)->wait();\necho $res->getBody();"
+                },
+                "curl": {
+                  "value": "curl -i -X GET 'https://open.feishu.cn/open-apis/authen/v1/user_info' \\\n-H 'Authorization: Bearer t-7f1b******8e560'"
+                },
+                "golang-sdk": {
+                  "value": "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\t\"github.com/larksuite/oapi-sdk-go/v3\"\n\t\"github.com/larksuite/oapi-sdk-go/v3/core\"\n)\n\n// SDK 使用文档：https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/server-side-sdk/golang-sdk-guide/preparations\n// 复制该 Demo 后, 需要将 \"YOUR_APP_ID\", \"YOUR_APP_SECRET\" 替换为自己应用的 APP_ID, APP_SECRET.\n// 以下示例代码默认根据文档示例值填充，如果存在代码问题，请在 API 调试台填上相关必要参数后再复制代码使用\nfunc main() {\n\t// 创建 Client\n\tclient := lark.NewClient(\"YOUR_APP_ID\", \"YOUR_APP_SECRET\")\n\n\t// 发起请求\n\tresp, err := client.Authen.V1.UserInfo.Get(context.Background())\n\n\t// 处理错误\n\tif err != nil {\n\t\tfmt.Println(err)\n\t\treturn\n\t}\n\n\t// 服务端错误处理\n\tif !resp.Success() {\n\t\tfmt.Printf(\"logId: %s, error response: \\n%s\", resp.RequestId(), larkcore.Prettify(resp.CodeError))\n\t\treturn\n\t}\n\n\t// 业务处理\n\tfmt.Println(larkcore.Prettify(resp))\n}\n"
+                },
+                "python-sdk": {
+                  "value": "import json\n\nimport lark_oapi as lark\nfrom lark_oapi.api.authen.v1 import *\n\n\n# SDK 使用说明: https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/server-side-sdk/python--sdk/preparations-before-development\n# 以下示例代码默认根据文档示例值填充，如果存在代码问题，请在 API 调试台填上相关必要参数后再复制代码使用\n# 复制该 Demo 后, 需要将 \"YOUR_APP_ID\", \"YOUR_APP_SECRET\" 替换为自己应用的 APP_ID, APP_SECRET.\ndef main():\n    # 创建client\n    client = lark.Client.builder() \\\n        .app_id(\"YOUR_APP_ID\") \\\n        .app_secret(\"YOUR_APP_SECRET\") \\\n        .log_level(lark.LogLevel.DEBUG) \\\n        .build()\n\n    # 构造请求对象\n    request: GetUserInfoRequest = GetUserInfoRequest.builder() \\\n        .build()\n\n    # 发起请求\n    response: GetUserInfoResponse = client.authen.v1.user_info.get(request)\n\n    # 处理失败返回\n    if not response.success():\n        lark.logger.error(\n            f\"client.authen.v1.user_info.get failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}, resp: \\n{json.dumps(json.loads(response.raw.content), indent=4, ensure_ascii=False)}\")\n        return\n\n    # 处理业务结果\n    lark.logger.info(lark.JSON.marshal(response.data, indent=4))\n\n\nif __name__ == \"__main__\":\n    main()\n"
+                },
+                "java-sdk": {
+                  "value": "package com.lark.oapi.sample.apiall.authenv1;\nimport com.google.gson.JsonParser;\nimport com.lark.oapi.Client;\nimport com.lark.oapi.core.utils.Jsons;\nimport com.lark.oapi.service.authen.v1.model.*;\nimport java.util.HashMap;\nimport com.lark.oapi.core.request.RequestOptions;\n\n// SDK 使用文档：https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/server-side-sdk/java-sdk-guide/preparations\n// 复制该 Demo 后, 需要将 \"YOUR_APP_ID\", \"YOUR_APP_SECRET\" 替换为自己应用的 APP_ID, APP_SECRET.\n// 以下示例代码默认根据文档示例值填充，如果存在代码问题，请在 API 调试台填上相关必要参数后再复制代码使用\npublic class GetUserInfoSample{\n\n  public static void main(String arg[]) throws Exception {\n      // 构建client\n      Client client = Client.newBuilder(\"YOUR_APP_ID\", \"YOUR_APP_SECRET\").build();\n\n      // 创建请求对象\n       // 发起请求\n      GetUserInfoResp resp = client.authen().v1().userInfo().get();\n\n       // 处理服务端错误\n       if (!resp.success()) {\n         System.out.println(String.format(\"code:%s,msg:%s,reqId:%s, resp:%s\",\n                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));\n         return;\n       }\n\n       // 业务数据处理\n         System.out.println(Jsons.DEFAULT.toJson(resp.getData()));\n  }\n}\n"
+                },
+                "nodejs-sdk": {
+                  "value": "// node-sdk使用说明：https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/server-side-sdk/nodejs-sdk/preparation-before-development\n// 以下示例代码默认根据文档示例值填充，如果存在代码问题，请在 API 调试台填上相关必要参数后再复制代码使用\nconst lark = require('@larksuiteoapi/node-sdk');\n\n// 开发者复制该Demo后，需要修改Demo里面的\"app id\", \"app secret\"为自己应用的appId, appSecret\nconst client = new lark.Client({\n    appId: 'app id',\n    appSecret: 'app secret',\n    // disableTokenCache为true时，SDK不会主动拉取并缓存token，这时需要在发起请求时，调用lark.withTenantToken(\"token\")手动传递\n    // disableTokenCache为false时，SDK会自动管理租户token的获取与刷新，无需使用lark.withTenantToken(\"token\")手动传递token\n    disableTokenCache: true\n});\n\nclient.authen.v1.userInfo.get({\n},\n    lark.withTenantToken(\"t-7f1b******8e560\")\n).then(res => {\n    console.log(res);\n}).catch(e => {\n    console.error(JSON.stringify(e.response.data, null, 4));\n});\n"
+                },
+                "c#-restsharp": {
+                  "value": "var client = new RestClient(\"https://open.feishu.cn/open-apis/authen/v1/user_info\");\nclient.Timeout = -1;\nvar request = new RestRequest(Method.GET);\nrequest.AddHeader(\"Authorization\", \"Bearer t-7f1b******8e560\");\nrequest.AddHeader(\"Content-Type\", \"application/json\");\nvar body = \"null\";\nrequest.AddParameter(\"application/json\", body,  ParameterType.RequestBody);\nIRestResponse response = client.Execute(request);\nConsole.WriteLine(response.Content);"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": [
+                    {
+                      "type": "integer",
+                      "options": [],
+                      "name": "code",
+                      "format": "int32",
+                      "description": "错误码，非 0 表示失败",
+                      "example": "0"
+                    },
+                    {
+                      "name": "msg",
+                      "example": "success",
+                      "description": "错误描述",
+                      "options": [],
+                      "type": "string"
+                    },
+                    {
+                      "name": "data",
+                      "properties": [
+                        {
+                          "description": "用户姓名",
+                          "type": "string",
+                          "example": "zhangsan",
+                          "name": "name",
+                          "options": []
+                        },
+                        {
+                          "type": "string",
+                          "description": "用户英文名称",
+                          "example": "zhangsan",
+                          "options": [],
+                          "name": "en_name"
+                        },
+                        {
+                          "name": "avatar_url",
+                          "description": "用户头像",
+                          "example": "www.feishu.cn/avatar/icon",
+                          "options": [],
+                          "type": "string"
+                        },
+                        {
+                          "options": [],
+                          "name": "avatar_thumb",
+                          "description": "用户头像 72x72",
+                          "example": "www.feishu.cn/avatar/icon_thumb",
+                          "type": "string"
+                        },
+                        {
+                          "description": "用户头像 240x240",
+                          "example": "www.feishu.cn/avatar/icon_middle",
+                          "name": "avatar_middle",
+                          "type": "string",
+                          "options": []
+                        },
+                        {
+                          "name": "avatar_big",
+                          "description": "用户头像 640x640",
+                          "type": "string",
+                          "example": "www.feishu.cn/avatar/icon_big",
+                          "options": []
+                        },
+                        {
+                          "name": "open_id",
+                          "type": "string",
+                          "description": "用户在应用内的唯一标识",
+                          "example": "ou_caecc734c2e3328a62489fe0648c4b98779515d3",
+                          "options": []
+                        },
+                        {
+                          "example": "on_d89jhsdhjsajkda7828enjdj328ydhhw3u43yjhdj",
+                          "options": [],
+                          "description": "用户对ISV的唯一标识，对于同一个ISV，用户在其名下所有应用的union_id相同",
+                          "name": "union_id",
+                          "type": "string"
+                        },
+                        {
+                          "description": "用户邮箱。邮箱信息为管理员导入的用户联系方式，未经过用户本人实时验证，不建议开发者直接将其作为业务系统的登录凭证。如使用，务必自行认证。",
+                          "example": "zhangsan@feishu.cn",
+                          "options": [],
+                          "name": "email",
+                          "type": "string",
+                          "scopeTags": [
+                            "contact:user.email:readonly"
+                          ]
+                        },
+                        {
+                          "example": "demo@mail.com",
+                          "options": [],
+                          "description": "企业邮箱，请先确保已在管理后台启用飞书邮箱服务",
+                          "type": "string",
+                          "scopeTags": [
+                            "contact:user.employee:readonly"
+                          ],
+                          "name": "enterprise_email"
+                        },
+                        {
+                          "type": "string",
+                          "description": "用户 user_id",
+                          "example": "5d9bdxxx",
+                          "scopeTags": [
+                            "contact:user.employee_id:readonly"
+                          ],
+                          "name": "user_id",
+                          "options": []
+                        },
+                        {
+                          "example": "+86130002883xx",
+                          "type": "string",
+                          "description": "用户手机号。手机号信息为管理员导入的用户联系方式，未经过用户本人实时验证，不建议开发者直接将其作为业务系统的登录凭证。如使用，务必自行认证。",
+                          "scopeTags": [
+                            "contact:user.phone:readonly"
+                          ],
+                          "name": "mobile",
+                          "options": []
+                        },
+                        {
+                          "type": "string",
+                          "example": "736588c92lxf175d",
+                          "options": [],
+                          "description": "当前企业标识",
+                          "name": "tenant_key"
+                        },
+                        {
+                          "example": "111222333",
+                          "description": "用户工号",
+                          "name": "employee_no",
+                          "type": "string",
+                          "options": [],
+                          "scopeTags": [
+                            "contact:user.employee:readonly",
+                            "contact:contact:readonly",
+                            "contact:contact:access_as_app",
+                            "contact:contact:readonly_as_app"
+                          ]
+                        }
+                      ],
+                      "options": [],
+                      "objectName": "user_info",
+                      "description": "\\-",
+                      "type": "object"
+                    }
+                  ],
+                  "options": []
+                },
+                "example": "{\n    \"code\": 0,\n    \"msg\": \"success\",\n    \"data\": {\n        \"name\": \"zhangsan\",\n        \"en_name\": \"zhangsan\",\n        \"avatar_url\": \"www.feishu.cn/avatar/icon\",\n        \"avatar_thumb\": \"www.feishu.cn/avatar/icon_thumb\",\n        \"avatar_middle\": \"www.feishu.cn/avatar/icon_middle\",\n        \"avatar_big\": \"www.feishu.cn/avatar/icon_big\",\n        \"open_id\": \"ou-caecc734c2e3328a62489fe0648c4b98779515d3\",\n        \"union_id\": \"on-d89jhsdhjsajkda7828enjdj328ydhhw3u43yjhdj\",\n        \"email\": \"zhangsan@feishu.cn\",\n        \"enterprise_email\": \"demo@mail.com\",\n        \"user_id\": \"5d9bdxxx\",\n        \"mobile\": \"+86130002883xx\",\n        \"tenant_key\": \"736588c92lxf175d\",\n\t\t\"employee_no\": \"111222333\"\n    }\n}",
+                "examples": {
+                  "default": {}
+                }
+              }
+            }
+          },
+          "errorCodeMapping": [
+            {
+              "errorCode": 20001,
+              "statusCode": 200,
+              "description": "Invalid request. Please check request param",
+              "troubleShootingSuggestion": "参数错误，请检查请求参数。"
+            },
+            {
+              "statusCode": 200,
+              "description": "The user access token passed is invalid. Please check the value",
+              "troubleShootingSuggestion": "提供的 `user_access_token` 无效，请使用有效的 `user_access_token`。相关文档：[获取 user_access_token](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/authentication-management/access-token/get-user-access-token)。",
+              "errorCode": 20005
+            },
+            {
+              "errorCode": 20008,
+              "statusCode": 200,
+              "description": "User not exist",
+              "troubleShootingSuggestion": "用户不存在，无法获取信息。"
+            },
+            {
+              "errorCode": 20021,
+              "statusCode": 200,
+              "description": "User resigned",
+              "troubleShootingSuggestion": "用户离职，无法获取信息。"
+            },
+            {
+              "troubleShootingSuggestion": "用户被冻结，无法获取信息。",
+              "errorCode": 20022,
+              "statusCode": 200,
+              "description": "User frozen"
+            },
+            {
+              "troubleShootingSuggestion": "用户没有完成注册，无法获取信息。",
+              "errorCode": 20023,
+              "statusCode": 200,
+              "description": "User not registered"
+            },
+            {
+              "errorCode": 20050,
+              "statusCode": 500,
+              "description": "System error",
+              "troubleShootingSuggestion": "系统错误，请重试。"
+            }
+          ]
+        },
+        "domain": "https://open.feishu.cn",
+        "path": "/open-apis/authen/v1/user_info",
+        "httpMethod": "GET",
+        "security": {
+          "rateLimitInfo": {
+            "docUrl": "/ssl:ttdoc/ukTMukTMukTM/uUzN04SN3QjL1cDN",
+            "description": "特殊频控"
+          },
+          "requiredScopes": [],
+          "fieldRequiredScopes": [
+            "contact:user.employee:readonly",
+            "contact:user.employee_id:readonly",
+            "contact:user.phone:readonly",
+            "contact:user.email:readonly",
+            "contact:contact:access_as_app",
+            "contact:contact:readonly",
+            "contact:contact:readonly_as_app"
+          ],
+          "supportedAccessToken": [
+            "user_access_token"
+          ],
+          "supportedAppTypes": [
+            "custom",
+            "isv"
+          ],
+          "rateLimitTier": 0,
+          "scopeInfos": [
+            {
+              "name": "contact:user.employee_id:readonly",
+              "description": "获取用户 user ID",
+              "supportedAppTypes": [
+                "custom"
+              ],
+              "tags": []
+            },
+            {
+              "tags": [],
+              "name": "contact:user.phone:readonly",
+              "description": "获取用户手机号",
+              "supportedAppTypes": [
+                "custom"
+              ]
+            },
+            {
+              "supportedAppTypes": [
+                "custom"
+              ],
+              "tags": [],
+              "name": "contact:user.email:readonly",
+              "description": "获取用户邮箱信息"
+            },
+            {
+              "name": "contact:contact:access_as_app",
+              "description": "以应用身份访问通讯录",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ],
+              "tags": [
+                "history",
+                "offline"
+              ]
+            },
+            {
+              "description": "读取通讯录",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ],
+              "tags": [
+                "history",
+                "offline"
+              ],
+              "name": "contact:contact:readonly"
+            },
+            {
+              "description": "以应用身份读取通讯录",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ],
+              "tags": [
+                "history"
+              ],
+              "name": "contact:contact:readonly_as_app"
+            },
+            {
+              "name": "contact:user.employee:readonly",
+              "description": "获取用户受雇信息",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ],
+              "tags": []
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1885 @@
+{
+  "code": 0,
+  "msg": "succeeded",
+  "data": {
+    "updateTime": 1748337476000,
+    "bizScope": "6999834704430252051",
+    "schema": {
+      "title": "创建用户",
+      "description": "调用该接口向通讯录创建一个用户（该动作可以理解为员工入职）。成功创建用户后，系统会以短信或邮件的形式向用户发送邀请，用户在同意邀请后方可访问企业或团队。",
+      "tips": [
+        {
+          "tipInfo": "",
+          "tipLevel": "error"
+        },
+        {
+          "tipInfo": "",
+          "tipLevel": "warn"
+        },
+        {
+          "tipInfo": "",
+          "tipLevel": "tip"
+        }
+      ],
+      "apiSchema": {
+        "requestBeforeContent": "## 注意事项\n\n- 创建用户时，所操作的所有部门均需要在当前应用的通讯录权限范围内，才能成功创建。如果需要在根部门下创建用户，则应用必须有全员权限。关于通讯录权限范围的具体说明可参见[权限范围资源介绍](/ssl:ttdoc/ukTMukTMukTM/uETNz4SM1MjLxUzM/v3/guides/scope_authority)。\n- 发送请求后获取到的响应数据受接口的字段权限要求影响，接口只返回有权限的数据，因此你在调用前需要为应用申请必要的接口权限和字段权限。如何申请 API 权限可参见[申请 API 权限](/ssl:ttdoc/ukTMukTMukTM/uQjN3QjL0YzN04CN2cDN)。\n\n\n## 使用限制\n\n- 未认证企业的人数上限为 100。\n- 已认证企业的人数上限在不同飞书版本里不相同，具体参考[版本对比](https://www.feishu.cn/service)。",
+        "responseBeforeContent": "**Go 请求示例**\n\n```go\nimport (\n\t\"context\"\n\n\t\"github.com/larksuite/oapi-sdk-go/v3\"\n\t\"github.com/larksuite/oapi-sdk-go/v3/service/contact/v3\"\n)\n\nfunc main() {\n\t// 创建 Client\n\tclient := lark.NewClient(\"appID\", \"appSecret\")\n\n\t// 创建请求对象\n\treq := larkcontact.NewCreateUserReqBuilder().\n\t\tUserIdType(`open_id`).\n\t\tUser(larkcontact.NewUserBuilder().\n\t\t\tName(`张三`).\n\t\t\tMobile(`13011111111`).\n\t\t\tDepartmentIds([]string{`od-4e6ac4d14bcd5071a37a39de902c7141`}).\n\t\t\tEmployeeType(1).\n\t\t\tBuild()).\n\t\tBuild()\n\n\t// 发起请求\n\tresp, err := client.Contact.User.Create(context.Background(), req)\n}\n```\n\n**Java 请求示例**\n```java\nimport com.lark.oapi.Client;\nimport com.lark.oapi.core.request.RequestOptions;\nimport com.lark.oapi.service.contact.v3.model.CreateUserReq;\nimport com.lark.oapi.service.contact.v3.model.CreateUserResp;\nimport com.lark.oapi.service.contact.v3.model.User;\n\npublic class Main {\n    public static void main(String arg[]) throws Exception {\n        // 构建client\n        Client client = Client.newBuilder(\"appId\", \"appSecret\").build();\n\n        // 创建请求对象\n        CreateUserReq req = CreateUserReq.newBuilder()\n                .userIdType(\"open_id\")\n                .user(User.newBuilder()\n                        .name(\"张三\")\n                        .mobile(\"13011111111\")\n                        .departmentIds(new String[]{\"od-4e6ac4d14bcd5071a37a39de902c7141\"})\n                        .employeeType(1)\n                        .build())\n                .build();\n\n        // 发起请求\n        CreateUserResp resp = client.contact().user().create(req, RequestOptions.newBuilder().build());\n    }\n}\n```",
+        "domain": "https://open.feishu.cn",
+        "path": "/open-apis/contact/v3/users",
+        "security": {
+          "requiredScopes": [
+            "contact:contact"
+          ],
+          "fieldRequiredScopes": [
+            "contact:user.base:readonly",
+            "contact:user.department:readonly",
+            "contact:user.dotted_line_leader_info.read",
+            "contact:user.employee:readonly",
+            "contact:user.employee_number:read",
+            "contact:user.gender:readonly",
+            "contact:user.email:readonly",
+            "contact:user.job_level:readonly",
+            "contact:user.employee_id:readonly",
+            "contact:user.phone:readonly",
+            "contact:user.user_geo",
+            "contact:user.job_family:readonly",
+            "contact:contact:access_as_app",
+            "contact:contact:readonly",
+            "contact:contact:readonly_as_app"
+          ],
+          "supportedAccessToken": [
+            "tenant_access_token"
+          ],
+          "supportedAppTypes": [
+            "custom"
+          ],
+          "rateLimitTier": 4,
+          "scopeInfos": [
+            {
+              "supportedAppTypes": [
+                "custom"
+              ],
+              "tags": [],
+              "name": "contact:user.employee_id:readonly",
+              "description": "获取用户 user ID"
+            },
+            {
+              "name": "contact:contact:access_as_app",
+              "description": "以应用身份访问通讯录",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ],
+              "tags": [
+                "history",
+                "offline"
+              ]
+            },
+            {
+              "tags": [
+                "history",
+                "offline"
+              ],
+              "name": "contact:contact:readonly",
+              "description": "读取通讯录",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ]
+            },
+            {
+              "tags": [],
+              "name": "contact:user.employee_number:read",
+              "description": "查看成员工号",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ]
+            },
+            {
+              "name": "contact:contact:readonly_as_app",
+              "description": "以应用身份读取通讯录",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ],
+              "tags": [
+                "history"
+              ]
+            },
+            {
+              "name": "contact:user.job_level:readonly",
+              "description": "查询用户职级",
+              "supportedAppTypes": [
+                "custom"
+              ],
+              "tags": []
+            },
+            {
+              "tags": [],
+              "name": "contact:user.email:readonly",
+              "description": "获取用户邮箱信息",
+              "supportedAppTypes": [
+                "custom"
+              ]
+            },
+            {
+              "name": "contact:user.phone:readonly",
+              "description": "获取用户手机号",
+              "supportedAppTypes": [
+                "custom"
+              ],
+              "tags": []
+            },
+            {
+              "name": "contact:user.employee:readonly",
+              "description": "获取用户受雇信息",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ],
+              "tags": []
+            },
+            {
+              "name": "contact:user.dotted_line_leader_info.read",
+              "description": "查看成员的虚线上级 ID",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ],
+              "tags": []
+            },
+            {
+              "name": "contact:user.department:readonly",
+              "description": "获取用户组织架构信息",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ],
+              "tags": []
+            },
+            {
+              "name": "contact:user.gender:readonly",
+              "description": "获取用户性别",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ],
+              "tags": []
+            },
+            {
+              "description": "查询用户所属的工作序列",
+              "supportedAppTypes": [
+                "custom"
+              ],
+              "tags": [],
+              "name": "contact:user.job_family:readonly"
+            },
+            {
+              "name": "contact:contact",
+              "description": "更新通讯录",
+              "supportedAppTypes": [
+                "custom"
+              ],
+              "tags": []
+            },
+            {
+              "tags": [],
+              "name": "contact:user.base:readonly",
+              "description": "获取用户基本信息",
+              "supportedAppTypes": [
+                "custom",
+                "isv"
+              ]
+            },
+            {
+              "name": "contact:user.user_geo",
+              "description": "查看成员数据驻留地",
+              "supportedAppTypes": [
+                "custom"
+              ],
+              "tags": []
+            }
+          ],
+          "rateLimitInfo": {
+            "docUrl": "/ssl:ttdoc/ukTMukTMukTM/uUzN04SN3QjL1cDN",
+            "description": "1000 次/分钟、50 次/秒"
+          }
+        },
+        "id": "project=contact&version=v3&resource=user&method=create",
+        "endingContent": "更多错误码信息，参见[通用错误码](/ssl:ttdoc/ukTMukTMukTM/ugjM14COyUjL4ITN)。",
+        "apiChargingStrategy": {
+          "chargingMethod": "none",
+          "usageType": "",
+          "unitEquityPoint": "",
+          "featureKey": ""
+        },
+        "httpMethod": "POST",
+        "parameters": [
+          {
+            "in": "query",
+            "schema": {
+              "name": "user_id_type",
+              "description": "用户 ID 类型",
+              "default": "open_id",
+              "scopeTags": [
+                "contact:user.employee_id:readonly"
+              ],
+              "example": "open_id",
+              "format": "user_id_type",
+              "type": "string",
+              "options": [
+                {
+                  "name": "open_id",
+                  "value": "open_id",
+                  "description": "标识一个用户在某个应用中的身份。同一个用户在不同应用中的 Open ID 不同。[了解更多：如何获取 Open ID](/ssl:ttdoc/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-obtain-openid)"
+                },
+                {
+                  "name": "union_id",
+                  "value": "union_id",
+                  "description": "标识一个用户在某个应用开发商下的身份。同一用户在同一开发商下的应用中的 Union ID 是相同的，在不同开发商下的应用中的 Union ID 是不同的。通过 Union ID，应用开发商可以把同个用户在多个应用中的身份关联起来。[了解更多：如何获取 Union ID？](/ssl:ttdoc/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-obtain-union-id)"
+                },
+                {
+                  "value": "user_id",
+                  "description": "标识一个用户在某个租户内的身份。同一个用户在租户 A 和租户 B 内的 User ID 是不同的。在同一个租户内，一个用户的 User ID 在所有应用（包括商店应用）中都保持一致。User ID 主要用于在不同的应用间打通用户数据。[了解更多：如何获取 User ID？](/ssl:ttdoc/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-obtain-user-id)",
+                  "name": "user_id"
+                }
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "options": [
+                {
+                  "name": "department_id",
+                  "value": "department_id",
+                  "description": "支持用户自定义配置的部门 ID。自定义配置时可复用已删除的 department_id，因此在未删除的部门范围内 department_id 具有唯一性。"
+                },
+                {
+                  "description": "由系统自动生成的部门 ID，ID 前缀固定为 `od-`，在租户内全局唯一。",
+                  "name": "open_department_id",
+                  "value": "open_department_id"
+                }
+              ],
+              "name": "department_id_type",
+              "example": "open_department_id",
+              "description": "此次调用中的部门 ID 类型。关于部门 ID 的详细介绍，可参见[部门 ID 说明](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/department/field-overview#23857fe0)。",
+              "default": "open_department_id"
+            }
+          },
+          {
+            "in": "query",
+            "schema": {
+              "example": "abcd-12345-e6f",
+              "options": [],
+              "description": "用于幂等判断是否为同一请求，避免重复创建。请参考参数示例值，传入自定义的 client_token。\n\n**默认值**：空，表示不进行幂等判断",
+              "name": "client_token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "objectName": "user",
+                "options": [],
+                "type": "object",
+                "properties": [
+                  {
+                    "type": "string",
+                    "options": [],
+                    "name": "user_id",
+                    "description": "自定义用户的 user_id。长度不能超过 64 字符。\n\nuser_id 是用户在当前租户内的唯一标识，自定义时请确保唯一性。\n\n**默认值**：空，表示由系统随机生成一个 user_id。",
+                    "example": "3e3cf96b"
+                  },
+                  {
+                    "options": [],
+                    "required": true,
+                    "minLength": "1",
+                    "name": "name",
+                    "description": "用户名。长度不能超过 255 字符。",
+                    "example": "张三",
+                    "type": "string"
+                  },
+                  {
+                    "name": "en_name",
+                    "example": "San Zhang",
+                    "options": [],
+                    "type": "string",
+                    "description": "英文名。长度不能超过 255 字符。\n\n**默认值**：空"
+                  },
+                  {
+                    "name": "nickname",
+                    "options": [],
+                    "example": "Alex Zhang",
+                    "type": "string",
+                    "description": "别名。长度不能超过 255 字符。\n\n**默认值**：空"
+                  },
+                  {
+                    "type": "string",
+                    "example": "zhangsan@gmail.com",
+                    "options": [],
+                    "description": "邮箱。\n\n**注意**：\n- 当设置非中国大陆的手机号时，必须同时设置邮箱。\n- 在当前租户下，邮箱不可重复。\n\n**默认值**：空",
+                    "name": "email"
+                  },
+                  {
+                    "description": "手机号。\n\n**注意**：\n- 在当前租户下，手机号不可重复。\n- 未认证企业仅支持添加中国大陆手机号；通过飞书认证的企业允许添加海外手机号。\n- 国际电话区号的前缀中，必须包含加号 **+**。\n\n取值示例：\n\n- 中国大陆手机号：13011111111 或 +8613011111111\n- 非中国大陆手机号：+41446681800",
+                    "options": [],
+                    "name": "mobile",
+                    "required": true,
+                    "example": "13011111111",
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean",
+                    "description": "手机号码是否对其他员工可见。\n\n**可选值有**：\n\n- true：可见。\n- false：不可见。不可见时，企业内的员工将无法查看该用户的手机号码。\n\n**默认值**：true",
+                    "example": "false",
+                    "options": [],
+                    "name": "mobile_visible"
+                  },
+                  {
+                    "description": "性别。\n\n**默认值**：0",
+                    "enumName": "GenderType",
+                    "type": "integer",
+                    "format": "int32",
+                    "example": "1",
+                    "options": [
+                      {
+                        "name": "unkown",
+                        "value": "0",
+                        "description": "保密"
+                      },
+                      {
+                        "name": "male",
+                        "value": "1",
+                        "description": "男"
+                      },
+                      {
+                        "name": "female",
+                        "value": "2",
+                        "description": "女"
+                      },
+                      {
+                        "name": "others",
+                        "value": "3",
+                        "description": "其他"
+                      }
+                    ],
+                    "name": "gender"
+                  },
+                  {
+                    "description": "头像的文件 Key。你可以通过[上传图片](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/im-v1/image/create)接口，上传并获取头像文件 Key，上传时图片类型需要选择 用于设置头像\n\n**默认值**：空",
+                    "type": "string",
+                    "name": "avatar_key",
+                    "options": [],
+                    "example": "2500c7a9-5fff-4d9a-a2de-3d59614ae28g"
+                  },
+                  {
+                    "description": "用户所属部门的 ID 列表。\n\n- 一个用户可属于多个部门，最多可设置 50 个部门。\n- 部门 ID 类型与查询参数 `department_id_type` 保持一致。\n- 你可以调用[搜索部门](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/department/search)接口，通过部门名称关键词获取对应的部门 ID。",
+                    "example": "od-4e6ac4d14bcd5071a37a39de902c7141",
+                    "name": "department_ids",
+                    "items": {
+                      "example": "od-4e6ac4d14bcd5071a37a39de902c714111111",
+                      "type": "string",
+                      "options": []
+                    },
+                    "options": [],
+                    "type": "array",
+                    "required": true
+                  },
+                  {
+                    "name": "leader_user_id",
+                    "example": "ou_7dab8a3d3cdcc9da365777c7ad535d62",
+                    "type": "string",
+                    "description": "用户的直接主管的用户 ID，ID 类型与查询参数 `user_id_type` 保持一致。用户 ID 获取方式可参见[如何获取不同的用户 ID](/ssl:ttdoc/home/user-identity-introduction/open-id)。\n\n**默认值**：空",
+                    "options": []
+                  },
+                  {
+                    "type": "string",
+                    "example": "杭州",
+                    "options": [],
+                    "name": "city",
+                    "description": "工作城市。字符长度上限为 100。\n\n**说明**：\n\n- 你可以调用[获取租户工作城市列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/work_city/list)接口获取当前租户内已有的工作城市名称。\n- 如果你传入的工作城市名称不存在，则系统会自动生成该工作城市。工作城市的枚举值数量上限为 10,000。\n\n**默认值**：空"
+                  },
+                  {
+                    "type": "string",
+                    "description": "国家或地区 Code 缩写。具体写入格式参考 [国家/地区 Code 参照表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/user/country-code-description)。\n\n**默认值**：空",
+                    "name": "country",
+                    "options": [],
+                    "example": "CN"
+                  },
+                  {
+                    "type": "string",
+                    "description": "工位。字符长度上限为 255。\n\n**默认值**：空",
+                    "options": [],
+                    "name": "work_station",
+                    "example": "北楼-H34"
+                  },
+                  {
+                    "type": "integer",
+                    "options": [],
+                    "name": "join_time",
+                    "description": "入职时间。秒级时间戳格式，表示从 1970 年 1 月 1 日开始所经过的秒数。如果不传入该参数，则默认填充当前请求时的时间。",
+                    "example": "2147483647",
+                    "format": "int32"
+                  },
+                  {
+                    "description": "工号。字符长度上限为 255。\n\n**注意**：同一租户下，用户工号不能重复。\n\n**默认值**：空",
+                    "example": "1",
+                    "options": [],
+                    "name": "employee_no",
+                    "type": "string"
+                  },
+                  {
+                    "name": "employee_type",
+                    "type": "integer",
+                    "required": true,
+                    "format": "int32",
+                    "options": [],
+                    "description": "员工类型。\n\n**可选值有**：\n- 1：正式员工\n- 2：实习生\n- 3：外包\n- 4：劳务\n- 5：顾问   \n\n该参数支持读取自定义的员工类型的 int 值。你可通过[获取人员类型](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/employee_type_enum/list)接口获取到该租户的自定义员工类型的编号值（enum_value）。",
+                    "example": "1"
+                  },
+                  {
+                    "description": "用户排序信息列表。该参数用于标记通讯录下组织架构的人员顺序，人员可能存在多个部门中，且有不同的排序。",
+                    "items": {
+                      "type": "object",
+                      "properties": [
+                        {
+                          "type": "string",
+                          "name": "department_id",
+                          "example": "od-4e6ac4d14bcd5071a37a39de902c7141",
+                          "options": [],
+                          "description": "排序信息对应的部门 ID。表示用户所在的、且需要排序的部门。\n\n**注意**：\n\n- 部门 ID 类型与查询参数 `department_id_type` 保持一致。\n- 该参数所传入的部门 ID 必须在用户所属的部门 ID 列表（department_ids 参数）内。\n- 如果不传值，系统默认会将 department_ids 参数内的部门 ID，依次传入 order 的 department_id 参数。"
+                        },
+                        {
+                          "format": "int32",
+                          "type": "integer",
+                          "example": "100",
+                          "options": [],
+                          "description": "用户在其直属部门内的排序。数值越大，排序越靠前。\n\n**注意**：该参数为 int 类型，取值时不能超出 int 的最大值。\n\n**默认值**：0",
+                          "name": "user_order"
+                        },
+                        {
+                          "name": "department_order",
+                          "description": "用户所属的多个部门之间的排序。数值越大，排序越靠前。\n\n**注意**：该参数为 int 类型，取值时不能超出 int 的最大值。\n\n**默认值**：0",
+                          "options": [],
+                          "format": "int32",
+                          "type": "integer",
+                          "example": "100"
+                        },
+                        {
+                          "description": "标识是否为用户的唯一主部门，主部门为用户所属部门中排序第一的部门（department_order 最大）。\n\n**可选值有**：\n\n- true：是\n- false：否\n\n**默认值**：如果当前的 department_id 是 department_ids 中传入的第一个数据，则默认值为 true，否则为 false。",
+                          "options": [],
+                          "type": "boolean",
+                          "name": "is_primary_dept",
+                          "example": "true"
+                        }
+                      ],
+                      "options": [],
+                      "objectName": "user_order"
+                    },
+                    "name": "orders",
+                    "options": [],
+                    "type": "array"
+                  },
+                  {
+                    "type": "array",
+                    "description": "自定义字段。设置参数前建议你先了解[自定义字段资源介绍](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/custom_attr/overview)。\n\n**默认值**：空。如果没有设置自定义字段，则无需传入值。\n\n**注意事项**：当企业管理员在管理后台配置了自定义字段，且开启了 **允许开放平台 API 调用** 功能后，该字段才会生效。",
+                    "options": [],
+                    "name": "custom_attrs",
+                    "items": {
+                      "options": [],
+                      "objectName": "user_custom_attr",
+                      "properties": [
+                        {
+                          "type": "string",
+                          "description": "自定义字段类型。\n\n**可选值有**：   \n- TEXT：文本\n- HREF：网页\n- ENUMERATION：枚举\n- PICTURE_ENUM：图片\n- GENERIC_USER：用户",
+                          "example": "TEXT",
+                          "name": "type",
+                          "options": []
+                        },
+                        {
+                          "description": "自定义字段 ID。你可以调用[获取企业自定义用户字段](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/custom_attr/list)接口获取自定义字段对应的字段 ID。\n\n**说明**：如果设置了自定义字段类型参数（type），则该参数必填。",
+                          "name": "id",
+                          "options": [],
+                          "type": "string",
+                          "example": "DemoId"
+                        },
+                        {
+                          "options": [],
+                          "objectName": "user_custom_attr_value",
+                          "description": "自定义字段取值。",
+                          "properties": [
+                            {
+                              "name": "text",
+                              "type": "string",
+                              "example": "DemoText",
+                              "description": "- 自定义字段类型为 TEXT 时，该参数必填，用于定义字段值。\n- 自定义字段类型为 HREF 时，该参数必填，用于定义网页标题。\n\n长度不能超过 100 字符。",
+                              "options": []
+                            },
+                            {
+                              "name": "url",
+                              "example": "http://www.fs.cn",
+                              "type": "string",
+                              "description": "自定义字段类型为 HREF 时，该参数必填，用于定义默认 URL。例如，手机端跳转小程序，PC端跳转网页。\n\n**注意**：请以 http:// 或 https:// 开头。",
+                              "options": []
+                            },
+                            {
+                              "description": "自定义字段类型为 HREF 时，该参数用于定义 PC 端 URL。\n\n**注意**：请以 http:// 或 https:// 开头。",
+                              "name": "pc_url",
+                              "options": [],
+                              "type": "string",
+                              "example": "http://www.fs.cn"
+                            },
+                            {
+                              "type": "string",
+                              "name": "option_id",
+                              "options": [],
+                              "description": "自定义字段类型为 ENUMERATION 或 PICTURE_ENUM 时，该参数用于定义选项 ID。\n\n你可以调用[获取企业自定义用户字段](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/custom_attr/list)接口获取自定义字段相应的选项 ID。",
+                              "example": "edcvfrtg"
+                            },
+                            {
+                              "type": "object",
+                              "description": "自定义字段类型为 GENERIC_USER 时，该参数用于定义引用人员。",
+                              "properties": [
+                                {
+                                  "name": "id",
+                                  "required": true,
+                                  "example": "9b2fabg5",
+                                  "options": [],
+                                  "type": "string",
+                                  "description": "引用人员的用户 ID。\n\n- ID 类型与查询参数 `user_id_type` 保持一致。\n\n- 如何获取用户 ID 可参见[如何获取不同的用户 ID](/ssl:ttdoc/home/user-identity-introduction/open-id)。"
+                                },
+                                {
+                                  "options": [],
+                                  "required": true,
+                                  "name": "type",
+                                  "type": "integer",
+                                  "example": "1",
+                                  "format": "int32",
+                                  "description": "用户类型。\n\n**可选值有**：\n1：用户\n\n**说明**：目前仅支持取值 1，表示用户。"
+                                }
+                              ],
+                              "options": [],
+                              "name": "generic_user",
+                              "objectName": "custom_attr_generic_user"
+                            }
+                          ],
+                          "name": "value",
+                          "type": "object"
+                        }
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "description": "企业邮箱。\n      \n**注意事项**：企业管理员在管理后台启用飞书邮箱服务后，才会生效该参数。如果设置企业邮箱失败，请联系企业管理员确认是否在管理后台启用了相应的企业邮箱域名。\n\n**默认值**：空",
+                    "name": "enterprise_email",
+                    "options": [],
+                    "example": "demo@mail.com",
+                    "type": "string"
+                  },
+                  {
+                    "type": "string",
+                    "description": "职务名称。字符数量上限为 255。\n\n- 你可以调用[获取租户职务列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_title/list)接口获取相应的职务名称。\n- 如果传入的职务名称不存在，则系统会自动创建并使用该名称。职务枚举值数量上限为 10,000。\n\n**默认值**：空",
+                    "example": "xxxxx",
+                    "options": [],
+                    "name": "job_title"
+                  },
+                  {
+                    "example": "cn",
+                    "options": [],
+                    "description": "数据驻留地。\n\n**注意事项**：需联系服务台技术支持开通使用。\n\n**默认值**：空",
+                    "name": "geo",
+                    "type": "string"
+                  },
+                  {
+                    "type": "string",
+                    "description": "职级 ID。你可以调用[获取租户职级列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_level/list)接口查询相应的职级 ID。\n\n**默认值**：空",
+                    "options": [],
+                    "name": "job_level_id",
+                    "example": "mga5oa8ayjlp9rb"
+                  },
+                  {
+                    "example": "mga5oa8ayjlp9rb",
+                    "description": "序列 ID。你可以调用[获取租户序列列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_family/list)接口查询相应的序列 ID。\n\n**默认值**：空",
+                    "name": "job_family_id",
+                    "type": "string",
+                    "options": []
+                  },
+                  {
+                    "description": "分配给用户的席位 ID 列表。\n\n**注意事项**：\n- 该字段需要应用已开通 **分配用户席位** 权限。\n- 如果你购买了席位，则创建用户时必须为用户分配席位 ID，否则用户将无法登录企业飞书。更多信息可参见[管理员分配席位](https://www.feishu.cn/hc/zh-CN/articles/548377434838-%E7%AE%A1%E7%90%86%E5%91%98%E5%88%86%E9%85%8D%E5%B8%AD%E4%BD%8D)。\n- 你可通过[获取企业席位信息](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/tenant-v2/tenant-product_assign_info/query)接口，获取到当前租户的可用席位 ID。\n\n**默认值**：空",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "example": "23213213213123123",
+                      "options": []
+                    },
+                    "name": "subscription_ids",
+                    "options": []
+                  },
+                  {
+                    "name": "dotted_line_leader_user_ids",
+                    "description": "虚线上级的用户 ID 列表。\n\n- ID 类型与查询参数 `user_id_type` 保持一致。\n\n- 如何获取用户 ID 可参见[如何获取不同的用户 ID](/ssl:ttdoc/home/user-identity-introduction/open-id)。\n\n**默认值**：空",
+                    "type": "array",
+                    "items": {
+                      "example": "ou_7dab8a3d3cdcc9da365777c7ad535d62",
+                      "options": [],
+                      "type": "string"
+                    },
+                    "options": []
+                  }
+                ]
+              },
+              "example": "{\n    \"user_id\": \"3e3cf96b\",\n    \"name\": \"张三\",\n    \"en_name\": \"San Zhang\",\n    \"nickname\": \"Alex Zhang\",\n    \"email\": \"zhangsan@gmail.com\",\n    \"mobile\": \"13011111111\",\n    \"mobile_visible\": false,\n    \"gender\": 1,\n    \"avatar_key\": \"2500c7a9-5fff-4d9a-a2de-3d59614ae28g\",\n    \"department_ids\": [\n        \"od-4e6ac4d14bcd5071a37a39de902c714111111\"\n    ],\n    \"leader_user_id\": \"ou_7dab8a3d3cdcc9da365777c7ad535d62\",\n    \"city\": \"杭州\",\n    \"country\": \"CN\",\n    \"work_station\": \"北楼-H34\",\n    \"join_time\": 2147483647,\n    \"employee_no\": \"1\",\n    \"employee_type\": 1,\n    \"orders\": [\n        {\n            \"department_id\": \"od-4e6ac4d14bcd5071a37a39de902c7141\",\n            \"user_order\": 100,\n            \"department_order\": 100,\n            \"is_primary_dept\": true\n        }\n    ],\n    \"custom_attrs\": [\n        {\n            \"type\": \"TEXT\",\n            \"id\": \"DemoId\",\n            \"value\": {\n                \"text\": \"DemoText\",\n                \"url\": \"http://www.fs.cn\",\n                \"pc_url\": \"http://www.fs.cn\",\n                \"option_id\": \"edcvfrtg\",\n                \"generic_user\": {\n                    \"id\": \"9b2fabg5\",\n                    \"type\": 1\n                }\n            }\n        }\n    ],\n    \"enterprise_email\": \"demo@mail.com\",\n    \"job_title\": \"xxxxx\",\n    \"geo\": \"cn\",\n    \"job_level_id\": \"mga5oa8ayjlp9rb\",\n    \"job_family_id\": \"mga5oa8ayjlp9rb\",\n    \"subscription_ids\": [\n        \"23213213213123123\"\n    ],\n    \"dotted_line_leader_user_ids\": [\n        \"ou_7dab8a3d3cdcc9da365777c7ad535d62\"\n    ]\n}",
+              "examples": {
+                "java-sdk": {
+                  "value": "package com.lark.oapi.sample.apiall.contactv3;\nimport com.google.gson.JsonParser;\nimport com.lark.oapi.Client;\nimport com.lark.oapi.core.utils.Jsons;\nimport com.lark.oapi.service.contact.v3.model.*;\nimport java.util.HashMap;\nimport com.lark.oapi.core.request.RequestOptions;\n\n// SDK 使用文档：https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/server-side-sdk/java-sdk-guide/preparations\n// 复制该 Demo 后, 需要将 \"YOUR_APP_ID\", \"YOUR_APP_SECRET\" 替换为自己应用的 APP_ID, APP_SECRET.\n// 以下示例代码默认根据文档示例值填充，如果存在代码问题，请在 API 调试台填上相关必要参数后再复制代码使用\npublic class CreateUserSample{\n\n  public static void main(String arg[]) throws Exception {\n      // 构建client\n      Client client = Client.newBuilder(\"YOUR_APP_ID\", \"YOUR_APP_SECRET\").build();\n\n      // 创建请求对象\n      CreateUserReq req = CreateUserReq.newBuilder()\n             .userIdType(\"open_id\")\n             .departmentIdType(\"open_department_id\")\n             .clientToken(\"abcd-12345-e6f\")\n             .user(User.newBuilder()\n                 .userId(\"3e3cf96b\")\n                 .name(\"张三\")\n                 .enName(\"San Zhang\")\n                 .nickname(\"Alex Zhang\")\n                 .email(\"zhangsan@gmail.com\")\n                 .mobile(\"13011111111\")\n                 .mobileVisible(false)\n                 .gender(1)\n                 .avatarKey(\"2500c7a9-5fff-4d9a-a2de-3d59614ae28g\")\n                 .departmentIds(new String[]{\"od-4e6ac4d14bcd5071a37a39de902c714111111\"})\n                 .leaderUserId(\"ou_7dab8a3d3cdcc9da365777c7ad535d62\")\n                 .city(\"杭州\")\n                 .country(\"CN\")\n                 .workStation(\"北楼-H34\")\n                 .joinTime(2147483647)\n                 .employeeNo(\"1\")\n                 .employeeType(1)\n                 .orders(new UserOrder[]{\n                    UserOrder.newBuilder()\n                      .departmentId(\"od-4e6ac4d14bcd5071a37a39de902c7141\")\n                      .userOrder(100)\n                      .departmentOrder(100)\n                      .isPrimaryDept(true)\n                      .build()\n                    })\n                 .customAttrs(new UserCustomAttr[]{\n                    UserCustomAttr.newBuilder()\n                      .type(\"TEXT\")\n                      .id(\"DemoId\")\n                      .value(UserCustomAttrValue.newBuilder()\n                        .text(\"DemoText\")\n                        .url(\"http://www.fs.cn\")\n                        .pcUrl(\"http://www.fs.cn\")\n                        .optionId(\"edcvfrtg\")\n                        .genericUser(CustomAttrGenericUser.newBuilder()\n                          .id(\"9b2fabg5\")\n                          .type(1)\n                          .build())\n                        .build())\n                      .build()\n                    })\n                 .enterpriseEmail(\"demo@mail.com\")\n                 .jobTitle(\"xxxxx\")\n                 .geo(\"cn\")\n                 .jobLevelId(\"mga5oa8ayjlp9rb\")\n                 .jobFamilyId(\"mga5oa8ayjlp9rb\")\n                 .subscriptionIds(new String[]{\"23213213213123123\"})\n                 .dottedLineLeaderUserIds(new String[]{\"ou_7dab8a3d3cdcc9da365777c7ad535d62\"})\n                  .build())\n             .build();\n\n      // 发起请求\n      CreateUserResp resp = client.contact().v3().user().create(req);\n\n       // 处理服务端错误\n       if (!resp.success()) {\n         System.out.println(String.format(\"code:%s,msg:%s,reqId:%s, resp:%s\",\n                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));\n         return;\n       }\n\n       // 业务数据处理\n         System.out.println(Jsons.DEFAULT.toJson(resp.getData()));\n  }\n}\n"
+                },
+                "nodejs-sdk": {
+                  "value": "// node-sdk使用说明：https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/server-side-sdk/nodejs-sdk/preparation-before-development\n// 以下示例代码默认根据文档示例值填充，如果存在代码问题，请在 API 调试台填上相关必要参数后再复制代码使用\nconst lark = require('@larksuiteoapi/node-sdk');\n\n// 开发者复制该Demo后，需要修改Demo里面的\"app id\", \"app secret\"为自己应用的appId, appSecret\nconst client = new lark.Client({\n    appId: 'app id',\n    appSecret: 'app secret',\n    // disableTokenCache为true时，SDK不会主动拉取并缓存token，这时需要在发起请求时，调用lark.withTenantToken(\"token\")手动传递\n    // disableTokenCache为false时，SDK会自动管理租户token的获取与刷新，无需使用lark.withTenantToken(\"token\")手动传递token\n    disableTokenCache: true\n});\n\nclient.contact.v3.user.create({\n        params: {\n                user_id_type:'open_id',\n                department_id_type:'open_department_id',\n                client_token:'abcd-12345-e6f',\n        },\n        data: {\n                user_id:'3e3cf96b',\n                name:'张三',\n                en_name:'San Zhang',\n                nickname:'Alex Zhang',\n                email:'zhangsan@gmail.com',\n                mobile:'13011111111',\n                mobile_visible:false,\n                gender:1,\n                avatar_key:'2500c7a9-5fff-4d9a-a2de-3d59614ae28g',\n                department_ids:['od-4e6ac4d14bcd5071a37a39de902c714111111'],\n                leader_user_id:'ou_7dab8a3d3cdcc9da365777c7ad535d62',\n                city:'杭州',\n                country:'CN',\n                work_station:'北楼-H34',\n                join_time:2147483647,\n                employee_no:'1',\n                employee_type:1,\n                orders:[\n                    {\n                      department_id:'od-4e6ac4d14bcd5071a37a39de902c7141',\n                      user_order:100,\n                      department_order:100,\n                      is_primary_dept:true,\n                      }\n                    ],\n                custom_attrs:[\n                    {\n                      type:'TEXT',\n                      id:'DemoId',\n                      value:{\n                        text:'DemoText',\n                        url:'http://www.fs.cn',\n                        pc_url:'http://www.fs.cn',\n                        option_id:'edcvfrtg',\n                        generic_user:{\n                          id:'9b2fabg5',\n                          type:1,\n                          },\n                        },\n                      }\n                    ],\n                enterprise_email:'demo@mail.com',\n                job_title:'xxxxx',\n                geo:'cn',\n                job_level_id:'mga5oa8ayjlp9rb',\n                job_family_id:'mga5oa8ayjlp9rb',\n                subscription_ids:['23213213213123123'],\n                dotted_line_leader_user_ids:['ou_7dab8a3d3cdcc9da365777c7ad535d62'],\n        },\n},\n    lark.withTenantToken(\"t-7f1b******8e560\")\n).then(res => {\n    console.log(res);\n}).catch(e => {\n    console.error(JSON.stringify(e.response.data, null, 4));\n});\n"
+                },
+                "c#-restsharp": {
+                  "value": "var client = new RestClient(\"https://open.feishu.cn/open-apis/contact/v3/users?client_token=abcd-12345-e6f&department_id_type=open_department_id&user_id_type=open_id\");\nclient.Timeout = -1;\nvar request = new RestRequest(Method.POST);\nrequest.AddHeader(\"Authorization\", \"Bearer t-7f1b******8e560\");\nrequest.AddHeader(\"Content-Type\", \"application/json\");\nvar body = \"{\\\"avatar_key\\\":\\\"2500c7a9-5fff-4d9a-a2de-3d59614ae28g\\\",\\\"city\\\":\\\"杭州\\\",\\\"country\\\":\\\"CN\\\",\\\"custom_attrs\\\":[{\\\"id\\\":\\\"DemoId\\\",\\\"type\\\":\\\"TEXT\\\",\\\"value\\\":{\\\"generic_user\\\":{\\\"id\\\":\\\"9b2fabg5\\\",\\\"type\\\":1},\\\"option_id\\\":\\\"edcvfrtg\\\",\\\"pc_url\\\":\\\"http://www.fs.cn\\\",\\\"text\\\":\\\"DemoText\\\",\\\"url\\\":\\\"http://www.fs.cn\\\"}}],\\\"department_ids\\\":[\\\"od-4e6ac4d14bcd5071a37a39de902c714111111\\\"],\\\"dotted_line_leader_user_ids\\\":[\\\"ou_7dab8a3d3cdcc9da365777c7ad535d62\\\"],\\\"email\\\":\\\"zhangsan@gmail.com\\\",\\\"employee_no\\\":\\\"1\\\",\\\"employee_type\\\":1,\\\"en_name\\\":\\\"San Zhang\\\",\\\"enterprise_email\\\":\\\"demo@mail.com\\\",\\\"gender\\\":1,\\\"geo\\\":\\\"cn\\\",\\\"job_family_id\\\":\\\"mga5oa8ayjlp9rb\\\",\\\"job_level_id\\\":\\\"mga5oa8ayjlp9rb\\\",\\\"job_title\\\":\\\"xxxxx\\\",\\\"join_time\\\":2147483647,\\\"leader_user_id\\\":\\\"ou_7dab8a3d3cdcc9da365777c7ad535d62\\\",\\\"mobile\\\":\\\"13011111111\\\",\\\"mobile_visible\\\":false,\\\"name\\\":\\\"张三\\\",\\\"nickname\\\":\\\"Alex Zhang\\\",\\\"orders\\\":[{\\\"department_id\\\":\\\"od-4e6ac4d14bcd5071a37a39de902c7141\\\",\\\"department_order\\\":100,\\\"is_primary_dept\\\":true,\\\"user_order\\\":100}],\\\"subscription_ids\\\":[\\\"23213213213123123\\\"],\\\"user_id\\\":\\\"3e3cf96b\\\",\\\"work_station\\\":\\\"北楼-H34\\\"}\";\nrequest.AddParameter(\"application/json\", body,  ParameterType.RequestBody);\nIRestResponse response = client.Execute(request);\nConsole.WriteLine(response.Content);"
+                },
+                "php-guzzle": {
+                  "value": "<?php\n$client = new Client();\n$headers = [\n  'Authorization' => 'Bearer t-7f1b******8e560',\n  'Content-Type' => 'application/json'\n];\n$body = '{\n    \"user_id\": \"3e3cf96b\",\n    \"name\": \"张三\",\n    \"en_name\": \"San Zhang\",\n    \"nickname\": \"Alex Zhang\",\n    \"email\": \"zhangsan@gmail.com\",\n    \"mobile\": \"13011111111\",\n    \"mobile_visible\": false,\n    \"gender\": 1,\n    \"avatar_key\": \"2500c7a9-5fff-4d9a-a2de-3d59614ae28g\",\n    \"department_ids\": [\n        \"od-4e6ac4d14bcd5071a37a39de902c714111111\"\n    ],\n    \"leader_user_id\": \"ou_7dab8a3d3cdcc9da365777c7ad535d62\",\n    \"city\": \"杭州\",\n    \"country\": \"CN\",\n    \"work_station\": \"北楼-H34\",\n    \"join_time\": 2147483647,\n    \"employee_no\": \"1\",\n    \"employee_type\": 1,\n    \"orders\": [\n        {\n            \"department_id\": \"od-4e6ac4d14bcd5071a37a39de902c7141\",\n            \"user_order\": 100,\n            \"department_order\": 100,\n            \"is_primary_dept\": true\n        }\n    ],\n    \"custom_attrs\": [\n        {\n            \"type\": \"TEXT\",\n            \"id\": \"DemoId\",\n            \"value\": {\n                \"text\": \"DemoText\",\n                \"url\": \"http://www.fs.cn\",\n                \"pc_url\": \"http://www.fs.cn\",\n                \"option_id\": \"edcvfrtg\",\n                \"generic_user\": {\n                    \"id\": \"9b2fabg5\",\n                    \"type\": 1\n                }\n            }\n        }\n    ],\n    \"enterprise_email\": \"demo@mail.com\",\n    \"job_title\": \"xxxxx\",\n    \"geo\": \"cn\",\n    \"job_level_id\": \"mga5oa8ayjlp9rb\",\n    \"job_family_id\": \"mga5oa8ayjlp9rb\",\n    \"subscription_ids\": [\n        \"23213213213123123\"\n    ],\n    \"dotted_line_leader_user_ids\": [\n        \"ou_7dab8a3d3cdcc9da365777c7ad535d62\"\n    ]\n}';\n$request = new Request('POST', 'https://open.feishu.cn/open-apis/contact/v3/users?client_token=abcd-12345-e6f&department_id_type=open_department_id&user_id_type=open_id', $headers, $body);\n$res = $client->sendAsync($request)->wait();\necho $res->getBody();"
+                },
+                "curl": {
+                  "value": "curl -i -X POST 'https://open.feishu.cn/open-apis/contact/v3/users?client_token=abcd-12345-e6f&department_id_type=open_department_id&user_id_type=open_id' \\\n-H 'Authorization: Bearer t-7f1b******8e560' \\\n-H 'Content-Type: application/json' \\\n-d '{\n\t\"avatar_key\": \"2500c7a9-5fff-4d9a-a2de-3d59614ae28g\",\n\t\"city\": \"杭州\",\n\t\"country\": \"CN\",\n\t\"custom_attrs\": [\n\t\t{\n\t\t\t\"id\": \"DemoId\",\n\t\t\t\"type\": \"TEXT\",\n\t\t\t\"value\": {\n\t\t\t\t\"generic_user\": {\n\t\t\t\t\t\"id\": \"9b2fabg5\",\n\t\t\t\t\t\"type\": 1\n\t\t\t\t},\n\t\t\t\t\"option_id\": \"edcvfrtg\",\n\t\t\t\t\"pc_url\": \"http://www.fs.cn\",\n\t\t\t\t\"text\": \"DemoText\",\n\t\t\t\t\"url\": \"http://www.fs.cn\"\n\t\t\t}\n\t\t}\n\t],\n\t\"department_ids\": [\n\t\t\"od-4e6ac4d14bcd5071a37a39de902c714111111\"\n\t],\n\t\"dotted_line_leader_user_ids\": [\n\t\t\"ou_7dab8a3d3cdcc9da365777c7ad535d62\"\n\t],\n\t\"email\": \"zhangsan@gmail.com\",\n\t\"employee_no\": \"1\",\n\t\"employee_type\": 1,\n\t\"en_name\": \"San Zhang\",\n\t\"enterprise_email\": \"demo@mail.com\",\n\t\"gender\": 1,\n\t\"geo\": \"cn\",\n\t\"job_family_id\": \"mga5oa8ayjlp9rb\",\n\t\"job_level_id\": \"mga5oa8ayjlp9rb\",\n\t\"job_title\": \"xxxxx\",\n\t\"join_time\": 2147483647,\n\t\"leader_user_id\": \"ou_7dab8a3d3cdcc9da365777c7ad535d62\",\n\t\"mobile\": \"13011111111\",\n\t\"mobile_visible\": false,\n\t\"name\": \"张三\",\n\t\"nickname\": \"Alex Zhang\",\n\t\"orders\": [\n\t\t{\n\t\t\t\"department_id\": \"od-4e6ac4d14bcd5071a37a39de902c7141\",\n\t\t\t\"department_order\": 100,\n\t\t\t\"is_primary_dept\": true,\n\t\t\t\"user_order\": 100\n\t\t}\n\t],\n\t\"subscription_ids\": [\n\t\t\"23213213213123123\"\n\t],\n\t\"user_id\": \"3e3cf96b\",\n\t\"work_station\": \"北楼-H34\"\n}'"
+                },
+                "golang-sdk": {
+                  "value": "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\t\"github.com/larksuite/oapi-sdk-go/v3\"\n\t\"github.com/larksuite/oapi-sdk-go/v3/core\"\n\t\"github.com/larksuite/oapi-sdk-go/v3/service/contact/v3\"\n)\n\n// SDK 使用文档：https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/server-side-sdk/golang-sdk-guide/preparations\n// 复制该 Demo 后, 需要将 \"YOUR_APP_ID\", \"YOUR_APP_SECRET\" 替换为自己应用的 APP_ID, APP_SECRET.\n// 以下示例代码默认根据文档示例值填充，如果存在代码问题，请在 API 调试台填上相关必要参数后再复制代码使用\nfunc main() {\n\t// 创建 Client\n\tclient := lark.NewClient(\"YOUR_APP_ID\", \"YOUR_APP_SECRET\")\n\t// 创建请求对象\n\treq := larkcontact.NewCreateUserReqBuilder().\n\t\tUserIdType(`open_id`).\n\t\tDepartmentIdType(`open_department_id`).\n\t\tClientToken(`abcd-12345-e6f`).\n\t\tUser(larkcontact.NewUserBuilder().\n\t\t\tUserId(`3e3cf96b`).\n\t\t\tName(`张三`).\n\t\t\tEnName(`San Zhang`).\n\t\t\tNickname(`Alex Zhang`).\n\t\t\tEmail(`zhangsan@gmail.com`).\n\t\t\tMobile(`13011111111`).\n\t\t\tMobileVisible(false).\n\t\t\tGender(1).\n\t\t\tAvatarKey(`2500c7a9-5fff-4d9a-a2de-3d59614ae28g`).\n\t\t\tDepartmentIds([]string{`od-4e6ac4d14bcd5071a37a39de902c714111111`}).\n\t\t\tLeaderUserId(`ou_7dab8a3d3cdcc9da365777c7ad535d62`).\n\t\t\tCity(`杭州`).\n\t\t\tCountry(`CN`).\n\t\t\tWorkStation(`北楼-H34`).\n\t\t\tJoinTime(2147483647).\n\t\t\tEmployeeNo(`1`).\n\t\t\tEmployeeType(1).\n\t\t\tOrders([]*larkcontact.UserOrder{\n\t\t\t\tlarkcontact.NewUserOrderBuilder().\n\t\t\t\t\tDepartmentId(`od-4e6ac4d14bcd5071a37a39de902c7141`).\n\t\t\t\t\tUserOrder(100).\n\t\t\t\t\tDepartmentOrder(100).\n\t\t\t\t\tIsPrimaryDept(true).\n\t\t\t\t\tBuild(),\n\t\t\t}).\n\t\t\tCustomAttrs([]*larkcontact.UserCustomAttr{\n\t\t\t\tlarkcontact.NewUserCustomAttrBuilder().\n\t\t\t\t\tType(`TEXT`).\n\t\t\t\t\tId(`DemoId`).\n\t\t\t\t\tValue(larkcontact.NewUserCustomAttrValueBuilder().\n\t\t\t\t\t\tText(`DemoText`).\n\t\t\t\t\t\tUrl(`http://www.fs.cn`).\n\t\t\t\t\t\tPcUrl(`http://www.fs.cn`).\n\t\t\t\t\t\tOptionId(`edcvfrtg`).\n\t\t\t\t\t\tGenericUser(larkcontact.NewCustomAttrGenericUserBuilder().\n\t\t\t\t\t\t\tId(`9b2fabg5`).\n\t\t\t\t\t\t\tType(1).\n\t\t\t\t\t\t\tBuild()).\n\t\t\t\t\t\tBuild()).\n\t\t\t\t\tBuild(),\n\t\t\t}).\n\t\t\tEnterpriseEmail(`demo@mail.com`).\n\t\t\tJobTitle(`xxxxx`).\n\t\t\tGeo(`cn`).\n\t\t\tJobLevelId(`mga5oa8ayjlp9rb`).\n\t\t\tJobFamilyId(`mga5oa8ayjlp9rb`).\n\t\t\tSubscriptionIds([]string{`23213213213123123`}).\n\t\t\tDottedLineLeaderUserIds([]string{`ou_7dab8a3d3cdcc9da365777c7ad535d62`}).\n\t\t\tBuild()).\n\t\tBuild()\n\n\t// 发起请求\n\tresp, err := client.Contact.V3.User.Create(context.Background(), req)\n\n\t// 处理错误\n\tif err != nil {\n\t\tfmt.Println(err)\n\t\treturn\n\t}\n\n\t// 服务端错误处理\n\tif !resp.Success() {\n\t\tfmt.Printf(\"logId: %s, error response: \\n%s\", resp.RequestId(), larkcore.Prettify(resp.CodeError))\n\t\treturn\n\t}\n\n\t// 业务处理\n\tfmt.Println(larkcore.Prettify(resp))\n}\n"
+                },
+                "python-sdk": {
+                  "value": "import json\n\nimport lark_oapi as lark\nfrom lark_oapi.api.contact.v3 import *\n\n\n# SDK 使用说明: https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/server-side-sdk/python--sdk/preparations-before-development\n# 以下示例代码默认根据文档示例值填充，如果存在代码问题，请在 API 调试台填上相关必要参数后再复制代码使用\n# 复制该 Demo 后, 需要将 \"YOUR_APP_ID\", \"YOUR_APP_SECRET\" 替换为自己应用的 APP_ID, APP_SECRET.\ndef main():\n    # 创建client\n    client = lark.Client.builder() \\\n        .app_id(\"YOUR_APP_ID\") \\\n        .app_secret(\"YOUR_APP_SECRET\") \\\n        .log_level(lark.LogLevel.DEBUG) \\\n        .build()\n\n    # 构造请求对象\n    request: CreateUserRequest = CreateUserRequest.builder() \\\n        .user_id_type(\"open_id\") \\\n        .department_id_type(\"open_department_id\") \\\n        .client_token(\"abcd-12345-e6f\") \\\n        .request_body(User.builder()\n            .user_id(\"3e3cf96b\")\n            .name(\"张三\")\n            .en_name(\"San Zhang\")\n            .nickname(\"Alex Zhang\")\n            .email(\"zhangsan@gmail.com\")\n            .mobile(\"13011111111\")\n            .mobile_visible(False)\n            .gender(1)\n            .avatar_key(\"2500c7a9-5fff-4d9a-a2de-3d59614ae28g\")\n            .department_ids([\"od-4e6ac4d14bcd5071a37a39de902c714111111\"])\n            .leader_user_id(\"ou_7dab8a3d3cdcc9da365777c7ad535d62\")\n            .city(\"杭州\")\n            .country(\"CN\")\n            .work_station(\"北楼-H34\")\n            .join_time(2147483647)\n            .employee_no(\"1\")\n            .employee_type(1)\n            .orders([UserOrder.builder()\n                .department_id(\"od-4e6ac4d14bcd5071a37a39de902c7141\")\n                .user_order(100)\n                .department_order(100)\n                .is_primary_dept(True)\n                .build()\n                ])\n            .custom_attrs([UserCustomAttr.builder()\n                .type(\"TEXT\")\n                .id(\"DemoId\")\n                .value(UserCustomAttrValue.builder()\n                    .text(\"DemoText\")\n                    .url(\"http://www.fs.cn\")\n                    .pc_url(\"http://www.fs.cn\")\n                    .option_id(\"edcvfrtg\")\n                    .generic_user(CustomAttrGenericUser.builder()\n                        .id(\"9b2fabg5\")\n                        .type(1)\n                        .build())\n                    .build())\n                .build()\n                ])\n            .enterprise_email(\"demo@mail.com\")\n            .job_title(\"xxxxx\")\n            .geo(\"cn\")\n            .job_level_id(\"mga5oa8ayjlp9rb\")\n            .job_family_id(\"mga5oa8ayjlp9rb\")\n            .subscription_ids([\"23213213213123123\"])\n            .dotted_line_leader_user_ids([\"ou_7dab8a3d3cdcc9da365777c7ad535d62\"])\n            .build()) \\\n        .build()\n\n    # 发起请求\n    response: CreateUserResponse = client.contact.v3.user.create(request)\n\n    # 处理失败返回\n    if not response.success():\n        lark.logger.error(\n            f\"client.contact.v3.user.create failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}, resp: \\n{json.dumps(json.loads(response.raw.content), indent=4, ensure_ascii=False)}\")\n        return\n\n    # 处理业务结果\n    lark.logger.info(lark.JSON.marshal(response.data, indent=4))\n\n\nif __name__ == \"__main__\":\n    main()\n"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": [
+                    {
+                      "format": "int32",
+                      "description": "错误码，非 0 表示失败",
+                      "options": [],
+                      "name": "code",
+                      "type": "integer",
+                      "example": "0"
+                    },
+                    {
+                      "name": "msg",
+                      "description": "错误描述",
+                      "example": "success",
+                      "options": [],
+                      "type": "string"
+                    },
+                    {
+                      "options": [],
+                      "description": "\\-",
+                      "properties": [
+                        {
+                          "objectName": "user",
+                          "description": "用户信息",
+                          "options": [],
+                          "name": "user",
+                          "type": "object",
+                          "properties": [
+                            {
+                              "example": "on_94a1ee5551019f18cd73d9f111898cf2",
+                              "name": "union_id",
+                              "type": "string",
+                              "description": "用户的 union_id，是应用开发商发布的不同应用中同一用户的标识。不同用户 ID 的说明参见 [用户相关的 ID 概念](/ssl:ttdoc/home/user-identity-introduction/introduction)。",
+                              "options": []
+                            },
+                            {
+                              "name": "user_id",
+                              "example": "3e3cf96b",
+                              "scopeTags": [
+                                "contact:user.employee_id:readonly"
+                              ],
+                              "options": [],
+                              "type": "string",
+                              "description": "用户的 user_id，租户内用户的唯一标识。不同用户 ID 的说明参见 [用户相关的 ID 概念](/ssl:ttdoc/home/user-identity-introduction/introduction)。"
+                            },
+                            {
+                              "description": "用户的 open_id，应用内用户的唯一标识。不同用户 ID 的说明参见 [用户相关的 ID 概念](/ssl:ttdoc/home/user-identity-introduction/introduction)。",
+                              "options": [],
+                              "name": "open_id",
+                              "type": "string",
+                              "example": "ou_7dab8a3d3cdcc9da365777c7ad535d62"
+                            },
+                            {
+                              "scopeTags": [
+                                "contact:contact:readonly_as_app",
+                                "contact:user.base:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app"
+                              ],
+                              "required": true,
+                              "name": "name",
+                              "minLength": "1",
+                              "type": "string",
+                              "example": "张三",
+                              "options": [],
+                              "description": "用户名。"
+                            },
+                            {
+                              "description": "英文名。",
+                              "example": "San Zhang",
+                              "scopeTags": [
+                                "contact:user.base:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app"
+                              ],
+                              "name": "en_name",
+                              "type": "string",
+                              "options": []
+                            },
+                            {
+                              "type": "string",
+                              "description": "别名。",
+                              "name": "nickname",
+                              "example": "Alex Zhang",
+                              "options": [],
+                              "scopeTags": [
+                                "contact:user.base:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "example": "zhangsan@gmail.com",
+                              "options": [],
+                              "description": "邮箱。",
+                              "scopeTags": [
+                                "contact:user.email:readonly"
+                              ],
+                              "name": "email"
+                            },
+                            {
+                              "name": "mobile",
+                              "example": "13011111111",
+                              "scopeTags": [
+                                "contact:user.phone:readonly"
+                              ],
+                              "required": true,
+                              "type": "string",
+                              "description": "手机号。",
+                              "options": []
+                            },
+                            {
+                              "description": "手机号码是否可见。\n\n**可能值有**：\n\n- true：可见。\n- false：不可见。不可见时，企业内的员工将无法查看该用户的手机号码。",
+                              "example": "false",
+                              "name": "mobile_visible",
+                              "type": "boolean",
+                              "options": []
+                            },
+                            {
+                              "name": "gender",
+                              "scopeTags": [
+                                "contact:user.gender:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app"
+                              ],
+                              "enumName": "GenderType",
+                              "type": "integer",
+                              "options": [
+                                {
+                                  "description": "保密",
+                                  "name": "unkown",
+                                  "value": "0"
+                                },
+                                {
+                                  "value": "1",
+                                  "description": "男",
+                                  "name": "male"
+                                },
+                                {
+                                  "name": "female",
+                                  "value": "2",
+                                  "description": "女"
+                                },
+                                {
+                                  "description": "其他",
+                                  "name": "others",
+                                  "value": "3"
+                                }
+                              ],
+                              "example": "1",
+                              "description": "性别。",
+                              "format": "int32"
+                            },
+                            {
+                              "example": "2500c7a9-5fff-4d9a-a2de-3d59614ae28g",
+                              "name": "avatar_key",
+                              "type": "string",
+                              "description": "头像的文件 Key。",
+                              "options": []
+                            },
+                            {
+                              "type": "object",
+                              "objectName": "avatar_info",
+                              "scopeTags": [
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app",
+                                "contact:user.base:readonly",
+                                "contact:contact:readonly"
+                              ],
+                              "properties": [
+                                {
+                                  "name": "avatar_72",
+                                  "description": "72*72 像素头像链接。",
+                                  "example": "https://foo.icon.com/xxxx",
+                                  "type": "string",
+                                  "options": []
+                                },
+                                {
+                                  "name": "avatar_240",
+                                  "type": "string",
+                                  "example": "https://foo.icon.com/xxxx",
+                                  "options": [],
+                                  "description": "240*240 像素头像链接。"
+                                },
+                                {
+                                  "options": [],
+                                  "type": "string",
+                                  "description": "640*640 像素头像链接。",
+                                  "example": "https://foo.icon.com/xxxx",
+                                  "name": "avatar_640"
+                                },
+                                {
+                                  "description": "原始头像链接。",
+                                  "name": "avatar_origin",
+                                  "example": "https://foo.icon.com/xxxx",
+                                  "options": [],
+                                  "type": "string"
+                                }
+                              ],
+                              "options": [],
+                              "name": "avatar",
+                              "description": "用户头像信息。"
+                            },
+                            {
+                              "name": "status",
+                              "type": "object",
+                              "objectName": "user_status",
+                              "options": [],
+                              "description": "用户状态。通过 is_frozen、is_resigned、is_activated、is_exited 布尔值类型参数进行展示。\n\n用户状态的转关逻辑可参见[用户资源介绍](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/user/field-overview#4302b5a1)。",
+                              "properties": [
+                                {
+                                  "options": [],
+                                  "name": "is_frozen",
+                                  "type": "boolean",
+                                  "example": "false",
+                                  "description": "是否为暂停状态。\n\n**可能值有**：\n\n- true：是\n- false：否"
+                                },
+                                {
+                                  "options": [],
+                                  "name": "is_resigned",
+                                  "type": "boolean",
+                                  "description": "是否为离职状态。\n\n**可能值有**：\n\n- true：是\n- false：否",
+                                  "example": "false"
+                                },
+                                {
+                                  "type": "boolean",
+                                  "example": "true",
+                                  "description": "是否为激活状态。\n\n**可能值有**：\n\n- true：是\n- false：否",
+                                  "options": [],
+                                  "name": "is_activated"
+                                },
+                                {
+                                  "name": "is_exited",
+                                  "description": "是否为主动退出状态。主动退出一段时间后用户状态会自动转为已离职。\n\n**可能值有**：\n\n- true：是\n- false：否",
+                                  "options": [],
+                                  "type": "boolean",
+                                  "example": "false"
+                                },
+                                {
+                                  "name": "is_unjoin",
+                                  "type": "boolean",
+                                  "example": "false",
+                                  "options": [],
+                                  "description": "是否为未加入状态，需要用户自主确认才能加入企业或团队。\n\n**可能值有**：\n\n- true：是\n- false：否"
+                                }
+                              ],
+                              "scopeTags": [
+                                "contact:user.employee:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app"
+                              ]
+                            },
+                            {
+                              "name": "department_ids",
+                              "type": "array",
+                              "description": "用户所属部门的 ID 列表，一个用户可属于多个部门。ID 值的类型与查询参数中的 department_id_type 一致。",
+                              "items": {
+                                "example": "od-4e6ac4d14bcd5071a37a39de902c7141",
+                                "type": "string",
+                                "options": []
+                              },
+                              "example": "od-4e6ac4d14bcd5071a37a39de902c7141",
+                              "options": [],
+                              "scopeTags": [
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app",
+                                "contact:user.department:readonly",
+                                "contact:contact:readonly"
+                              ]
+                            },
+                            {
+                              "name": "leader_user_id",
+                              "scopeTags": [
+                                "contact:contact:readonly_as_app",
+                                "contact:user.department:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app"
+                              ],
+                              "options": [],
+                              "description": "用户的直接主管的用户ID。ID 值的类型与查询参数中的user_id_type 一致。",
+                              "example": "ou_7dab8a3d3cdcc9da365777c7ad535d62",
+                              "type": "string"
+                            },
+                            {
+                              "example": "杭州",
+                              "description": "工作城市。",
+                              "type": "string",
+                              "scopeTags": [
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app",
+                                "contact:user.employee:readonly",
+                                "contact:contact:readonly"
+                              ],
+                              "name": "city",
+                              "options": []
+                            },
+                            {
+                              "options": [],
+                              "name": "country",
+                              "description": "国家或地区 Code 缩写，具体格式参考 [国家/地区 Code 参照表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/user/country-code-description)。",
+                              "type": "string",
+                              "scopeTags": [
+                                "contact:user.employee:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app"
+                              ],
+                              "example": "CN"
+                            },
+                            {
+                              "type": "string",
+                              "description": "工位。",
+                              "name": "work_station",
+                              "example": "北楼-H34",
+                              "options": [],
+                              "scopeTags": [
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app",
+                                "contact:user.employee:readonly",
+                                "contact:contact:readonly"
+                              ]
+                            },
+                            {
+                              "type": "integer",
+                              "options": [],
+                              "example": "2147483647",
+                              "scopeTags": [
+                                "contact:user.employee:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app"
+                              ],
+                              "name": "join_time",
+                              "description": "入职时间。秒级时间戳格式，表示从 1970 年 1 月 1 日开始所经过的秒数。",
+                              "format": "int32"
+                            },
+                            {
+                              "scopeTags": [
+                                "contact:user.employee:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app"
+                              ],
+                              "example": "false",
+                              "name": "is_tenant_manager",
+                              "type": "boolean",
+                              "description": "用户是否为租户超级管理员。\n\n**可能值有**：\n- true：是\n- false：否",
+                              "options": []
+                            },
+                            {
+                              "name": "employee_no",
+                              "description": "工号。",
+                              "options": [],
+                              "type": "string",
+                              "example": "1",
+                              "scopeTags": [
+                                "contact:user.employee:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app",
+                                "contact:user.employee_number:read"
+                              ]
+                            },
+                            {
+                              "options": [],
+                              "scopeTags": [
+                                "contact:user.employee:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app"
+                              ],
+                              "name": "employee_type",
+                              "description": "员工类型。\n\n**可能值有**：\n\n- 1：正式员工\n- 2：实习生\n- 3：外包\n- 4：劳务\n- 5：顾问   \n\n同时支持自定义员工类型的 int 值。你可通过[获取人员类型](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/employee_type_enum/list)接口获取到当前租户内自定义员工类型的名称。",
+                              "example": "1",
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            {
+                              "name": "orders",
+                              "type": "array",
+                              "description": "用户排序信息。用于标记通讯录下组织架构的人员顺序，人员可能存在多个部门中，且有不同的排序。",
+                              "options": [],
+                              "items": {
+                                "options": [],
+                                "properties": [
+                                  {
+                                    "type": "string",
+                                    "name": "department_id",
+                                    "description": "排序信息对应的部门 ID，表示用户所在的、且需要排序的部门。ID 值的类型与查询参数中的 department_id_type 一致。",
+                                    "options": [],
+                                    "example": "od-4e6ac4d14bcd5071a37a39de902c7141"
+                                  },
+                                  {
+                                    "type": "integer",
+                                    "description": "用户在其直属部门内的排序。数值越大，排序越靠前。",
+                                    "example": "100",
+                                    "format": "int32",
+                                    "name": "user_order",
+                                    "options": []
+                                  },
+                                  {
+                                    "example": "100",
+                                    "options": [],
+                                    "name": "department_order",
+                                    "type": "integer",
+                                    "description": "用户所属的多个部门间的排序。数值越大，排序越靠前。",
+                                    "format": "int32"
+                                  },
+                                  {
+                                    "example": "true",
+                                    "options": [],
+                                    "name": "is_primary_dept",
+                                    "type": "boolean",
+                                    "description": "标识是否为用户的唯一主部门。主部门为用户所属部门中排序第一的部门(department_order 最大)。\n\n**可能值有**：\n- true：是\n- false：否"
+                                  }
+                                ],
+                                "type": "object",
+                                "objectName": "user_order"
+                              },
+                              "scopeTags": [
+                                "contact:user.department:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app"
+                              ]
+                            },
+                            {
+                              "name": "custom_attrs",
+                              "description": "自定义字段。\n\n**注意事项**：当企业管理员在管理后台配置了自定义字段，且开启了 **允许开放平台 API 调用** 功能后，该字段才会生效。",
+                              "options": [],
+                              "scopeTags": [
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app",
+                                "contact:user.employee:readonly",
+                                "contact:contact:readonly"
+                              ],
+                              "type": "array",
+                              "items": {
+                                "properties": [
+                                  {
+                                    "description": "自定义字段类型。\n\n**可能值有**：\n- TEXT：文本\n- HREF：网页\n- ENUMERATION：枚举\n- PICTURE_ENUM：图片\n- GENERIC_USER：用户",
+                                    "options": [],
+                                    "example": "TEXT",
+                                    "name": "type",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "string",
+                                    "options": [],
+                                    "name": "id",
+                                    "example": "DemoId",
+                                    "description": "自定义字段 ID。"
+                                  },
+                                  {
+                                    "properties": [
+                                      {
+                                        "example": "DemoText",
+                                        "type": "string",
+                                        "options": [],
+                                        "name": "text",
+                                        "description": "- 字段类型为 TEXT 时，该参数返回定义的字段值。\n- 字段类型为 HREF 时，该参数返回定义的网页标题。"
+                                      },
+                                      {
+                                        "example": "http://www.fs.cn",
+                                        "type": "string",
+                                        "options": [],
+                                        "name": "url",
+                                        "description": "字段类型为 HREF 时，该参数返回定义的默认 URL。"
+                                      },
+                                      {
+                                        "options": [],
+                                        "name": "pc_url",
+                                        "description": "字段类型为 HREF 时，该参数返回定义的 PC 端 URL。",
+                                        "type": "string",
+                                        "example": "http://www.fs.cn"
+                                      },
+                                      {
+                                        "name": "option_id",
+                                        "type": "string",
+                                        "options": [],
+                                        "description": "字段类型为 ENUMERATION 或 PICTURE_ENUM 时，该参数返回定义的选项 ID。",
+                                        "example": "edcvfrtg"
+                                      },
+                                      {
+                                        "example": "option",
+                                        "name": "option_value",
+                                        "type": "string",
+                                        "description": "枚举类型中选项的选项值。",
+                                        "options": []
+                                      },
+                                      {
+                                        "type": "string",
+                                        "name": "name",
+                                        "options": [],
+                                        "description": "图片类型中图片选项的名称。",
+                                        "example": "name"
+                                      },
+                                      {
+                                        "type": "string",
+                                        "example": "https://xxxxxxxxxxxxxxxxxx",
+                                        "options": [],
+                                        "description": "图片类型中图片选项的链接。",
+                                        "name": "picture_url"
+                                      },
+                                      {
+                                        "name": "generic_user",
+                                        "objectName": "custom_attr_generic_user",
+                                        "description": "字段类型为 GENERIC_USER 时，该参数返回定义的引用人员信息。",
+                                        "properties": [
+                                          {
+                                            "description": "引用人员的用户 ID。ID 类型与查询参数 user_id_type 的取值一致。",
+                                            "required": true,
+                                            "example": "9b2fabg5",
+                                            "options": [],
+                                            "name": "id",
+                                            "type": "string"
+                                          },
+                                          {
+                                            "name": "type",
+                                            "description": "用户类型。目前固定为 1，表示用户类型。",
+                                            "required": true,
+                                            "type": "integer",
+                                            "format": "int32",
+                                            "example": "1",
+                                            "options": []
+                                          }
+                                        ],
+                                        "options": [],
+                                        "type": "object"
+                                      }
+                                    ],
+                                    "objectName": "user_custom_attr_value",
+                                    "description": "自定义字段取值。",
+                                    "name": "value",
+                                    "type": "object",
+                                    "options": []
+                                  }
+                                ],
+                                "options": [],
+                                "objectName": "user_custom_attr",
+                                "type": "object"
+                              }
+                            },
+                            {
+                              "type": "string",
+                              "example": "demo@mail.com",
+                              "description": "企业邮箱。\n      \n**注意事项**：企业管理员在管理后台启用飞书邮箱服务后，才会生效该参数。",
+                              "options": [],
+                              "scopeTags": [
+                                "contact:user.employee:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app"
+                              ],
+                              "name": "enterprise_email"
+                            },
+                            {
+                              "name": "job_title",
+                              "type": "string",
+                              "description": "职务。",
+                              "scopeTags": [
+                                "contact:user.employee:readonly",
+                                "contact:contact:readonly",
+                                "contact:contact:access_as_app",
+                                "contact:contact:readonly_as_app"
+                              ],
+                              "options": [],
+                              "example": "xxxxx"
+                            },
+                            {
+                              "example": "false",
+                              "options": [],
+                              "description": "是否为暂停状态的用户。\n\n**可能值有**：\n- true：是\n- false：否",
+                              "type": "boolean",
+                              "name": "is_frozen"
+                            },
+                            {
+                              "scopeTags": [
+                                "contact:user.user_geo"
+                              ],
+                              "type": "string",
+                              "options": [],
+                              "name": "geo",
+                              "example": "cn",
+                              "description": "数据驻留地。"
+                            },
+                            {
+                              "example": "mga5oa8ayjlp9rb",
+                              "type": "string",
+                              "scopeTags": [
+                                "contact:user.job_level:readonly"
+                              ],
+                              "options": [],
+                              "name": "job_level_id",
+                              "description": "职级 ID。"
+                            },
+                            {
+                              "example": "mga5oa8ayjlp9rb",
+                              "scopeTags": [
+                                "contact:user.job_family:readonly"
+                              ],
+                              "options": [],
+                              "name": "job_family_id",
+                              "type": "string",
+                              "description": "序列 ID。"
+                            },
+                            {
+                              "type": "array",
+                              "options": [],
+                              "description": "虚线上级的用户 ID 列表。ID 类型与查询参数 user_id_type 的取值保持一致。",
+                              "scopeTags": [
+                                "contact:user.dotted_line_leader_info.read"
+                              ],
+                              "name": "dotted_line_leader_user_ids",
+                              "items": {
+                                "options": [],
+                                "example": "ou_7dab8a3d3cdcc9da365777c7ad535d62",
+                                "type": "string"
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "name": "data",
+                      "type": "object"
+                    }
+                  ],
+                  "options": []
+                },
+                "example": "{\n    \"code\": 0,\n    \"msg\": \"success\",\n    \"data\": {\n        \"user\": {\n            \"union_id\": \"on_94a1ee5551019f18cd73d9f111898cf2\",\n            \"user_id\": \"3e3cf96b\",\n            \"open_id\": \"ou_7dab8a3d3cdcc9da365777c7ad535d62\",\n            \"name\": \"张三\",\n            \"en_name\": \"San Zhang\",\n            \"nickname\": \"Alex Zhang\",\n            \"email\": \"zhangsan@gmail.com\",\n            \"mobile\": \"13011111111\",\n            \"mobile_visible\": false,\n            \"gender\": 1,\n            \"avatar_key\": \"2500c7a9-5fff-4d9a-a2de-3d59614ae28g\",\n            \"avatar\": {\n                \"avatar_72\": \"https://foo.icon.com/xxxx\",\n                \"avatar_240\": \"https://foo.icon.com/xxxx\",\n                \"avatar_640\": \"https://foo.icon.com/xxxx\",\n                \"avatar_origin\": \"https://foo.icon.com/xxxx\"\n            },\n            \"status\": {\n                \"is_frozen\": false,\n                \"is_resigned\": false,\n                \"is_activated\": true,\n                \"is_exited\": false,\n                \"is_unjoin\": false\n            },\n            \"department_ids\": [\n                \"od-4e6ac4d14bcd5071a37a39de902c7141\"\n            ],\n            \"leader_user_id\": \"ou_7dab8a3d3cdcc9da365777c7ad535d62\",\n            \"city\": \"杭州\",\n            \"country\": \"CN\",\n            \"work_station\": \"北楼-H34\",\n            \"join_time\": 2147483647,\n            \"is_tenant_manager\": false,\n            \"employee_no\": \"1\",\n            \"employee_type\": 1,\n            \"orders\": [\n                {\n                    \"department_id\": \"od-4e6ac4d14bcd5071a37a39de902c7141\",\n                    \"user_order\": 100,\n                    \"department_order\": 100,\n                    \"is_primary_dept\": true\n                }\n            ],\n            \"custom_attrs\": [\n                {\n                    \"type\": \"TEXT\",\n                    \"id\": \"DemoId\",\n                    \"value\": {\n                        \"text\": \"DemoText\",\n                        \"url\": \"http://www.fs.cn\",\n                        \"pc_url\": \"http://www.fs.cn\",\n                        \"option_id\": \"edcvfrtg\",\n                        \"option_value\": \"option\",\n                        \"name\": \"name\",\n                        \"picture_url\": \"https://xxxxxxxxxxxxxxxxxx\",\n                        \"generic_user\": {\n                            \"id\": \"9b2fabg5\",\n                            \"type\": 1\n                        }\n                    }\n                }\n            ],\n            \"enterprise_email\": \"demo@mail.com\",\n            \"job_title\": \"xxxxx\",\n            \"is_frozen\": false,\n            \"geo\": \"cn\",\n            \"job_level_id\": \"mga5oa8ayjlp9rb\",\n            \"job_family_id\": \"mga5oa8ayjlp9rb\",\n            \"dotted_line_leader_user_ids\": [\n                \"ou_7dab8a3d3cdcc9da365777c7ad535d62\"\n            ]\n        }\n    }\n}",
+                "examples": {
+                  "default": {}
+                }
+              }
+            }
+          },
+          "errorCodeMapping": [
+            {
+              "errorCode": 40001,
+              "statusCode": 400,
+              "description": "param error",
+              "troubleShootingSuggestion": "参数错误，请对照接口文档修改输入参数后重试。"
+            },
+            {
+              "troubleShootingSuggestion": "内部错误。您可以获取请求的 X-Request-Id，并联系[技术支持](https://applink.feishu.cn/TLJpeNdW)协助排查。",
+              "errorCode": 40003,
+              "statusCode": 400,
+              "description": "internal error"
+            },
+            {
+              "description": "no dept authority error",
+              "troubleShootingSuggestion": "应用没有部门权限，检查该部门是否在应用的通讯录权限范围内。你可以登录[开发者后台](https://open.feishu.cn/app) ，在应用详情页的 **开发配置 > 权限管理 > 数据权限** 功能页查看 **通讯录权限范围** 内是否有相应部门，如果没有则需要在 **通讯录权限范围** 内添加上部门，并发布应用使配置生效。具体操作参考[配置应用数据权限](/ssl:ttdoc/home/introduction-to-scope-and-authorization/configure-app-data-permissions)。\n\n**注意**：如果通讯录权限范围设置的是 **与应用的可用范围一致**，则你需要在应用发布阶段（点击 **应用发布 > 版本管理与发布 > 创建版本** 后的 **版本详情** 页面内）配置应用的可用范围，并发布应用使配置生效。具体操作参考[配置应用可用范围](/ssl:ttdoc/home/introduction-to-scope-and-authorization/availability)。",
+              "errorCode": 40004,
+              "statusCode": 403
+            },
+            {
+              "errorCode": 40021,
+              "statusCode": 400,
+              "description": "no a same request error",
+              "troubleShootingSuggestion": "非同一请求。两次请求如果传入了相同的 client_token，则当传入的其他参数取值不相同时，会报该错误。你需要根据实际场景选择是否传入 client_token 参数。"
+            },
+            {
+              "errorCode": 41001,
+              "statusCode": 400,
+              "description": "mobile has already exist error",
+              "troubleShootingSuggestion": "手机号已存在。你需要修改传入的手机号，确保租户内唯一。如何通过手机号查询用户信息，可参见[通过手机号或邮箱获取用户 ID](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/user/batch_get_id)。"
+            },
+            {
+              "errorCode": 41002,
+              "statusCode": 400,
+              "description": "email has already exist error",
+              "troubleShootingSuggestion": "邮箱已存在。你需要修改传入的邮箱，确保租户内唯一。如何通过邮箱查询用户信息，可参见[通过手机号或邮箱获取用户 ID](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/user/batch_get_id)。"
+            },
+            {
+              "statusCode": 409,
+              "description": "user account conflict error",
+              "troubleShootingSuggestion": "用户的联系方式属于两个不同的飞书账号，导致添加失败。建议换用其它手机号或邮箱创建用户，或是先注销手机号或邮箱对应的用户帐号，然后再尝试创建。注销流程参见[注销账号](https://www.feishu.cn/hc/zh-CN/articles/360049067831)。如果问题仍未解决，请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。",
+              "errorCode": 41003
+            },
+            {
+              "errorCode": 41004,
+              "statusCode": 400,
+              "description": "mobile is invalid error",
+              "troubleShootingSuggestion": "手机号不合法。你需要参考接口文档提供的手机号参数描述，传入正确可用的手机号格式。"
+            },
+            {
+              "errorCode": 41005,
+              "statusCode": 400,
+              "description": "email is invalid error",
+              "troubleShootingSuggestion": "邮箱不合法。你需要参考接口文档提供的邮箱参数描述，传入正确可用的邮箱。"
+            },
+            {
+              "troubleShootingSuggestion": "没有设置用户名称。请求时必须传入 name 参数。",
+              "errorCode": 41006,
+              "statusCode": 400,
+              "description": "no user name error"
+            },
+            {
+              "statusCode": 400,
+              "description": "exceed uncertain tenant seat limit error",
+              "troubleShootingSuggestion": "未认证租户的成员数目超过系统限制，无法创建用户。你需要清理租户内的无效成员或者扩容租户的成员数量限制。详情咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。",
+              "errorCode": 41007
+            },
+            {
+              "errorCode": 41008,
+              "statusCode": 400,
+              "description": "exceed bill seat limit error",
+              "troubleShootingSuggestion": "租户的成员数目超过系统限制，无法创建用户。你需要清理租户内的无效成员或者扩容租户的成员数量限制。详情咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。"
+            },
+            {
+              "errorCode": 41009,
+              "statusCode": 400,
+              "description": "no email or mobile error",
+              "troubleShootingSuggestion": "无邮箱或手机号。请求时，邮箱和手机号不能都为空。"
+            },
+            {
+              "statusCode": 400,
+              "description": "no mobile error",
+              "troubleShootingSuggestion": "无手机号。请求时必须传入 mobile 参数。",
+              "errorCode": 41010
+            },
+            {
+              "statusCode": 400,
+              "description": "user id already exist error",
+              "troubleShootingSuggestion": "user_id 重复。user_id 是用户在企业内的唯一ID，传入时如果重复可尝试更换其他自定义的 user_id。",
+              "errorCode": 41011
+            },
+            {
+              "errorCode": 41012,
+              "statusCode": 400,
+              "description": "user id invalid error",
+              "troubleShootingSuggestion": "用户 ID 无效。请参考接口文档提供的 user_id 参数说明，传入正确的 user_id 值。"
+            },
+            {
+              "errorCode": 41013,
+              "statusCode": 400,
+              "description": "exceed user id update limit error",
+              "troubleShootingSuggestion": "用户 ID 更新次数超过限制。"
+            },
+            {
+              "description": "user name sensitive error",
+              "troubleShootingSuggestion": "传入的 name 中包含敏感信息。如有疑问，请联系[技术支持](https://applink.feishu.cn/TLJpeNdW)。",
+              "errorCode": 41014,
+              "statusCode": 400
+            },
+            {
+              "errorCode": 41015,
+              "statusCode": 400,
+              "description": "idp type invalid error",
+              "troubleShootingSuggestion": "登录类型无效。"
+            },
+            {
+              "errorCode": 41016,
+              "statusCode": 400,
+              "description": "department has too many users  error",
+              "troubleShootingSuggestion": "部门内的用户数量过多。当前设置的用户所属部门中存量用户数量达到上限，建议你修改用户的所属部门。"
+            },
+            {
+              "statusCode": 400,
+              "description": "department is required error",
+              "troubleShootingSuggestion": "部门信息不能为空。请求时必须传入 department_ids 参数。",
+              "errorCode": 41017
+            },
+            {
+              "description": "position info is invalid error",
+              "troubleShootingSuggestion": "岗位信息无效。",
+              "errorCode": 41018,
+              "statusCode": 400
+            },
+            {
+              "description": "position department is invalid error",
+              "troubleShootingSuggestion": "岗位部门无效。",
+              "errorCode": 41019,
+              "statusCode": 400
+            },
+            {
+              "troubleShootingSuggestion": "岗位code无效。",
+              "errorCode": 41020,
+              "statusCode": 400,
+              "description": "position code has already exist  error"
+            },
+            {
+              "errorCode": 41021,
+              "statusCode": 400,
+              "description": "position multiple main count error",
+              "troubleShootingSuggestion": "一个用户至多只能有设置一个主岗。"
+            },
+            {
+              "errorCode": 41022,
+              "statusCode": 400,
+              "description": "user tenant not match error",
+              "troubleShootingSuggestion": "用户租户不匹配。你需要检查是否使用其他企业的凭证访问了当前企业的资源。"
+            },
+            {
+              "errorCode": 41025,
+              "statusCode": 400,
+              "description": "order department invalid error",
+              "troubleShootingSuggestion": "排序信息中的部门无效。请求中，用户排序信息的部门 ID，必须是用户所属部门的部门 ID 之一。"
+            },
+            {
+              "errorCode": 41027,
+              "statusCode": 504,
+              "description": "create account failed error",
+              "troubleShootingSuggestion": "创建用户失败。请稍后重试，如果仍然失败请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。"
+            },
+            {
+              "errorCode": 41028,
+              "statusCode": 405,
+              "description": "user multi department need upgrade visibility error",
+              "troubleShootingSuggestion": "企业管理后台的权限规则未升级，不支持多部门。你需要登录[管理后台](https://feishu.cn/admin)，在 **安全** > **成员权限** > **组织架构可见范围** 页面内，根据页面提示提升权限规则。"
+            },
+            {
+              "troubleShootingSuggestion": "当前企业不支持用户同时加入多个部门，如有疑问，请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。",
+              "errorCode": 41029,
+              "statusCode": 400,
+              "description": "create or update user multi department error"
+            },
+            {
+              "errorCode": 41030,
+              "statusCode": 400,
+              "description": "set leader to oneself error",
+              "troubleShootingSuggestion": "不能将直属上级设置为自己。你需要将传入的直属上级参数值修改为用户实际对应的直属上级用户 ID，如无直属上级，则无需设置。"
+            },
+            {
+              "errorCode": 41031,
+              "statusCode": 504,
+              "description": "position feature not enable error",
+              "troubleShootingSuggestion": "当前企业不支持设置用户岗位信息，如有疑问，请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。"
+            },
+            {
+              "errorCode": 41032,
+              "statusCode": 504,
+              "description": "user multi department feature not enable error",
+              "troubleShootingSuggestion": "当前企业不支持用户同时加入多个部门，如有疑问，请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。"
+            },
+            {
+              "errorCode": 41033,
+              "statusCode": 400,
+              "description": "user in too many departments  error",
+              "troubleShootingSuggestion": "用户所属部门过多。设置的用户所属部门（department_ids）数量不能超过 50 个。"
+            },
+            {
+              "errorCode": 41034,
+              "statusCode": 400,
+              "description": "email prefix already exist error",
+              "troubleShootingSuggestion": "邮箱前缀（`@`符号前的内容）已存在。更换为其他邮箱前缀后重试。"
+            },
+            {
+              "description": "email prefix is invalid error",
+              "troubleShootingSuggestion": "邮箱前缀（`@`符号前的内容）不合法。请检查拼写是否有误。",
+              "errorCode": 41035,
+              "statusCode": 400
+            },
+            {
+              "troubleShootingSuggestion": "头像的文件 Key 无效。你可以重新调用[上传图片](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/im-v1/image/create)接口，将头像文件上传后获取相应的 Key。",
+              "errorCode": 41036,
+              "statusCode": 400,
+              "description": "avatar key is invalid error"
+            },
+            {
+              "troubleShootingSuggestion": "头像的文件 Key存在敏感信息。你可以重新调用[上传图片](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/im-v1/image/create)接口，将头像文件上传后获取相应的 Key。",
+              "errorCode": 41037,
+              "statusCode": 400,
+              "description": "avatar key is sensitive error"
+            },
+            {
+              "description": "gender is invalid error",
+              "troubleShootingSuggestion": "性别参数不合法。你需要参考性别参数描述，传入正确的枚举值。",
+              "errorCode": 41038,
+              "statusCode": 400
+            },
+            {
+              "errorCode": 41040,
+              "statusCode": 400,
+              "description": "user name is null error",
+              "troubleShootingSuggestion": "用户名不能为空。请求时必须传入 name 参数。"
+            },
+            {
+              "errorCode": 41041,
+              "statusCode": 400,
+              "description": "department id is not assigned  error",
+              "troubleShootingSuggestion": "未分配部门 ID。请求时必须传入用户所属部门 ID 列表参数（department_ids）"
+            },
+            {
+              "troubleShootingSuggestion": "用户加入时间不能为空。",
+              "errorCode": 41042,
+              "statusCode": 400,
+              "description": "join time is invalid error"
+            },
+            {
+              "statusCode": 400,
+              "description": "employee id is invalid error",
+              "troubleShootingSuggestion": "无效的 user id。 user_id 的取值长度不能超过 64 个字符。",
+              "errorCode": 41043
+            },
+            {
+              "errorCode": 41044,
+              "statusCode": 400,
+              "description": "Custom attribute is not set error",
+              "troubleShootingSuggestion": "自定义字段属性设置有误。设置用户自定义字段时，必须指明设定的字段ID，字段 ID 可以通过[获取企业自定义用户字段](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/custom_attr/list)接口查询。"
+            },
+            {
+              "errorCode": 41045,
+              "statusCode": 400,
+              "description": "Custom attribute id is not exist error",
+              "troubleShootingSuggestion": "自定义字段 ID 不存在。你可以调用[获取企业自定义用户字段](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/custom_attr/list)接口，获取正确的字段 ID。"
+            },
+            {
+              "errorCode": 41046,
+              "statusCode": 400,
+              "description": "Custom attribute value is not set error",
+              "troubleShootingSuggestion": "自定义字段值设置有误。设置自定义字段时，需要传入相应的 value 字段。"
+            },
+            {
+              "errorCode": 41047,
+              "statusCode": 400,
+              "description": "Custom attribute href text  is null error",
+              "troubleShootingSuggestion": "HREF 类型自定义字段的 text 属性为空。如果你设置了 HREF 类型的自定义字段，则 text 字段为必填字段。"
+            },
+            {
+              "description": "Custom attribute href url  is null error",
+              "troubleShootingSuggestion": "HREF 类型自定义字段的 url 属性为空。如果你设置了 HREF 类型的自定义字段，则 url 字段为必填字段。",
+              "errorCode": 41048,
+              "statusCode": 400
+            },
+            {
+              "errorCode": 41051,
+              "statusCode": 400,
+              "description": "user id info not provide error",
+              "troubleShootingSuggestion": "用户ID没有填写。"
+            },
+            {
+              "errorCode": 41052,
+              "statusCode": 400,
+              "description": "user resign acceptor is invalid error",
+              "troubleShootingSuggestion": "用户辞职审批人无效。"
+            },
+            {
+              "troubleShootingSuggestion": "用户已存在。",
+              "errorCode": 41053,
+              "statusCode": 409,
+              "description": "user has already exist error"
+            },
+            {
+              "errorCode": 41054,
+              "statusCode": 400,
+              "description": "need send email but not set mail",
+              "troubleShootingSuggestion": "需发送邮件但未设置邮箱。请求时请传入邮箱参数（email）。"
+            },
+            {
+              "troubleShootingSuggestion": "需要发送手机短信单位设置手机号。请求时请传入手机号参数（mobile）。",
+              "errorCode": 41055,
+              "statusCode": 400,
+              "description": "need send sms but not set mobile"
+            },
+            {
+              "errorCode": 41059,
+              "statusCode": 400,
+              "description": "invalid employee type error",
+              "troubleShootingSuggestion": "员工类型设置错误。员工类型的可选值有：\n- 1：正式员工\n- 2：实习生\n- 3：外包\n- 4：劳务\n- 5：顾问   \n\n同时支持读取自定义的员工类型的 int 值。你可通过[获取人员类型](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/employee_type_enum/list)接口获取到该租户的自定义员工类型的编号值（enum_value）。"
+            },
+            {
+              "errorCode": 41060,
+              "statusCode": 400,
+              "description": "inactive employee type error",
+              "troubleShootingSuggestion": "员工类型在企业内未激活。你可以调用[获取人员类型](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/employee_type_enum/list)接口获取员工类型的使用状态（enum_status），仅可选择已激活的类型。"
+            },
+            {
+              "errorCode": 41063,
+              "statusCode": 400,
+              "description": "job_title length exceed 100 character",
+              "troubleShootingSuggestion": "设置的职务字符长度超过了 100 个字符。你需要减少设置的职务字符长度。"
+            },
+            {
+              "errorCode": 41068,
+              "statusCode": 400,
+              "description": "Number of email aliases exceeds the upper limit",
+              "troubleShootingSuggestion": "企业邮箱账户已经达到上限。请咨询企业管理员企业邮箱配额情况。"
+            },
+            {
+              "errorCode": 41069,
+              "statusCode": 400,
+              "description": "Business email is in the recycle bin",
+              "troubleShootingSuggestion": "企业邮箱处于回收站内，此时无法被使用。如需使用该企业邮箱，则需要先释放邮箱（在企业邮箱回收站内永久删除该邮箱），然后再使用。详情参见[员工离职后企业邮箱还能继续使用吗](https://www.feishu.cn/hc/zh-CN/articles/715885646166-%E7%AE%A1%E7%90%86%E5%91%98%E8%BD%AC%E7%A7%BB%E7%A6%BB%E8%81%8C%E6%88%90%E5%91%98%E7%9A%84%E9%82%AE%E4%BB%B6#tabs0|lineguid-bkqnq)。"
+            },
+            {
+              "errorCode": 41070,
+              "statusCode": 400,
+              "description": "name length exceed 255 character",
+              "troubleShootingSuggestion": "用户名长度超过 255 个字符。你需要减少设置的用户名字符长度。"
+            },
+            {
+              "errorCode": 41071,
+              "statusCode": 400,
+              "description": "en_name length exceed 255 character",
+              "troubleShootingSuggestion": "用户英文名长度超过 255 个字符。你需要减少设置的用户英文名字符长度。"
+            },
+            {
+              "troubleShootingSuggestion": "用户别名长度超过 255 个字符。你需要减少设置的用户别名字符长度。",
+              "errorCode": 41072,
+              "statusCode": 400,
+              "description": "nickname length exceed 255 character"
+            },
+            {
+              "statusCode": 400,
+              "description": "business email domain not available error",
+              "troubleShootingSuggestion": "企业无对应的企业邮域名。企业管理员必须在管理后台开通企业邮箱后，才可以在创建用户时设置企业邮箱地址。",
+              "errorCode": 44001
+            },
+            {
+              "errorCode": 44004,
+              "statusCode": 400,
+              "description": "this user has been joined too many tenants recently",
+              "troubleShootingSuggestion": "用户加入团队过于频繁，请 24 小时后重试。"
+            },
+            {
+              "description": "name length exceed 255 character",
+              "troubleShootingSuggestion": "用户名超过 255 个字符。你需要减少设置的用户名字符长度。",
+              "errorCode": 44006,
+              "statusCode": 400
+            },
+            {
+              "errorCode": 44007,
+              "statusCode": 400,
+              "description": "en_name length exceed 255 character",
+              "troubleShootingSuggestion": "用户英文名超过 255 个字符。你需要减少设置的用户英文名字符长度。"
+            },
+            {
+              "errorCode": 44008,
+              "statusCode": 400,
+              "description": "nickname length exceed 255 character",
+              "troubleShootingSuggestion": "用户别名超过 255 个字符。你需要减少设置的用户别名字符长度。"
+            },
+            {
+              "errorCode": 44009,
+              "statusCode": 400,
+              "description": "this tenant has been create too many users recently",
+              "troubleShootingSuggestion": "团队添加成员过于频繁。一个手机号码或者一个邮箱，一天只能加入三个租户。"
+            },
+            {
+              "description": "Adding user has been intercepted. Contact Feishu Customer Service",
+              "troubleShootingSuggestion": "添加成员失败，详情咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。",
+              "errorCode": 44012,
+              "statusCode": 400
+            },
+            {
+              "errorCode": 44013,
+              "statusCode": 400,
+              "description": "User enterprise Email password is not valid",
+              "troubleShootingSuggestion": "输入的用户企业邮箱密码不合法，请修改后重试。"
+            },
+            {
+              "errorCode": 44016,
+              "statusCode": 400,
+              "description": "can not set enterprise email password",
+              "troubleShootingSuggestion": "设置企业邮箱密码失败，请确认是否有对应的权限。"
+            },
+            {
+              "troubleShootingSuggestion": "Lark 不支持使用 +86 前缀的手机号。请修改后重试。",
+              "errorCode": 44018,
+              "statusCode": 400,
+              "description": "lark not support +86 mobile"
+            },
+            {
+              "troubleShootingSuggestion": "未认证企业仅支持添加中国大陆 +86 手机号，添加非 +86 手机号请先完成飞书认证，完成认证后次日可添加。",
+              "errorCode": 44019,
+              "statusCode": 400,
+              "description": "feishu only support +86 mobile"
+            },
+            {
+              "errorCode": 44020,
+              "statusCode": 400,
+              "description": "mobile and email need together exist",
+              "troubleShootingSuggestion": "已认证企业，添加非 +86 手机号成员时必须同时添加邮箱。"
+            },
+            {
+              "troubleShootingSuggestion": "直接主管或者虚线上级已离职，无法使用。请更换为正确可用的负责人后重试。",
+              "errorCode": 44021,
+              "statusCode": 400,
+              "description": "leader is resigned"
+            },
+            {
+              "errorCode": 44022,
+              "statusCode": 400,
+              "description": "leaderID is Invalid",
+              "troubleShootingSuggestion": "直接主管或者虚线上级无效。请更换为正确可用的负责人后重试。"
+            },
+            {
+              "errorCode": 44023,
+              "statusCode": 400,
+              "description": "exceed feature contact seat limit",
+              "troubleShootingSuggestion": "创建的用户数量超出通讯录资源上限。如果需要使用更多用户数量，请升级飞书版本。了解更多参见[版本对比](https://www.feishu.cn/service)。"
+            },
+            {
+              "statusCode": 400,
+              "description": "User enterprise email has already been registered as a member's account",
+              "troubleShootingSuggestion": "企业邮箱已注册。",
+              "errorCode": 44024
+            },
+            {
+              "troubleShootingSuggestion": "您设置的数据驻留地（geo） 不在系统支持的 geo 列表中。",
+              "errorCode": 44038,
+              "statusCode": 400,
+              "description": "req set user geo not find in geo list"
+            },
+            {
+              "troubleShootingSuggestion": "没有设置数据驻留地（geo）的权限。",
+              "errorCode": 44039,
+              "statusCode": 400,
+              "description": "not set geo name auth"
+            },
+            {
+              "errorCode": 44040,
+              "statusCode": 400,
+              "description": "tenant not open mg not set geo name",
+              "troubleShootingSuggestion": "当前租户未开通多个数据驻留地功能，不能设置 geo 字段。如有疑问可咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。"
+            },
+            {
+              "troubleShootingSuggestion": "职级 ID 无效。你可以调用[获取租户职级列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_level/list)接口查询相应的职级 ID。",
+              "errorCode": 44044,
+              "statusCode": 400,
+              "description": "invalid job level id"
+            },
+            {
+              "errorCode": 44045,
+              "statusCode": 400,
+              "description": "invalid job family id",
+              "troubleShootingSuggestion": "序列 ID 无效。你可以调用[获取租户序列列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_family/list)接口查询相应的序列 ID。"
+            },
+            {
+              "errorCode": 44046,
+              "statusCode": 400,
+              "description": "user license subscription id must not empty in multi-license tenant",
+              "troubleShootingSuggestion": "多许可证租户内创建用户时，必须指定席位 ID 参数。你可以调用[获取企业席位信息接口](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/tenant-v2/tenant-product_assign_info/query)接口查询席位详情，然后选择使用正确可用的席位 ID。"
+            },
+            {
+              "description": "license subscription id exceed limit",
+              "troubleShootingSuggestion": "设置的席位 ID 已超过上限，请更换席位 ID。你可以调用[获取企业席位信息接口](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/tenant-v2/tenant-product_assign_info/query)接口查询席位详情，然后选择使用正确可用的席位 ID。",
+              "errorCode": 44047,
+              "statusCode": 400
+            },
+            {
+              "errorCode": 44048,
+              "statusCode": 400,
+              "description": "user license subscription id invalid",
+              "troubleShootingSuggestion": "请确认传入的席位 ID 正确有效。你可以调用[获取企业席位信息接口](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/tenant-v2/tenant-product_assign_info/query)接口查询席位详情，然后选择使用正确可用的席位 ID。"
+            },
+            {
+              "troubleShootingSuggestion": "未开通 **分配用户席位** 权限。你需要在 [开发者后台](https://open.feishu.cn/app) > **应用详情页** > **权限管理** > **API 权限** 内申请 **分配用户席位** 权限，并确保权限生效。",
+              "errorCode": 44050,
+              "statusCode": 403,
+              "description": "not set subscription ids auth"
+            },
+            {
+              "errorCode": 44051,
+              "statusCode": 400,
+              "description": "employee_no already existed",
+              "troubleShootingSuggestion": "员工工号重复，请修改后重试。"
+            },
+            {
+              "errorCode": 44054,
+              "statusCode": 400,
+              "description": "create user success and create city fail",
+              "troubleShootingSuggestion": "创建用户成功，创建工作城市字段失败。\n\n可能原因：\n\n1. 枚举值数量超过上限。工作城市枚举值数量上限均为 10,000。\n2. 传入的值不合法。单个工作城市字符数量上限为 100。传入的内容也需要确保有效、无敏感信息。\n3. 枚举值未启用。你可以调用[获取租户工作城市列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/work_city/list)接口，获取状态为已启用的工作城市信息。\n\n如问题仍未解决请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。\n\n"
+            },
+            {
+              "errorCode": 44055,
+              "statusCode": 400,
+              "description": "create user success and create job title fail",
+              "troubleShootingSuggestion": "创建用户成功，创建职务字段失败。\n\n可能原因：\n\n1. 枚举值数量超过上限。职务的枚举值数量上限均为 10,000。\n2. 传入的值不合法。单个职务的字符上限为 255。传入的内容也需要确保有效、无敏感信息。\n3. 枚举值未启用。你可以调用[获取租户职务列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_title/list)，获取状态为已启用的职务信息。\n\n如问题仍未解决请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。"
+            },
+            {
+              "errorCode": 44056,
+              "statusCode": 400,
+              "description": "create user success and create city and job title fail",
+              "troubleShootingSuggestion": "创建用户成功，创建工作城市、职务字段失败。\n\n可能原因：\n\n1. 枚举值数量超过上限。工作城市、职务的枚举值数量上限均为 10,000。\n2. 传入的值不合法。单个工作城市字符数量上限为 100；单个职务的字符上限为 255。传入的内容也需要确保有效、无敏感信息。\n3. 枚举值未启用。你可以调用[获取租户工作城市列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/work_city/list)接口，获取状态为已启用的工作城市信息。你可以调用[获取租户职务列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_title/list)，获取状态为已启用的职务信息。\n\n如问题仍未解决请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。"
+            },
+            {
+              "errorCode": 44060,
+              "statusCode": 400,
+              "description": "mg asset exceed time",
+              "troubleShootingSuggestion": "数据驻留服务已到期。"
+            },
+            {
+              "errorCode": 44061,
+              "statusCode": 400,
+              "description": "mg asset exceed quota",
+              "troubleShootingSuggestion": "数据驻留服务无可分配席位。"
+            },
+            {
+              "errorCode": 41410,
+              "statusCode": 400,
+              "description": "user primary dept must be the first department in the order",
+              "troubleShootingSuggestion": "主部门必须为用户所属部门中排序第一的部门。请求时，is_primary_dept 为 true 的部门，department_order 取值必须为排序列表（orders）中的最大值。"
+            }
+          ]
+        }
+      }
+    },
+    "id": "6943913881476939803",
+    "type": "ReferenceDocumentType",
+    "title": "",
+    "fullPath": "/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/user/create",
+    "redirectUri": "",
+    "visibleTag": "All",
+    "allVisible": true,
+    "templateName": "API_V1",
+    "directoryId": "6920532209305042945",
+    "name": "创建用户",
+    "content": "# 创建用户\n\n调用该接口向通讯录创建一个用户（该动作可以理解为员工入职）。成功创建用户后，系统会以短信或邮件的形式向用户发送邀请，用户在同意邀请后方可访问企业或团队。{尝试一下}(url=/api/tools/api_explore/api_explore_config?project=contact&version=v3&resource=user&method=create)\n\n:::html\n<md-alert type=\"error\">\n\n</md-alert>\n:::\n\n:::html\n<md-alert type=\"warn\">\n\n</md-alert>\n:::\n\n:::html\n<md-alert type=\"tip\">\n\n</md-alert>\n:::\n\n## 注意事项\n\n- 创建用户时，所操作的所有部门均需要在当前应用的通讯录权限范围内，才能成功创建。如果需要在根部门下创建用户，则应用必须有全员权限。关于通讯录权限范围的具体说明可参见[权限范围资源介绍](/ssl:ttdoc/ukTMukTMukTM/uETNz4SM1MjLxUzM/v3/guides/scope_authority)。\n- 发送请求后获取到的响应数据受接口的字段权限要求影响，接口只返回有权限的数据，因此你在调用前需要为应用申请必要的接口权限和字段权限。如何申请 API 权限可参见[申请 API 权限](/ssl:ttdoc/ukTMukTMukTM/uQjN3QjL0YzN04CN2cDN)。\n\n\n## 使用限制\n\n- 未认证企业的人数上限为 100。\n- 已认证企业的人数上限在不同飞书版本里不相同，具体参考[版本对比](https://www.feishu.cn/service)。\n\n## 请求\n:::html\n<md-table>\n  <md-thead>\n  <tr>\n      <md-th>基本</md-th>\n      <md-th></md-th>\n  </tr>\n  </md-thead>\n  <md-tbody>\n    <md-tr>\n      <md-th>HTTP URL</md-th>\n      <md-td>https://open.feishu.cn/open-apis/contact/v3/users</md-td>\n    </md-tr>\n    <md-tr>\n      <md-th>HTTP Method</md-th>\n      <md-td>POST</md-td>\n    </md-tr>\n    <md-tr>\n      <md-th>接口频率限制</md-th>\n      <md-td>[1000 次/分钟、50 次/秒](/ssl:ttdoc/ukTMukTMukTM/uUzN04SN3QjL1cDN)</md-td>\n    </md-tr>\n    <md-tr>\n      <md-th>支持的应用类型</md-th>\n      <md-td>\n      <md-app-support types=\"custom\"></md-app-support>\n      </md-td>\n    </md-tr>\n    <md-tr>\n      <md-th>\n            权限要求\n            <md-tooltip type=\"info\">调用该 API 所需的权限。开启其中任意一项权限即可调用</md-tooltip>\n            \n      </md-th>\n      <md-td>\n            <md-perm name=\"contact:contact\" desc=\"更新通讯录\" support_app_types=\"custom\" tags=\"\">更新通讯录</md-perm>\n      </md-td>\n    </md-tr>\n    <md-tr>\n      <md-th>\n            字段权限要求\n      </md-th>\n      <md-td>\n        <md-alert type=\"tip\" icon=\"none\">\n        该接口返回体中存在下列敏感字段，仅当开启对应的权限后才会返回；如果无需获取这些字段，则不建议申请\n        </md-alert>\n        <md-perm name=\"contact:user.base:readonly\" desc=\"获取用户基本信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户基本信息</md-perm>\n        <md-perm name=\"contact:user.department:readonly\" desc=\"获取用户组织架构信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户组织架构信息</md-perm>\n        <md-perm name=\"contact:user.dotted_line_leader_info.read\" desc=\"查看成员的虚线上级 ID\" support_app_types=\"custom,isv\" tags=\"\">查看成员的虚线上级 ID</md-perm>\n        <md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n        <md-perm name=\"contact:user.employee_number:read\" desc=\"查看成员工号\" support_app_types=\"custom,isv\" tags=\"\">查看成员工号</md-perm>\n        <md-perm name=\"contact:user.gender:readonly\" desc=\"获取用户性别\" support_app_types=\"custom,isv\" tags=\"\">获取用户性别</md-perm>\n        <md-perm name=\"contact:user.email:readonly\" desc=\"获取用户邮箱信息\" support_app_types=\"custom\" tags=\"\">获取用户邮箱信息</md-perm>\n        <md-perm name=\"contact:user.job_level:readonly\" desc=\"查询用户职级\" support_app_types=\"custom\" tags=\"\">查询用户职级</md-perm>\n        <md-perm name=\"contact:user.employee_id:readonly\" desc=\"获取用户 user ID\" support_app_types=\"custom\" tags=\"\">获取用户 user ID</md-perm>\n        <md-perm name=\"contact:user.phone:readonly\" desc=\"获取用户手机号\" support_app_types=\"custom\" tags=\"\">获取用户手机号</md-perm>\n        <md-perm name=\"contact:user.user_geo\" desc=\"查看成员数据驻留地\" support_app_types=\"custom\" tags=\"\">查看成员数据驻留地</md-perm>\n        <md-perm name=\"contact:user.job_family:readonly\" desc=\"查询用户所属的工作序列\" support_app_types=\"custom\" tags=\"\">查询用户所属的工作序列</md-perm>\n        <md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n        <md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n        <md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n      </md-td>\n    </md-tr>\n  </md-tbody>\n</md-table>\n:::\n### 请求头\n:::html\n<md-table>\n  <md-thead>\n    <md-tr>\n      <md-th style=\"width: 35%;\">名称</md-th>\n      <md-th style=\"width: 13%;\">类型</md-th>\n       <md-th style=\"width: 15%;\" filters=\"是,否\" >必填</md-th>\n      <md-th  style=\"width: 37%;\">描述</md-th>\n    </md-tr>\n  </md-thead>\n  <md-tbody>\n    <md-tr>\n      <md-td>Authorization</md-td>\n      <md-td>string</md-td>\n      <md-td>是</md-td>\n      \t<md-td>\n<md-tag mode=\"inline\" type=\"token-tenant\">tenant_access_token</md-tag>\n\n**值格式**：\"Bearer `access_token`\"\n\n**示例值**：\"Bearer t-7f1bcd13fc57d46bac21793a18e560\"\n\n[了解更多：如何选择与获取 access token](/ssl:ttdoc/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-choose-which-type-of-token-to-use)\n\n</md-td>\n</md-tr>\n<md-tr>\n<md-td>Content-Type</md-td>\n<md-td>string</md-td>\n<md-td>是</md-td>\n<md-td>**固定值**：\"application/json; charset=utf-8\"</md-td>\n</md-tr>\n</md-tbody>\n</md-table>\n:::\n\n\n\n### 查询参数\n:::html\n<md-dt-table>\n  <md-dt-thead>\n      <md-dt-tr>\n      <md-dt-th style=\"width: 35%;\">名称</md-dt-th>\n      <md-dt-th style=\"width: 13%;\">类型</md-dt-th>\n      <md-dt-th style=\"width: 15%;\" filters=\"是,否\" >必填</md-dt-th>\n      <md-dt-th style=\"width: 37%;\" >描述</md-dt-th>\n      </md-dt-tr>\n  </md-dt-thead>\n  <md-dt-tbody>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >user_id_type</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户 ID 类型\n\n**示例值**：open_id\n\n**可选值有**：\n<md-enum>\n<md-enum-item key=\"open_id\" >标识一个用户在某个应用中的身份。同一个用户在不同应用中的 Open ID 不同。[了解更多：如何获取 Open ID](/ssl:ttdoc/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-obtain-openid)</md-enum-item>\n<md-enum-item key=\"union_id\" >标识一个用户在某个应用开发商下的身份。同一用户在同一开发商下的应用中的 Union ID 是相同的，在不同开发商下的应用中的 Union ID 是不同的。通过 Union ID，应用开发商可以把同个用户在多个应用中的身份关联起来。[了解更多：如何获取 Union ID？](/ssl:ttdoc/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-obtain-union-id)</md-enum-item>\n<md-enum-item key=\"user_id\" >标识一个用户在某个租户内的身份。同一个用户在租户 A 和租户 B 内的 User ID 是不同的。在同一个租户内，一个用户的 User ID 在所有应用（包括商店应用）中都保持一致。User ID 主要用于在不同的应用间打通用户数据。[了解更多：如何获取 User ID？](/ssl:ttdoc/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-obtain-user-id)</md-enum-item>\n</md-enum>\n\n**默认值**：`open_id`\n\n**当值为 `user_id`，字段权限要求**：\n<md-perm name=\"contact:user.employee_id:readonly\" desc=\"获取用户 user ID\" support_app_types=\"custom\" tags=\"\">获取用户 user ID</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >department_id_type</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t此次调用中的部门 ID 类型。关于部门 ID 的详细介绍，可参见[部门 ID 说明](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/department/field-overview#23857fe0)。\n\n**示例值**：open_department_id\n\n**可选值有**：\n<md-enum>\n<md-enum-item key=\"department_id\" >支持用户自定义配置的部门 ID。自定义配置时可复用已删除的 department_id，因此在未删除的部门范围内 department_id 具有唯一性。</md-enum-item>\n<md-enum-item key=\"open_department_id\" >由系统自动生成的部门 ID，ID 前缀固定为 `od-`，在租户内全局唯一。</md-enum-item>\n</md-enum>\n\n**默认值**：`open_department_id`\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >client_token</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t用于幂等判断是否为同一请求，避免重复创建。请参考参数示例值，传入自定义的 client_token。\n\n**默认值**：空，表示不进行幂等判断\n\n**示例值**：abcd-12345-e6f\n\t</md-dt-td>\n</md-dt-tr>\n\n  </md-dt-tbody>\n</md-dt-table>\n:::\n\n\n\n### 请求体\n\n:::html\n<md-dt-table>\n  <md-dt-thead>\n      <md-dt-tr>\n      <md-dt-th style=\"width: 35%;\">名称</md-dt-th>\n      <md-dt-th style=\"width: 13%;\">类型</md-dt-th>\n      <md-dt-th style=\"width: 15%;\" filters=\"是,否\" >必填</md-dt-th>\n      <md-dt-th style=\"width: 37%;\">描述</md-dt-th>\n      </md-dt-tr>\n  </md-dt-thead>\n  <md-dt-tbody>\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >user_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义用户的 user_id。长度不能超过 64 字符。\n\nuser_id 是用户在当前租户内的唯一标识，自定义时请确保唯一性。\n\n**默认值**：空，表示由系统随机生成一个 user_id。\n\n**示例值**：\"3e3cf96b\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >name</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t是\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户名。长度不能超过 255 字符。\n\n**示例值**：\"张三\"\n\n**数据校验规则**：\n\n- 最小长度：`1` 字符\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >en_name</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t英文名。长度不能超过 255 字符。\n\n**默认值**：空\n\n**示例值**：\"San Zhang\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >nickname</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t别名。长度不能超过 255 字符。\n\n**默认值**：空\n\n**示例值**：\"Alex Zhang\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >email</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t邮箱。\n\n**注意**：\n- 当设置非中国大陆的手机号时，必须同时设置邮箱。\n- 在当前租户下，邮箱不可重复。\n\n**默认值**：空\n\n**示例值**：\"zhangsan@gmail.com\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >mobile</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t是\n\t</md-dt-td>\n\t<md-dt-td>\n\t手机号。\n\n**注意**：\n- 在当前租户下，手机号不可重复。\n- 未认证企业仅支持添加中国大陆手机号；通过飞书认证的企业允许添加海外手机号。\n- 国际电话区号的前缀中，必须包含加号 **+**。\n\n取值示例：\n\n- 中国大陆手机号：13011111111 或 +8613011111111\n- 非中国大陆手机号：+41446681800\n\n**示例值**：\"13011111111\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >mobile_visible</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >boolean</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t手机号码是否对其他员工可见。\n\n**可选值有**：\n\n- true：可见。\n- false：不可见。不可见时，企业内的员工将无法查看该用户的手机号码。\n\n**默认值**：true\n\n**示例值**：false\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >gender</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t性别。\n\n**默认值**：0\n\n**示例值**：1\n\n**可选值有**：\n<md-enum>\n<md-enum-item key=\"0\" >保密</md-enum-item>\n<md-enum-item key=\"1\" >男</md-enum-item>\n<md-enum-item key=\"2\" >女</md-enum-item>\n<md-enum-item key=\"3\" >其他</md-enum-item>\n</md-enum>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >avatar_key</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t头像的文件 Key。你可以通过[上传图片](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/im-v1/image/create)接口，上传并获取头像文件 Key，上传时图片类型需要选择 用于设置头像\n\n**默认值**：空\n\n**示例值**：\"2500c7a9-5fff-4d9a-a2de-3d59614ae28g\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >department_ids</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string\\[\\]</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t是\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户所属部门的 ID 列表。\n\n- 一个用户可属于多个部门，最多可设置 50 个部门。\n- 部门 ID 类型与查询参数 `department_id_type` 保持一致。\n- 你可以调用[搜索部门](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/department/search)接口，通过部门名称关键词获取对应的部门 ID。\n\n**示例值**：[\"od-4e6ac4d14bcd5071a37a39de902c714111111\"]\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >leader_user_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户的直接主管的用户 ID，ID 类型与查询参数 `user_id_type` 保持一致。用户 ID 获取方式可参见[如何获取不同的用户 ID](/ssl:ttdoc/home/user-identity-introduction/open-id)。\n\n**默认值**：空\n\n**示例值**：\"ou_7dab8a3d3cdcc9da365777c7ad535d62\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >city</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t工作城市。字符长度上限为 100。\n\n**说明**：\n\n- 你可以调用[获取租户工作城市列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/work_city/list)接口获取当前租户内已有的工作城市名称。\n- 如果你传入的工作城市名称不存在，则系统会自动生成该工作城市。工作城市的枚举值数量上限为 10,000。\n\n**默认值**：空\n\n**示例值**：\"杭州\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >country</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t国家或地区 Code 缩写。具体写入格式参考 [国家/地区 Code 参照表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/user/country-code-description)。\n\n**默认值**：空\n\n**示例值**：\"CN\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >work_station</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t工位。字符长度上限为 255。\n\n**默认值**：空\n\n**示例值**：\"北楼-H34\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >join_time</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t入职时间。秒级时间戳格式，表示从 1970 年 1 月 1 日开始所经过的秒数。如果不传入该参数，则默认填充当前请求时的时间。\n\n**示例值**：2147483647\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >employee_no</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t工号。字符长度上限为 255。\n\n**注意**：同一租户下，用户工号不能重复。\n\n**默认值**：空\n\n**示例值**：\"1\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >employee_type</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t是\n\t</md-dt-td>\n\t<md-dt-td>\n\t员工类型。\n\n**可选值有**：\n- 1：正式员工\n- 2：实习生\n- 3：外包\n- 4：劳务\n- 5：顾问   \n\n该参数支持读取自定义的员工类型的 int 值。你可通过[获取人员类型](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/employee_type_enum/list)接口获取到该租户的自定义员工类型的编号值（enum_value）。\n\n**示例值**：1\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >orders</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >user_order\\[\\]</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户排序信息列表。该参数用于标记通讯录下组织架构的人员顺序，人员可能存在多个部门中，且有不同的排序。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >department_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t排序信息对应的部门 ID。表示用户所在的、且需要排序的部门。\n\n**注意**：\n\n- 部门 ID 类型与查询参数 `department_id_type` 保持一致。\n- 该参数所传入的部门 ID 必须在用户所属的部门 ID 列表（department_ids 参数）内。\n- 如果不传值，系统默认会将 department_ids 参数内的部门 ID，依次传入 order 的 department_id 参数。\n\n**示例值**：\"od-4e6ac4d14bcd5071a37a39de902c7141\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >user_order</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户在其直属部门内的排序。数值越大，排序越靠前。\n\n**注意**：该参数为 int 类型，取值时不能超出 int 的最大值。\n\n**默认值**：0\n\n**示例值**：100\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >department_order</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户所属的多个部门之间的排序。数值越大，排序越靠前。\n\n**注意**：该参数为 int 类型，取值时不能超出 int 的最大值。\n\n**默认值**：0\n\n**示例值**：100\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >is_primary_dept</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >boolean</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t标识是否为用户的唯一主部门，主部门为用户所属部门中排序第一的部门（department_order 最大）。\n\n**可选值有**：\n\n- true：是\n- false：否\n\n**默认值**：如果当前的 department_id 是 department_ids 中传入的第一个数据，则默认值为 true，否则为 false。\n\n**示例值**：true\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >custom_attrs</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >user_custom_attr\\[\\]</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义字段。设置参数前建议你先了解[自定义字段资源介绍](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/custom_attr/overview)。\n\n**默认值**：空。如果没有设置自定义字段，则无需传入值。\n\n**注意事项**：当企业管理员在管理后台配置了自定义字段，且开启了 **允许开放平台 API 调用** 功能后，该字段才会生效。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >type</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义字段类型。\n\n**可选值有**：   \n- TEXT：文本\n- HREF：网页\n- ENUMERATION：枚举\n- PICTURE_ENUM：图片\n- GENERIC_USER：用户\n\n**示例值**：\"TEXT\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义字段 ID。你可以调用[获取企业自定义用户字段](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/custom_attr/list)接口获取自定义字段对应的字段 ID。\n\n**说明**：如果设置了自定义字段类型参数（type），则该参数必填。\n\n**示例值**：\"DemoId\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >value</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >user_custom_attr_value</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义字段取值。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >text</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t- 自定义字段类型为 TEXT 时，该参数必填，用于定义字段值。\n- 自定义字段类型为 HREF 时，该参数必填，用于定义网页标题。\n\n长度不能超过 100 字符。\n\n**示例值**：\"DemoText\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >url</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义字段类型为 HREF 时，该参数必填，用于定义默认 URL。例如，手机端跳转小程序，PC端跳转网页。\n\n**注意**：请以 http:// 或 https:// 开头。\n\n**示例值**：\"http://www.fs.cn\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >pc_url</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义字段类型为 HREF 时，该参数用于定义 PC 端 URL。\n\n**注意**：请以 http:// 或 https:// 开头。\n\n**示例值**：\"http://www.fs.cn\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >option_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义字段类型为 ENUMERATION 或 PICTURE_ENUM 时，该参数用于定义选项 ID。\n\n你可以调用[获取企业自定义用户字段](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/custom_attr/list)接口获取自定义字段相应的选项 ID。\n\n**示例值**：\"edcvfrtg\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >generic_user</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >custom_attr_generic_user</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义字段类型为 GENERIC_USER 时，该参数用于定义引用人员。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t是\n\t</md-dt-td>\n\t<md-dt-td>\n\t引用人员的用户 ID。\n\n- ID 类型与查询参数 `user_id_type` 保持一致。\n\n- 如何获取用户 ID 可参见[如何获取不同的用户 ID](/ssl:ttdoc/home/user-identity-introduction/open-id)。\n\n**示例值**：\"9b2fabg5\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >type</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t是\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户类型。\n\n**可选值有**：\n1：用户\n\n**说明**：目前仅支持取值 1，表示用户。\n\n**示例值**：1\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >enterprise_email</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t企业邮箱。\n      \n**注意事项**：企业管理员在管理后台启用飞书邮箱服务后，才会生效该参数。如果设置企业邮箱失败，请联系企业管理员确认是否在管理后台启用了相应的企业邮箱域名。\n\n**默认值**：空\n\n**示例值**：\"demo@mail.com\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >job_title</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t职务名称。字符数量上限为 255。\n\n- 你可以调用[获取租户职务列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_title/list)接口获取相应的职务名称。\n- 如果传入的职务名称不存在，则系统会自动创建并使用该名称。职务枚举值数量上限为 10,000。\n\n**默认值**：空\n\n**示例值**：\"xxxxx\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >geo</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t数据驻留地。\n\n**注意事项**：需联系服务台技术支持开通使用。\n\n**默认值**：空\n\n**示例值**：\"cn\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >job_level_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t职级 ID。你可以调用[获取租户职级列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_level/list)接口查询相应的职级 ID。\n\n**默认值**：空\n\n**示例值**：\"mga5oa8ayjlp9rb\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >job_family_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t序列 ID。你可以调用[获取租户序列列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_family/list)接口查询相应的序列 ID。\n\n**默认值**：空\n\n**示例值**：\"mga5oa8ayjlp9rb\"\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >subscription_ids</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string\\[\\]</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t分配给用户的席位 ID 列表。\n\n**注意事项**：\n- 该字段需要应用已开通 **分配用户席位** 权限。\n- 如果你购买了席位，则创建用户时必须为用户分配席位 ID，否则用户将无法登录企业飞书。更多信息可参见[管理员分配席位](https://www.feishu.cn/hc/zh-CN/articles/548377434838-%E7%AE%A1%E7%90%86%E5%91%98%E5%88%86%E9%85%8D%E5%B8%AD%E4%BD%8D)。\n- 你可通过[获取企业席位信息](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/tenant-v2/tenant-product_assign_info/query)接口，获取到当前租户的可用席位 ID。\n\n**默认值**：空\n\n**示例值**：[\"23213213213123123\"]\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >dotted_line_leader_user_ids</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string\\[\\]</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t否\n\t</md-dt-td>\n\t<md-dt-td>\n\t虚线上级的用户 ID 列表。\n\n- ID 类型与查询参数 `user_id_type` 保持一致。\n\n- 如何获取用户 ID 可参见[如何获取不同的用户 ID](/ssl:ttdoc/home/user-identity-introduction/open-id)。\n\n**默认值**：空\n\n**示例值**：[\"ou_7dab8a3d3cdcc9da365777c7ad535d62\"]\n\t</md-dt-td>\n</md-dt-tr>\n\n  </md-dt-tbody>\n</md-dt-table>\n:::\n\n\n\n\n\n### 请求体示例\n:::html\n<md-code-json>\n{\n    \"user_id\": \"3e3cf96b\",\n    \"name\": \"张三\",\n    \"en_name\": \"San Zhang\",\n    \"nickname\": \"Alex Zhang\",\n    \"email\": \"zhangsan@gmail.com\",\n    \"mobile\": \"13011111111\",\n    \"mobile_visible\": false,\n    \"gender\": 1,\n    \"avatar_key\": \"2500c7a9-5fff-4d9a-a2de-3d59614ae28g\",\n    \"department_ids\": [\n        \"od-4e6ac4d14bcd5071a37a39de902c714111111\"\n    ],\n    \"leader_user_id\": \"ou_7dab8a3d3cdcc9da365777c7ad535d62\",\n    \"city\": \"杭州\",\n    \"country\": \"CN\",\n    \"work_station\": \"北楼-H34\",\n    \"join_time\": 2147483647,\n    \"employee_no\": \"1\",\n    \"employee_type\": 1,\n    \"orders\": [\n        {\n            \"department_id\": \"od-4e6ac4d14bcd5071a37a39de902c7141\",\n            \"user_order\": 100,\n            \"department_order\": 100,\n            \"is_primary_dept\": true\n        }\n    ],\n    \"custom_attrs\": [\n        {\n            \"type\": \"TEXT\",\n            \"id\": \"DemoId\",\n            \"value\": {\n                \"text\": \"DemoText\",\n                \"url\": \"http://www.fs.cn\",\n                \"pc_url\": \"http://www.fs.cn\",\n                \"option_id\": \"edcvfrtg\",\n                \"generic_user\": {\n                    \"id\": \"9b2fabg5\",\n                    \"type\": 1\n                }\n            }\n        }\n    ],\n    \"enterprise_email\": \"demo@mail.com\",\n    \"job_title\": \"xxxxx\",\n    \"geo\": \"cn\",\n    \"job_level_id\": \"mga5oa8ayjlp9rb\",\n    \"job_family_id\": \"mga5oa8ayjlp9rb\",\n    \"subscription_ids\": [\n        \"23213213213123123\"\n    ],\n    \"dotted_line_leader_user_ids\": [\n        \"ou_7dab8a3d3cdcc9da365777c7ad535d62\"\n    ]\n}\n</md-code-json>\n:::\n\n**Go 请求示例**\n\n```go\nimport (\n\t\"context\"\n\n\t\"github.com/larksuite/oapi-sdk-go/v3\"\n\t\"github.com/larksuite/oapi-sdk-go/v3/service/contact/v3\"\n)\n\nfunc main() {\n\t// 创建 Client\n\tclient := lark.NewClient(\"appID\", \"appSecret\")\n\n\t// 创建请求对象\n\treq := larkcontact.NewCreateUserReqBuilder().\n\t\tUserIdType(`open_id`).\n\t\tUser(larkcontact.NewUserBuilder().\n\t\t\tName(`张三`).\n\t\t\tMobile(`13011111111`).\n\t\t\tDepartmentIds([]string{`od-4e6ac4d14bcd5071a37a39de902c7141`}).\n\t\t\tEmployeeType(1).\n\t\t\tBuild()).\n\t\tBuild()\n\n\t// 发起请求\n\tresp, err := client.Contact.User.Create(context.Background(), req)\n}\n```\n\n**Java 请求示例**\n```java\nimport com.lark.oapi.Client;\nimport com.lark.oapi.core.request.RequestOptions;\nimport com.lark.oapi.service.contact.v3.model.CreateUserReq;\nimport com.lark.oapi.service.contact.v3.model.CreateUserResp;\nimport com.lark.oapi.service.contact.v3.model.User;\n\npublic class Main {\n    public static void main(String arg[]) throws Exception {\n        // 构建client\n        Client client = Client.newBuilder(\"appId\", \"appSecret\").build();\n\n        // 创建请求对象\n        CreateUserReq req = CreateUserReq.newBuilder()\n                .userIdType(\"open_id\")\n                .user(User.newBuilder()\n                        .name(\"张三\")\n                        .mobile(\"13011111111\")\n                        .departmentIds(new String[]{\"od-4e6ac4d14bcd5071a37a39de902c7141\"})\n                        .employeeType(1)\n                        .build())\n                .build();\n\n        // 发起请求\n        CreateUserResp resp = client.contact().user().create(req, RequestOptions.newBuilder().build());\n    }\n}\n```\n\n## 响应\n\n\n\n\n\n### 响应体\n:::html\n<md-dt-table>\n  <md-dt-thead>\n      <md-dt-tr>\n      <md-dt-th style=\"width: 35%;\">名称</md-dt-th>\n      <md-dt-th style=\"width: 13%;\">类型</md-dt-th>\n      <md-dt-th style=\"width: 52%;\">描述</md-dt-th>\n      </md-dt-tr>\n  </md-dt-thead>\n  <md-dt-tbody>\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >code</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t错误码，非 0 表示失败\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >msg</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t错误描述\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"0\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >data</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >\\-</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t\\-\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"1\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >user</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >user</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户信息\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >union_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户的 union_id，是应用开发商发布的不同应用中同一用户的标识。不同用户 ID 的说明参见 [用户相关的 ID 概念](/ssl:ttdoc/home/user-identity-introduction/introduction)。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >user_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户的 user_id，租户内用户的唯一标识。不同用户 ID 的说明参见 [用户相关的 ID 概念](/ssl:ttdoc/home/user-identity-introduction/introduction)。\n\n**字段权限要求**：\n<md-perm name=\"contact:user.employee_id:readonly\" desc=\"获取用户 user ID\" support_app_types=\"custom\" tags=\"\">获取用户 user ID</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >open_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户的 open_id，应用内用户的唯一标识。不同用户 ID 的说明参见 [用户相关的 ID 概念](/ssl:ttdoc/home/user-identity-introduction/introduction)。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >name</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户名。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.base:readonly\" desc=\"获取用户基本信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户基本信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >en_name</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t英文名。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.base:readonly\" desc=\"获取用户基本信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户基本信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >nickname</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t别名。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.base:readonly\" desc=\"获取用户基本信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户基本信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >email</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t邮箱。\n\n**字段权限要求**：\n<md-perm name=\"contact:user.email:readonly\" desc=\"获取用户邮箱信息\" support_app_types=\"custom\" tags=\"\">获取用户邮箱信息</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >mobile</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t手机号。\n\n**字段权限要求**：\n<md-perm name=\"contact:user.phone:readonly\" desc=\"获取用户手机号\" support_app_types=\"custom\" tags=\"\">获取用户手机号</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >mobile_visible</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >boolean</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t手机号码是否可见。\n\n**可能值有**：\n\n- true：可见。\n- false：不可见。不可见时，企业内的员工将无法查看该用户的手机号码。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >gender</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t性别。\n\n**可选值有**：\n<md-enum>\n<md-enum-item key=\"0\" >保密</md-enum-item>\n<md-enum-item key=\"1\" >男</md-enum-item>\n<md-enum-item key=\"2\" >女</md-enum-item>\n<md-enum-item key=\"3\" >其他</md-enum-item>\n</md-enum>\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.gender:readonly\" desc=\"获取用户性别\" support_app_types=\"custom,isv\" tags=\"\">获取用户性别</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >avatar_key</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t头像的文件 Key。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >avatar</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >avatar_info</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户头像信息。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.base:readonly\" desc=\"获取用户基本信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户基本信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >avatar_72</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t72*72 像素头像链接。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >avatar_240</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t240*240 像素头像链接。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >avatar_640</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t640*640 像素头像链接。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >avatar_origin</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t原始头像链接。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >status</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >user_status</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户状态。通过 is_frozen、is_resigned、is_activated、is_exited 布尔值类型参数进行展示。\n\n用户状态的转关逻辑可参见[用户资源介绍](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/user/field-overview#4302b5a1)。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >is_frozen</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >boolean</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t是否为暂停状态。\n\n**可能值有**：\n\n- true：是\n- false：否\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >is_resigned</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >boolean</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t是否为离职状态。\n\n**可能值有**：\n\n- true：是\n- false：否\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >is_activated</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >boolean</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t是否为激活状态。\n\n**可能值有**：\n\n- true：是\n- false：否\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >is_exited</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >boolean</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t是否为主动退出状态。主动退出一段时间后用户状态会自动转为已离职。\n\n**可能值有**：\n\n- true：是\n- false：否\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >is_unjoin</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >boolean</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t是否为未加入状态，需要用户自主确认才能加入企业或团队。\n\n**可能值有**：\n\n- true：是\n- false：否\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >department_ids</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string\\[\\]</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户所属部门的 ID 列表，一个用户可属于多个部门。ID 值的类型与查询参数中的 department_id_type 一致。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.department:readonly\" desc=\"获取用户组织架构信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户组织架构信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >leader_user_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户的直接主管的用户ID。ID 值的类型与查询参数中的user_id_type 一致。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.department:readonly\" desc=\"获取用户组织架构信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户组织架构信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >city</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t工作城市。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >country</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t国家或地区 Code 缩写，具体格式参考 [国家/地区 Code 参照表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/user/country-code-description)。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >work_station</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t工位。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >join_time</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t入职时间。秒级时间戳格式，表示从 1970 年 1 月 1 日开始所经过的秒数。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >is_tenant_manager</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >boolean</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户是否为租户超级管理员。\n\n**可能值有**：\n- true：是\n- false：否\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >employee_no</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t工号。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.employee_number:read\" desc=\"查看成员工号\" support_app_types=\"custom,isv\" tags=\"\">查看成员工号</md-perm>\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >employee_type</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t员工类型。\n\n**可能值有**：\n\n- 1：正式员工\n- 2：实习生\n- 3：外包\n- 4：劳务\n- 5：顾问   \n\n同时支持自定义员工类型的 int 值。你可通过[获取人员类型](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/employee_type_enum/list)接口获取到当前租户内自定义员工类型的名称。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >orders</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >user_order\\[\\]</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户排序信息。用于标记通讯录下组织架构的人员顺序，人员可能存在多个部门中，且有不同的排序。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.department:readonly\" desc=\"获取用户组织架构信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户组织架构信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >department_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t排序信息对应的部门 ID，表示用户所在的、且需要排序的部门。ID 值的类型与查询参数中的 department_id_type 一致。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >user_order</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户在其直属部门内的排序。数值越大，排序越靠前。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >department_order</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户所属的多个部门间的排序。数值越大，排序越靠前。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >is_primary_dept</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >boolean</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t标识是否为用户的唯一主部门。主部门为用户所属部门中排序第一的部门(department_order 最大)。\n\n**可能值有**：\n- true：是\n- false：否\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >custom_attrs</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >user_custom_attr\\[\\]</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义字段。\n\n**注意事项**：当企业管理员在管理后台配置了自定义字段，且开启了 **允许开放平台 API 调用** 功能后，该字段才会生效。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >type</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义字段类型。\n\n**可能值有**：\n- TEXT：文本\n- HREF：网页\n- ENUMERATION：枚举\n- PICTURE_ENUM：图片\n- GENERIC_USER：用户\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义字段 ID。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"3\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >value</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >user_custom_attr_value</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t自定义字段取值。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"4\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >text</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t- 字段类型为 TEXT 时，该参数返回定义的字段值。\n- 字段类型为 HREF 时，该参数返回定义的网页标题。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"4\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >url</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t字段类型为 HREF 时，该参数返回定义的默认 URL。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"4\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >pc_url</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t字段类型为 HREF 时，该参数返回定义的 PC 端 URL。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"4\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >option_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t字段类型为 ENUMERATION 或 PICTURE_ENUM 时，该参数返回定义的选项 ID。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"4\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >option_value</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t枚举类型中选项的选项值。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"4\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >name</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t图片类型中图片选项的名称。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"4\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >picture_url</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t图片类型中图片选项的链接。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"4\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >generic_user</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >custom_attr_generic_user</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t字段类型为 GENERIC_USER 时，该参数返回定义的引用人员信息。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"5\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t引用人员的用户 ID。ID 类型与查询参数 user_id_type 的取值一致。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"5\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >type</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >int</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t用户类型。目前固定为 1，表示用户类型。\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >enterprise_email</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t企业邮箱。\n      \n**注意事项**：企业管理员在管理后台启用飞书邮箱服务后，才会生效该参数。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >job_title</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t职务。\n\n**字段权限要求（满足任一）**：\n<md-perm name=\"contact:user.employee:readonly\" desc=\"获取用户受雇信息\" support_app_types=\"custom,isv\" tags=\"\">获取用户受雇信息</md-perm>\n<md-perm name=\"contact:contact:access_as_app\" desc=\"以应用身份访问通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">以应用身份访问通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly\" desc=\"读取通讯录\" support_app_types=\"custom,isv\" tags=\"history,offline\">读取通讯录</md-perm>\n<md-perm name=\"contact:contact:readonly_as_app\" desc=\"以应用身份读取通讯录\" support_app_types=\"custom,isv\" tags=\"history\">以应用身份读取通讯录</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >is_frozen</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >boolean</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t是否为暂停状态的用户。\n\n**可能值有**：\n- true：是\n- false：否\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >geo</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t数据驻留地。\n\n**字段权限要求**：\n<md-perm name=\"contact:user.user_geo\" desc=\"查看成员数据驻留地\" support_app_types=\"custom\" tags=\"\">查看成员数据驻留地</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >job_level_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t职级 ID。\n\n**字段权限要求**：\n<md-perm name=\"contact:user.job_level:readonly\" desc=\"查询用户职级\" support_app_types=\"custom\" tags=\"\">查询用户职级</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >job_family_id</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t序列 ID。\n\n**字段权限要求**：\n<md-perm name=\"contact:user.job_family:readonly\" desc=\"查询用户所属的工作序列\" support_app_types=\"custom\" tags=\"\">查询用户所属的工作序列</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n<md-dt-tr level=\"2\">\n\t<md-dt-td>\n\t<md-text type=\"field-name\" >dotted_line_leader_user_ids</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t<md-text type=\"field-type\" >string\\[\\]</md-text>\n\t</md-dt-td>\n\t<md-dt-td>\n\t虚线上级的用户 ID 列表。ID 类型与查询参数 user_id_type 的取值保持一致。\n\n**字段权限要求**：\n<md-perm name=\"contact:user.dotted_line_leader_info.read\" desc=\"查看成员的虚线上级 ID\" support_app_types=\"custom,isv\" tags=\"\">查看成员的虚线上级 ID</md-perm>\n\t</md-dt-td>\n</md-dt-tr>\n\n\n  </md-dt-tbody>\n</md-dt-table>\n:::\n\n\n\n### 响应体示例\n:::html\n<md-code-json>\n{\n    \"code\": 0,\n    \"msg\": \"success\",\n    \"data\": {\n        \"user\": {\n            \"union_id\": \"on_94a1ee5551019f18cd73d9f111898cf2\",\n            \"user_id\": \"3e3cf96b\",\n            \"open_id\": \"ou_7dab8a3d3cdcc9da365777c7ad535d62\",\n            \"name\": \"张三\",\n            \"en_name\": \"San Zhang\",\n            \"nickname\": \"Alex Zhang\",\n            \"email\": \"zhangsan@gmail.com\",\n            \"mobile\": \"13011111111\",\n            \"mobile_visible\": false,\n            \"gender\": 1,\n            \"avatar_key\": \"2500c7a9-5fff-4d9a-a2de-3d59614ae28g\",\n            \"avatar\": {\n                \"avatar_72\": \"https://foo.icon.com/xxxx\",\n                \"avatar_240\": \"https://foo.icon.com/xxxx\",\n                \"avatar_640\": \"https://foo.icon.com/xxxx\",\n                \"avatar_origin\": \"https://foo.icon.com/xxxx\"\n            },\n            \"status\": {\n                \"is_frozen\": false,\n                \"is_resigned\": false,\n                \"is_activated\": true,\n                \"is_exited\": false,\n                \"is_unjoin\": false\n            },\n            \"department_ids\": [\n                \"od-4e6ac4d14bcd5071a37a39de902c7141\"\n            ],\n            \"leader_user_id\": \"ou_7dab8a3d3cdcc9da365777c7ad535d62\",\n            \"city\": \"杭州\",\n            \"country\": \"CN\",\n            \"work_station\": \"北楼-H34\",\n            \"join_time\": 2147483647,\n            \"is_tenant_manager\": false,\n            \"employee_no\": \"1\",\n            \"employee_type\": 1,\n            \"orders\": [\n                {\n                    \"department_id\": \"od-4e6ac4d14bcd5071a37a39de902c7141\",\n                    \"user_order\": 100,\n                    \"department_order\": 100,\n                    \"is_primary_dept\": true\n                }\n            ],\n            \"custom_attrs\": [\n                {\n                    \"type\": \"TEXT\",\n                    \"id\": \"DemoId\",\n                    \"value\": {\n                        \"text\": \"DemoText\",\n                        \"url\": \"http://www.fs.cn\",\n                        \"pc_url\": \"http://www.fs.cn\",\n                        \"option_id\": \"edcvfrtg\",\n                        \"option_value\": \"option\",\n                        \"name\": \"name\",\n                        \"picture_url\": \"https://xxxxxxxxxxxxxxxxxx\",\n                        \"generic_user\": {\n                            \"id\": \"9b2fabg5\",\n                            \"type\": 1\n                        }\n                    }\n                }\n            ],\n            \"enterprise_email\": \"demo@mail.com\",\n            \"job_title\": \"xxxxx\",\n            \"is_frozen\": false,\n            \"geo\": \"cn\",\n            \"job_level_id\": \"mga5oa8ayjlp9rb\",\n            \"job_family_id\": \"mga5oa8ayjlp9rb\",\n            \"dotted_line_leader_user_ids\": [\n                \"ou_7dab8a3d3cdcc9da365777c7ad535d62\"\n            ]\n        }\n    }\n}\n</md-code-json>\n:::\n\n\n\n### 错误码\n:::html\n<md-table>\n    <md-thead>\n        <md-tr>\n            <md-th style=\"width: 15%;\">HTTP状态码</md-th>\n            <md-th style=\"width: 15%;\">错误码</md-th>\n            <md-th style=\"width: 30%;\">描述</md-th>\n            <md-th style=\"width: 30%;\">排查建议</md-th>\n        </md-tr>\n    </md-thead>\n  <md-tbody>\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>40001</md-td>\n  <md-td>param error</md-td>\n  <md-td>参数错误，请对照接口文档修改输入参数后重试。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>40003</md-td>\n  <md-td>internal error</md-td>\n  <md-td>内部错误。您可以获取请求的 X-Request-Id，并联系[技术支持](https://applink.feishu.cn/TLJpeNdW)协助排查。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>403</md-td>\n  <md-td>40004</md-td>\n  <md-td>no dept authority error</md-td>\n  <md-td>应用没有部门权限，检查该部门是否在应用的通讯录权限范围内。你可以登录[开发者后台](https://open.feishu.cn/app) ，在应用详情页的 **开发配置 > 权限管理 > 数据权限** 功能页查看 **通讯录权限范围** 内是否有相应部门，如果没有则需要在 **通讯录权限范围** 内添加上部门，并发布应用使配置生效。具体操作参考[配置应用数据权限](/ssl:ttdoc/home/introduction-to-scope-and-authorization/configure-app-data-permissions)。\n\n**注意**：如果通讯录权限范围设置的是 **与应用的可用范围一致**，则你需要在应用发布阶段（点击 **应用发布 > 版本管理与发布 > 创建版本** 后的 **版本详情** 页面内）配置应用的可用范围，并发布应用使配置生效。具体操作参考[配置应用可用范围](/ssl:ttdoc/home/introduction-to-scope-and-authorization/availability)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>40021</md-td>\n  <md-td>no a same request error</md-td>\n  <md-td>非同一请求。两次请求如果传入了相同的 client_token，则当传入的其他参数取值不相同时，会报该错误。你需要根据实际场景选择是否传入 client_token 参数。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41001</md-td>\n  <md-td>mobile has already exist error</md-td>\n  <md-td>手机号已存在。你需要修改传入的手机号，确保租户内唯一。如何通过手机号查询用户信息，可参见[通过手机号或邮箱获取用户 ID](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/user/batch_get_id)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41002</md-td>\n  <md-td>email has already exist error</md-td>\n  <md-td>邮箱已存在。你需要修改传入的邮箱，确保租户内唯一。如何通过邮箱查询用户信息，可参见[通过手机号或邮箱获取用户 ID](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/user/batch_get_id)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>409</md-td>\n  <md-td>41003</md-td>\n  <md-td>user account conflict error</md-td>\n  <md-td>用户的联系方式属于两个不同的飞书账号，导致添加失败。建议换用其它手机号或邮箱创建用户，或是先注销手机号或邮箱对应的用户帐号，然后再尝试创建。注销流程参见[注销账号](https://www.feishu.cn/hc/zh-CN/articles/360049067831)。如果问题仍未解决，请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41004</md-td>\n  <md-td>mobile is invalid error</md-td>\n  <md-td>手机号不合法。你需要参考接口文档提供的手机号参数描述，传入正确可用的手机号格式。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41005</md-td>\n  <md-td>email is invalid error</md-td>\n  <md-td>邮箱不合法。你需要参考接口文档提供的邮箱参数描述，传入正确可用的邮箱。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41006</md-td>\n  <md-td>no user name error</md-td>\n  <md-td>没有设置用户名称。请求时必须传入 name 参数。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41007</md-td>\n  <md-td>exceed uncertain tenant seat limit error</md-td>\n  <md-td>未认证租户的成员数目超过系统限制，无法创建用户。你需要清理租户内的无效成员或者扩容租户的成员数量限制。详情咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41008</md-td>\n  <md-td>exceed bill seat limit error</md-td>\n  <md-td>租户的成员数目超过系统限制，无法创建用户。你需要清理租户内的无效成员或者扩容租户的成员数量限制。详情咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41009</md-td>\n  <md-td>no email or mobile error</md-td>\n  <md-td>无邮箱或手机号。请求时，邮箱和手机号不能都为空。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41010</md-td>\n  <md-td>no mobile error</md-td>\n  <md-td>无手机号。请求时必须传入 mobile 参数。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41011</md-td>\n  <md-td>user id already exist error</md-td>\n  <md-td>user_id 重复。user_id 是用户在企业内的唯一ID，传入时如果重复可尝试更换其他自定义的 user_id。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41012</md-td>\n  <md-td>user id invalid error</md-td>\n  <md-td>用户 ID 无效。请参考接口文档提供的 user_id 参数说明，传入正确的 user_id 值。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41013</md-td>\n  <md-td>exceed user id update limit error</md-td>\n  <md-td>用户 ID 更新次数超过限制。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41014</md-td>\n  <md-td>user name sensitive error</md-td>\n  <md-td>传入的 name 中包含敏感信息。如有疑问，请联系[技术支持](https://applink.feishu.cn/TLJpeNdW)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41015</md-td>\n  <md-td>idp type invalid error</md-td>\n  <md-td>登录类型无效。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41016</md-td>\n  <md-td>department has too many users  error</md-td>\n  <md-td>部门内的用户数量过多。当前设置的用户所属部门中存量用户数量达到上限，建议你修改用户的所属部门。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41017</md-td>\n  <md-td>department is required error</md-td>\n  <md-td>部门信息不能为空。请求时必须传入 department_ids 参数。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41018</md-td>\n  <md-td>position info is invalid error</md-td>\n  <md-td>岗位信息无效。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41019</md-td>\n  <md-td>position department is invalid error</md-td>\n  <md-td>岗位部门无效。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41020</md-td>\n  <md-td>position code has already exist  error</md-td>\n  <md-td>岗位code无效。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41021</md-td>\n  <md-td>position multiple main count error</md-td>\n  <md-td>一个用户至多只能有设置一个主岗。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41022</md-td>\n  <md-td>user tenant not match error</md-td>\n  <md-td>用户租户不匹配。你需要检查是否使用其他企业的凭证访问了当前企业的资源。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41025</md-td>\n  <md-td>order department invalid error</md-td>\n  <md-td>排序信息中的部门无效。请求中，用户排序信息的部门 ID，必须是用户所属部门的部门 ID 之一。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>504</md-td>\n  <md-td>41027</md-td>\n  <md-td>create account failed error</md-td>\n  <md-td>创建用户失败。请稍后重试，如果仍然失败请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>405</md-td>\n  <md-td>41028</md-td>\n  <md-td>user multi department need upgrade visibility error</md-td>\n  <md-td>企业管理后台的权限规则未升级，不支持多部门。你需要登录[管理后台](https://feishu.cn/admin)，在 **安全** > **成员权限** > **组织架构可见范围** 页面内，根据页面提示提升权限规则。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41029</md-td>\n  <md-td>create or update user multi department error</md-td>\n  <md-td>当前企业不支持用户同时加入多个部门，如有疑问，请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41030</md-td>\n  <md-td>set leader to oneself error</md-td>\n  <md-td>不能将直属上级设置为自己。你需要将传入的直属上级参数值修改为用户实际对应的直属上级用户 ID，如无直属上级，则无需设置。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>504</md-td>\n  <md-td>41031</md-td>\n  <md-td>position feature not enable error</md-td>\n  <md-td>当前企业不支持设置用户岗位信息，如有疑问，请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>504</md-td>\n  <md-td>41032</md-td>\n  <md-td>user multi department feature not enable error</md-td>\n  <md-td>当前企业不支持用户同时加入多个部门，如有疑问，请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41033</md-td>\n  <md-td>user in too many departments  error</md-td>\n  <md-td>用户所属部门过多。设置的用户所属部门（department_ids）数量不能超过 50 个。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41034</md-td>\n  <md-td>email prefix already exist error</md-td>\n  <md-td>邮箱前缀（`@`符号前的内容）已存在。更换为其他邮箱前缀后重试。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41035</md-td>\n  <md-td>email prefix is invalid error</md-td>\n  <md-td>邮箱前缀（`@`符号前的内容）不合法。请检查拼写是否有误。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41036</md-td>\n  <md-td>avatar key is invalid error</md-td>\n  <md-td>头像的文件 Key 无效。你可以重新调用[上传图片](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/im-v1/image/create)接口，将头像文件上传后获取相应的 Key。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41037</md-td>\n  <md-td>avatar key is sensitive error</md-td>\n  <md-td>头像的文件 Key存在敏感信息。你可以重新调用[上传图片](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/im-v1/image/create)接口，将头像文件上传后获取相应的 Key。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41038</md-td>\n  <md-td>gender is invalid error</md-td>\n  <md-td>性别参数不合法。你需要参考性别参数描述，传入正确的枚举值。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41040</md-td>\n  <md-td>user name is null error</md-td>\n  <md-td>用户名不能为空。请求时必须传入 name 参数。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41041</md-td>\n  <md-td>department id is not assigned  error</md-td>\n  <md-td>未分配部门 ID。请求时必须传入用户所属部门 ID 列表参数（department_ids）</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41042</md-td>\n  <md-td>join time is invalid error</md-td>\n  <md-td>用户加入时间不能为空。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41043</md-td>\n  <md-td>employee id is invalid error</md-td>\n  <md-td>无效的 user id。 user_id 的取值长度不能超过 64 个字符。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41044</md-td>\n  <md-td>Custom attribute is not set error</md-td>\n  <md-td>自定义字段属性设置有误。设置用户自定义字段时，必须指明设定的字段ID，字段 ID 可以通过[获取企业自定义用户字段](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/custom_attr/list)接口查询。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41045</md-td>\n  <md-td>Custom attribute id is not exist error</md-td>\n  <md-td>自定义字段 ID 不存在。你可以调用[获取企业自定义用户字段](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/custom_attr/list)接口，获取正确的字段 ID。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41046</md-td>\n  <md-td>Custom attribute value is not set error</md-td>\n  <md-td>自定义字段值设置有误。设置自定义字段时，需要传入相应的 value 字段。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41047</md-td>\n  <md-td>Custom attribute href text  is null error</md-td>\n  <md-td>HREF 类型自定义字段的 text 属性为空。如果你设置了 HREF 类型的自定义字段，则 text 字段为必填字段。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41048</md-td>\n  <md-td>Custom attribute href url  is null error</md-td>\n  <md-td>HREF 类型自定义字段的 url 属性为空。如果你设置了 HREF 类型的自定义字段，则 url 字段为必填字段。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41051</md-td>\n  <md-td>user id info not provide error</md-td>\n  <md-td>用户ID没有填写。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41052</md-td>\n  <md-td>user resign acceptor is invalid error</md-td>\n  <md-td>用户辞职审批人无效。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>409</md-td>\n  <md-td>41053</md-td>\n  <md-td>user has already exist error</md-td>\n  <md-td>用户已存在。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41054</md-td>\n  <md-td>need send email but not set mail</md-td>\n  <md-td>需发送邮件但未设置邮箱。请求时请传入邮箱参数（email）。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41055</md-td>\n  <md-td>need send sms but not set mobile</md-td>\n  <md-td>需要发送手机短信单位设置手机号。请求时请传入手机号参数（mobile）。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41059</md-td>\n  <md-td>invalid employee type error</md-td>\n  <md-td>员工类型设置错误。员工类型的可选值有：\n- 1：正式员工\n- 2：实习生\n- 3：外包\n- 4：劳务\n- 5：顾问   \n\n同时支持读取自定义的员工类型的 int 值。你可通过[获取人员类型](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/employee_type_enum/list)接口获取到该租户的自定义员工类型的编号值（enum_value）。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41060</md-td>\n  <md-td>inactive employee type error</md-td>\n  <md-td>员工类型在企业内未激活。你可以调用[获取人员类型](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/employee_type_enum/list)接口获取员工类型的使用状态（enum_status），仅可选择已激活的类型。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41063</md-td>\n  <md-td>job_title length exceed 100 character</md-td>\n  <md-td>设置的职务字符长度超过了 100 个字符。你需要减少设置的职务字符长度。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41068</md-td>\n  <md-td>Number of email aliases exceeds the upper limit</md-td>\n  <md-td>企业邮箱账户已经达到上限。请咨询企业管理员企业邮箱配额情况。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41069</md-td>\n  <md-td>Business email is in the recycle bin</md-td>\n  <md-td>企业邮箱处于回收站内，此时无法被使用。如需使用该企业邮箱，则需要先释放邮箱（在企业邮箱回收站内永久删除该邮箱），然后再使用。详情参见[员工离职后企业邮箱还能继续使用吗](https://www.feishu.cn/hc/zh-CN/articles/715885646166-%E7%AE%A1%E7%90%86%E5%91%98%E8%BD%AC%E7%A7%BB%E7%A6%BB%E8%81%8C%E6%88%90%E5%91%98%E7%9A%84%E9%82%AE%E4%BB%B6#tabs0|lineguid-bkqnq)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41070</md-td>\n  <md-td>name length exceed 255 character</md-td>\n  <md-td>用户名长度超过 255 个字符。你需要减少设置的用户名字符长度。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41071</md-td>\n  <md-td>en_name length exceed 255 character</md-td>\n  <md-td>用户英文名长度超过 255 个字符。你需要减少设置的用户英文名字符长度。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41072</md-td>\n  <md-td>nickname length exceed 255 character</md-td>\n  <md-td>用户别名长度超过 255 个字符。你需要减少设置的用户别名字符长度。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44001</md-td>\n  <md-td>business email domain not available error</md-td>\n  <md-td>企业无对应的企业邮域名。企业管理员必须在管理后台开通企业邮箱后，才可以在创建用户时设置企业邮箱地址。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44004</md-td>\n  <md-td>this user has been joined too many tenants recently</md-td>\n  <md-td>用户加入团队过于频繁，请 24 小时后重试。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44006</md-td>\n  <md-td>name length exceed 255 character</md-td>\n  <md-td>用户名超过 255 个字符。你需要减少设置的用户名字符长度。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44007</md-td>\n  <md-td>en_name length exceed 255 character</md-td>\n  <md-td>用户英文名超过 255 个字符。你需要减少设置的用户英文名字符长度。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44008</md-td>\n  <md-td>nickname length exceed 255 character</md-td>\n  <md-td>用户别名超过 255 个字符。你需要减少设置的用户别名字符长度。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44009</md-td>\n  <md-td>this tenant has been create too many users recently</md-td>\n  <md-td>团队添加成员过于频繁。一个手机号码或者一个邮箱，一天只能加入三个租户。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44012</md-td>\n  <md-td>Adding user has been intercepted. Contact Feishu Customer Service</md-td>\n  <md-td>添加成员失败，详情咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44013</md-td>\n  <md-td>User enterprise Email password is not valid</md-td>\n  <md-td>输入的用户企业邮箱密码不合法，请修改后重试。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44016</md-td>\n  <md-td>can not set enterprise email password</md-td>\n  <md-td>设置企业邮箱密码失败，请确认是否有对应的权限。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44018</md-td>\n  <md-td>lark not support +86 mobile</md-td>\n  <md-td>Lark 不支持使用 +86 前缀的手机号。请修改后重试。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44019</md-td>\n  <md-td>feishu only support +86 mobile</md-td>\n  <md-td>未认证企业仅支持添加中国大陆 +86 手机号，添加非 +86 手机号请先完成飞书认证，完成认证后次日可添加。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44020</md-td>\n  <md-td>mobile and email need together exist</md-td>\n  <md-td>已认证企业，添加非 +86 手机号成员时必须同时添加邮箱。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44021</md-td>\n  <md-td>leader is resigned</md-td>\n  <md-td>直接主管或者虚线上级已离职，无法使用。请更换为正确可用的负责人后重试。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44022</md-td>\n  <md-td>leaderID is Invalid</md-td>\n  <md-td>直接主管或者虚线上级无效。请更换为正确可用的负责人后重试。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44023</md-td>\n  <md-td>exceed feature contact seat limit</md-td>\n  <md-td>创建的用户数量超出通讯录资源上限。如果需要使用更多用户数量，请升级飞书版本。了解更多参见[版本对比](https://www.feishu.cn/service)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44024</md-td>\n  <md-td>User enterprise email has already been registered as a member's account</md-td>\n  <md-td>企业邮箱已注册。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44038</md-td>\n  <md-td>req set user geo not find in geo list</md-td>\n  <md-td>您设置的数据驻留地（geo） 不在系统支持的 geo 列表中。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44039</md-td>\n  <md-td>not set geo name auth</md-td>\n  <md-td>没有设置数据驻留地（geo）的权限。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44040</md-td>\n  <md-td>tenant not open mg not set geo name</md-td>\n  <md-td>当前租户未开通多个数据驻留地功能，不能设置 geo 字段。如有疑问可咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44044</md-td>\n  <md-td>invalid job level id</md-td>\n  <md-td>职级 ID 无效。你可以调用[获取租户职级列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_level/list)接口查询相应的职级 ID。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44045</md-td>\n  <md-td>invalid job family id</md-td>\n  <md-td>序列 ID 无效。你可以调用[获取租户序列列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_family/list)接口查询相应的序列 ID。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44046</md-td>\n  <md-td>user license subscription id must not empty in multi-license tenant</md-td>\n  <md-td>多许可证租户内创建用户时，必须指定席位 ID 参数。你可以调用[获取企业席位信息接口](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/tenant-v2/tenant-product_assign_info/query)接口查询席位详情，然后选择使用正确可用的席位 ID。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44047</md-td>\n  <md-td>license subscription id exceed limit</md-td>\n  <md-td>设置的席位 ID 已超过上限，请更换席位 ID。你可以调用[获取企业席位信息接口](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/tenant-v2/tenant-product_assign_info/query)接口查询席位详情，然后选择使用正确可用的席位 ID。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44048</md-td>\n  <md-td>user license subscription id invalid</md-td>\n  <md-td>请确认传入的席位 ID 正确有效。你可以调用[获取企业席位信息接口](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/tenant-v2/tenant-product_assign_info/query)接口查询席位详情，然后选择使用正确可用的席位 ID。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>403</md-td>\n  <md-td>44050</md-td>\n  <md-td>not set subscription ids auth</md-td>\n  <md-td>未开通 **分配用户席位** 权限。你需要在 [开发者后台](https://open.feishu.cn/app) > **应用详情页** > **权限管理** > **API 权限** 内申请 **分配用户席位** 权限，并确保权限生效。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44051</md-td>\n  <md-td>employee_no already existed</md-td>\n  <md-td>员工工号重复，请修改后重试。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44054</md-td>\n  <md-td>create user success and create city fail</md-td>\n  <md-td>创建用户成功，创建工作城市字段失败。\n\n可能原因：\n\n1. 枚举值数量超过上限。工作城市枚举值数量上限均为 10,000。\n2. 传入的值不合法。单个工作城市字符数量上限为 100。传入的内容也需要确保有效、无敏感信息。\n3. 枚举值未启用。你可以调用[获取租户工作城市列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/work_city/list)接口，获取状态为已启用的工作城市信息。\n\n如问题仍未解决请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。\n\n</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44055</md-td>\n  <md-td>create user success and create job title fail</md-td>\n  <md-td>创建用户成功，创建职务字段失败。\n\n可能原因：\n\n1. 枚举值数量超过上限。职务的枚举值数量上限均为 10,000。\n2. 传入的值不合法。单个职务的字符上限为 255。传入的内容也需要确保有效、无敏感信息。\n3. 枚举值未启用。你可以调用[获取租户职务列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_title/list)，获取状态为已启用的职务信息。\n\n如问题仍未解决请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44056</md-td>\n  <md-td>create user success and create city and job title fail</md-td>\n  <md-td>创建用户成功，创建工作城市、职务字段失败。\n\n可能原因：\n\n1. 枚举值数量超过上限。工作城市、职务的枚举值数量上限均为 10,000。\n2. 传入的值不合法。单个工作城市字符数量上限为 100；单个职务的字符上限为 255。传入的内容也需要确保有效、无敏感信息。\n3. 枚举值未启用。你可以调用[获取租户工作城市列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/work_city/list)接口，获取状态为已启用的工作城市信息。你可以调用[获取租户职务列表](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/job_title/list)，获取状态为已启用的职务信息。\n\n如问题仍未解决请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44060</md-td>\n  <md-td>mg asset exceed time</md-td>\n  <md-td>数据驻留服务已到期。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>44061</md-td>\n  <md-td>mg asset exceed quota</md-td>\n  <md-td>数据驻留服务无可分配席位。</md-td>\n</md-tr>\n\n\n<md-tr>\n  <md-td>400</md-td>\n  <md-td>41410</md-td>\n  <md-td>user primary dept must be the first department in the order</md-td>\n  <md-td>主部门必须为用户所属部门中排序第一的部门。请求时，is_primary_dept 为 true 的部门，department_order 取值必须为排序列表（orders）中的最大值。</md-td>\n</md-tr>\n\n\n  </md-tbody>\n</md-table>\n:::\n\n更多错误码信息，参见[通用错误码](/ssl:ttdoc/ukTMukTMukTM/ugjM14COyUjL4ITN)。\n\n\n"
+  }
+}

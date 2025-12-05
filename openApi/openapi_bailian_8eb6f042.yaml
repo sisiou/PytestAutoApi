@@ -1,0 +1,1101 @@
+openapi: 3.0.0
+info:
+  title: 用户管理与消息通信API
+  version: 1.0.0
+  description: 提供用户创建、消息发送、共享日历创建及用户信息获取等核心功能，用于集成飞书平台的通讯录、IM、日历及认证服务。
+servers:
+  - url: https://open.feishu.cn/open-apis
+    description: 飞书开放平台生产环境服务器
+components:
+  schemas:
+    UserCreateRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+          maxLength: 64
+          example: "3e3cf96b"
+          description: 自定义用户的 user_id。长度不能超过 64 字符。默认由系统随机生成。
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "张三"
+          description: 用户名。必填，长度不能超过 255 字符。
+        en_name:
+          type: string
+          maxLength: 255
+          example: "San Zhang"
+          description: 英文名。默认为空。
+        nickname:
+          type: string
+          maxLength: 255
+          example: "Alex Zhang"
+          description: 别名。默认为空。
+        email:
+          type: string
+          example: "zhangsan@gmail.com"
+          description: 邮箱。当设置非中国大陆手机号时必须同时设置邮箱，且在租户内唯一。默认为空。
+        mobile:
+          type: string
+          example: "13011111111"
+          description: 手机号。必填，在租户内唯一。未认证企业仅支持中国大陆手机号。
+        mobile_visible:
+          type: boolean
+          example: false
+          description: 手机号码是否对其他员工可见。默认为 true。
+        gender:
+          type: integer
+          enum: [0, 1, 2, 3]
+          example: 1
+          description: 性别。0:保密, 1:男, 2:女, 3:其他。默认为 0。
+        avatar_key:
+          type: string
+          example: "2500c7a9-5fff-4d9a-a2de-3d59614ae28g"
+          description: 头像文件 Key。通过上传图片接口获取。默认为空。
+        department_ids:
+          type: array
+          items:
+            type: string
+          example: ["od-4e6ac4d14bcd5071a37a39de902c7141"]
+          description: 用户所属部门 ID 列表。最多可设置 50 个部门。ID 类型与查询参数一致。
+        leader_user_id:
+          type: string
+          example: "ou_7dab8a3d3cdcc9da365777c7ad535d62"
+          description: 直接主管的用户 ID。类型与查询参数一致。默认为空。
+        city:
+          type: string
+          maxLength: 100
+          example: "杭州"
+          description: 工作城市。默认为空。
+        country:
+          type: string
+          example: "CN"
+          description: 国家或地区 Code 缩写。默认为空。
+        work_station:
+          type: string
+          maxLength: 255
+          example: "北楼-H34"
+          description: 工位。默认为空。
+        join_time:
+          type: integer
+          format: int32
+          example: 2147483647
+          description: 入职时间（秒级时间戳）。默认为当前请求时间。
+        employee_no:
+          type: string
+          maxLength: 255
+          example: "1"
+          description: 工号。同一租户下不可重复。默认为空。
+        employee_type:
+          type: integer
+          example: 1
+          description: 员工类型。1:正式, 2:实习生, 3:外包, 4:劳务, 5:顾问。
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserOrder'
+          description: 用户排序信息列表。
+        custom_attrs:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserCustomAttr'
+          description: 自定义字段列表。
+        enterprise_email:
+          type: string
+          example: "demo@mail.com"
+          description: 企业邮箱。需管理员启用邮箱服务后生效。
+        job_title:
+          type: string
+          example: "xxxxx"
+          description: 职务名称。字符上限 255。默认为空。
+        geo:
+          type: string
+          example: "cn"
+          description: 数据驻留地。默认为空。
+        job_level_id:
+          type: string
+          example: "mga5oa8ayjlp9rb"
+          description: 职级 ID。默认为空。
+        job_family_id:
+          type: string
+          example: "mga5oa8ayjlp9rb"
+          description: 序列 ID。默认为空。
+        subscription_ids:
+          type: array
+          items:
+            type: string
+          example: ["23213213213123123"]
+          description: 分配给用户的席位 ID 列表。
+        dotted_line_leader_user_ids:
+          type: array
+          items:
+            type: string
+          example: ["ou_7dab8a3d3cdcc9da365777c7ad535d62"]
+          description: 虚线上级的用户 ID 列表。
+      required:
+        - name
+        - mobile
+        - employee_type
+
+    UserOrder:
+      type: object
+      properties:
+        department_id:
+          type: string
+          example: "od-4e6ac4d14bcd5071a37a39de902c7141"
+          description: 排序对应的部门 ID。
+        user_order:
+          type: integer
+          format: int32
+          example: 100
+          description: 用户在直属部门内的排序。数值越大越靠前。默认为 0。
+        department_order:
+          type: integer
+          format: int32
+          example: 100
+          description: 用户在多个部门间的排序。数值越大越靠前。默认为 0。
+        is_primary_dept:
+          type: boolean
+          example: true
+          description: 是否为主部门。默认根据 department_ids 中第一个数据确定。
+
+    UserCustomAttr:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["TEXT", "HREF", "ENUMERATION", "PICTURE_ENUM", "GENERIC_USER"]
+          example: "TEXT"
+          description: 自定义字段类型。
+        id:
+          type: string
+          example: "DemoId"
+          description: 自定义字段 ID。通过获取企业自定义用户字段接口获得。
+        value:
+          $ref: '#/components/schemas/UserCustomAttrValue'
+          description: 自定义字段取值。
+
+    UserCustomAttrValue:
+      type: object
+      properties:
+        text:
+          type: string
+          example: "DemoText"
+          description: 文本或网页标题。
+        url:
+          type: string
+          example: "http://www.fs.cn"
+          description: 默认 URL，以 http:// 或 https:// 开头。
+        pc_url:
+          type: string
+          example: "http://www.fs.cn"
+          description: PC 端 URL。
+        option_id:
+          type: string
+          example: "edcvfrtg"
+          description: 枚举或图片类型的选项 ID。
+        generic_user:
+          $ref: '#/components/schemas/GenericUser'
+          description: 引用人员信息。
+
+    GenericUser:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "9b2fabg5"
+          description: 引用人员的用户 ID。
+        type:
+          type: integer
+          format: int32
+          example: 1
+          description: 用户类型。目前仅支持 1。
+
+    CreateUserResponseData:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserInfo'
+
+    UserInfo:
+      type: object
+      properties:
+        union_id:
+          type: string
+          example: "on_94a1ee5551019f18cd73d9f111898cf2"
+          description: 用户的 union_id。
+        user_id:
+          type: string
+          example: "3e3cf96b"
+          description: 用户的 user_id。
+        open_id:
+          type: string
+          example: "ou_7dab8a3d3cdcc9da365777c7ad535d62"
+          description: 用户的 open_id。
+        name:
+          type: string
+          example: "张三"
+          description: 用户名。
+        en_name:
+          type: string
+          example: "San Zhang"
+          description: 英文名。
+        nickname:
+          type: string
+          example: "Alex Zhang"
+          description: 别名。
+        email:
+          type: string
+          example: "zhangsan@gmail.com"
+          description: 邮箱。
+        mobile:
+          type: string
+          example: "13011111111"
+          description: 手机号。
+        mobile_visible:
+          type: boolean
+          example: false
+          description: 手机是否可见。
+        gender:
+          type: integer
+          enum: [0, 1, 2, 3]
+          example: 1
+          description: 性别。
+        avatar_key:
+          type: string
+          example: "2500c7a9-5fff-4d9a-a2de-3d59614ae28g"
+          description: 头像文件 Key。
+        avatar:
+          $ref: '#/components/schemas/AvatarInfo'
+          description: 用户头像信息。
+        status:
+          $ref: '#/components/schemas/UserStatus'
+          description: 用户状态。
+        department_ids:
+          type: array
+          items:
+            type: string
+          example: ["od-4e6ac4d14bcd5071a37a39de902c7141"]
+          description: 所属部门 ID 列表。
+        leader_user_id:
+          type: string
+          example: "ou_7dab8a3d3cdcc9da365777c7ad535d62"
+          description: 直接主管 ID。
+        city:
+          type: string
+          example: "杭州"
+          description: 工作城市。
+        country:
+          type: string
+          example: "CN"
+          description: 国家或地区。
+        work_station:
+          type: string
+          example: "北楼-H34"
+          description: 工位。
+        join_time:
+          type: integer
+          format: int32
+          example: 2147483647
+          description: 入职时间（秒级）。
+        is_tenant_manager:
+          type: boolean
+          example: false
+          description: 是否为租户超级管理员。
+        employee_no:
+          type: string
+          example: "1"
+          description: 工号。
+        employee_type:
+          type: integer
+          example: 1
+          description: 员工类型。
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserOrder'
+          description: 排序信息。
+        custom_attrs:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserCustomAttr'
+          description: 自定义字段。
+        enterprise_email:
+          type: string
+          example: "demo@mail.com"
+          description: 企业邮箱。
+        job_title:
+          type: string
+          example: "xxxxx"
+          description: 职务。
+        is_frozen:
+          type: boolean
+          example: false
+          description: 是否为暂停状态。
+        geo:
+          type: string
+          example: "cn"
+          description: 数据驻留地。
+        job_level_id:
+          type: string
+          example: "mga5oa8ayjlp9rb"
+          description: 职级 ID。
+        job_family_id:
+          type: string
+          example: "mga5oa8ayjlp9rb"
+          description: 序列 ID。
+        dotted_line_leader_user_ids:
+          type: array
+          items:
+            type: string
+          example: ["ou_7dab8a3d3cdcc9da365777c7ad535d62"]
+          description: 虚线上级 ID 列表。
+
+    AvatarInfo:
+      type: object
+      properties:
+        avatar_72:
+          type: string
+          example: "https://foo.icon.com/xxxx"
+          description: 72x72 像素头像链接。
+        avatar_240:
+          type: string
+          example: "https://foo.icon.com/xxxx"
+          description: 240x240 像素头像链接。
+        avatar_640:
+          type: string
+          example: "https://foo.icon.com/xxxx"
+          description: 640x640 像素头像链接。
+        avatar_origin:
+          type: string
+          example: "https://foo.icon.com/xxxx"
+          description: 原始头像链接。
+
+    UserStatus:
+      type: object
+      properties:
+        is_frozen:
+          type: boolean
+          example: false
+          description: 是否为暂停状态。
+        is_resigned:
+          type: boolean
+          example: false
+          description: 是否为离职状态。
+        is_activated:
+          type: boolean
+          example: true
+          description: 是否为激活状态。
+        is_exited:
+          type: boolean
+          example: false
+          description: 是否为主动退出状态。
+        is_unjoin:
+          type: boolean
+          example: false
+          description: 是否为未加入状态。
+
+    MessageCreateRequest:
+      type: object
+      properties:
+        receive_id:
+          type: string
+          example: "ou_7d8a6e6df7621556ce0d21922b676706ccs"
+          description: 消息接收者的 ID，与 `receive_id_type` 类型一致。
+        msg_type:
+          type: string
+          enum:
+            - text
+            - post
+            - image
+            - file
+            - audio
+            - media
+            - sticker
+            - interactive
+            - share_chat
+            - share_user
+            - system
+          example: "text"
+          description: 消息类型。
+        content:
+          type: string
+          example: "{\"text\":\"test content\"}"
+          description: 消息内容，JSON 结构序列化后的字符串。
+        uuid:
+          type: string
+          maxLength: 50
+          example: "选填，每次调用前请更换，如a0d69e20-1dd1-458b-k525-dfeca4015204"
+          description: 请求去重标识。
+      required:
+        - receive_id
+        - msg_type
+        - content
+
+    MessageCreateResponseData:
+      type: object
+      properties:
+        message_id:
+          type: string
+          example: "om_dc13264520392913993dd051dba21dcf"
+          description: 消息 ID。
+        root_id:
+          type: string
+          example: "om_40eb06e7b84dc71c03e009ad3c754195"
+          description: 根消息 ID。
+        parent_id:
+          type: string
+          example: "om_d4be107c616aed9c1da8ed8068570a9f"
+          description: 父消息 ID。
+        thread_id:
+          type: string
+          example: "omt_d4be107c616a"
+          description: 话题 ID。
+        msg_type:
+          type: string
+          enum:
+            - text
+            - post
+            - image
+            - file
+            - audio
+            - media
+            - sticker
+            - interactive
+            - share_chat
+            - share_user
+            - system
+          example: "interactive"
+          description: 消息类型。
+        create_time:
+          type: string
+          example: "1615380573411"
+          description: 消息生成时间（毫秒）。
+        update_time:
+          type: string
+          example: "1615380573411"
+          description: 消息更新时间（毫秒）。
+        deleted:
+          type: boolean
+          example: false
+          description: 是否被撤回。
+        updated:
+          type: boolean
+          example: false
+          description: 是否被更新。
+        chat_id:
+          type: string
+          example: "oc_5ad11d72b830411d72b836c20"
+          description: 所属群 ID。
+        sender:
+          $ref: '#/components/schemas/SenderInfo'
+          description: 发送者信息。
+        body:
+          $ref: '#/components/schemas/MessageBody'
+          description: 消息内容。
+        mentions:
+          type: array
+          items:
+            $ref: '#/components/schemas/MentionInfo'
+          description: 被 @ 的用户列表。
+        upper_message_id:
+          type: string
+          example: "om_40eb06e7b84dc71c03e009ad3c754195"
+          description: 合并转发上层消息 ID。
+
+    SenderInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "cli_9f427eec54ae901b"
+          description: 发送者 ID。
+        id_type:
+          type: string
+          enum: ["open_id", "app_id"]
+          example: "app_id"
+          description: 发送者 ID 类型。
+        sender_type:
+          type: string
+          enum: ["user", "app", "anonymous", "unknown"]
+          example: "app"
+          description: 发送者类型。
+        tenant_key:
+          type: string
+          example: "736588c9260f175e"
+          description: 租户唯一标识。
+
+    MessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+          example: "{\"text\":\"@_user_1 test content\"}"
+          description: 消息内容（JSON 序列化）。
+
+    MentionInfo:
+      type: object
+      properties:
+        key:
+          type: string
+          example: "@_user_1"
+          description: 被 @ 的用户序号。
+        id:
+          type: string
+          example: "ou_155184d1e73cbfb8973e5a9e698e74f2"
+          description: 被 @ 的用户的 open_id。
+        id_type:
+          type: string
+          example: "open_id"
+          description: 被 @ 的用户的 ID 类型。
+        name:
+          type: string
+          example: "Tom"
+          description: 被 @ 的用户姓名。
+        tenant_key:
+          type: string
+          example: "736588c9260f175e"
+          description: 租户唯一标识。
+
+    CalendarCreateRequest:
+      type: object
+      properties:
+        summary:
+          type: string
+          maxLength: 255
+          example: "测试日历"
+          description: 日历标题。默认为空。
+        description:
+          type: string
+          maxLength: 255
+          example: "使用开放接口创建日历"
+          description: 日历描述。默认为空。
+        permissions:
+          type: string
+          enum: ["private", "show_only_free_busy", "public"]
+          example: "private"
+          description: 日历公开范围。默认为 show_only_free_busy。
+        color:
+          type: integer
+          format: int32
+          example: -1
+          description: 日历颜色（RGB 的 int32 表示）。默认为 -14513409。
+        summary_alias:
+          type: string
+          maxLength: 255
+          example: "日历备注名"
+          description: 日历备注名。默认为空。
+
+    CalendarCreateResponseData:
+      type: object
+      properties:
+        calendar:
+          $ref: '#/components/schemas/CalendarInfo'
+
+    CalendarInfo:
+      type: object
+      properties:
+        calendar_id:
+          type: string
+          example: "feishu.cn_xxxxxxxxxx@group.calendar.feishu.cn"
+          description: 日历 ID。
+        summary:
+          type: string
+          example: "测试日历"
+          description: 日历标题。
+        description:
+          type: string
+          example: "使用开放接口创建日历"
+          description: 日历描述。
+        permissions:
+          type: string
+          enum: ["private", "show_only_free_busy", "public"]
+          example: "private"
+          description: 日历公开范围。
+        color:
+          type: integer
+          format: int32
+          example: -1
+          description: 日历颜色。
+        type:
+          type: string
+          enum: ["unknown", "primary", "shared", "google", "resource", "exchange"]
+          example: "shared"
+          description: 日历类型。
+        summary_alias:
+          type: string
+          example: "日历备注名"
+          description: 日历备注名。
+        is_deleted:
+          type: boolean
+          example: false
+          description: 是否已被标记删除。
+        is_third_party:
+          type: boolean
+          example: false
+          description: 是否为第三方日历。
+        role:
+          type: string
+          enum: ["unknown", "free_busy_reader", "reader", "writer", "owner"]
+          example: "owner"
+          description: 当前身份对该日历的访问权限。
+
+    CommonErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          example: 40001
+          description: 错误码。
+        msg:
+          type: string
+          example: "param error"
+          description: 错误描述。
+
+    GetUserInfoResponseData:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "zhangsan"
+          description: 用户姓名。
+        en_name:
+          type: string
+          example: "zhangsan"
+          description: 用户英文名称。
+        avatar_url:
+          type: string
+          example: "www.feishu.cn/avatar/icon"
+          description: 用户头像。
+        avatar_thumb:
+          type: string
+          example: "www.feishu.cn/avatar/icon_thumb"
+          description: 用户头像 72x72。
+        avatar_middle:
+          type: string
+          example: "www.feishu.cn/avatar/icon_middle"
+          description: 用户头像 240x240。
+        avatar_big:
+          type: string
+          example: "www.feishu.cn/avatar/icon_big"
+          description: 用户头像 640x640。
+        open_id:
+          type: string
+          example: "ou-caecc734c2e3328a62489fe0648c4b98779515d3"
+          description: 用户在应用内的唯一标识。
+        union_id:
+          type: string
+          example: "on-d89jhsdhjsajkda7828enjdj328ydhhw3u43yjhdj"
+          description: 用户对ISV的唯一标识。
+        email:
+          type: string
+          example: "zhangsan@feishu.cn"
+          description: 用户邮箱。
+        enterprise_email:
+          type: string
+          example: "demo@mail.com"
+          description: 企业邮箱。
+        user_id:
+          type: string
+          example: "5d9bdxxx"
+          description: 用户 user_id。
+        mobile:
+          type: string
+          example: "+86130002883xx"
+          description: 用户手机号。
+        tenant_key:
+          type: string
+          example: "736588c92lxf175d"
+          description: 当前企业标识。
+        employee_no:
+          type: string
+          example: "111222333"
+          description: 用户工号。
+
+paths:
+  /im/v1/messages:
+    post:
+      tags:
+        - IM
+      summary: 发送消息
+      description: 向指定用户或群聊发送消息，支持文本、富文本、卡片等多种类型。
+      parameters:
+        - in: query
+          name: receive_id_type
+          required: true
+          schema:
+            type: string
+            enum: ["open_id", "union_id", "user_id", "email", "chat_id"]
+            example: "open_id"
+          description: 消息接收者 ID 类型。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageCreateRequest'
+            example:
+              receive_id: "ou_7d8a6e6df7621556ce0d21922b676706ccs"
+              msg_type: "text"
+              content: "{\"text\":\"test content\"}"
+              uuid: "选填，每次调用前请更换，如a0d69e20-1dd1-458b-k525-dfeca4015204"
+      responses:
+        '200':
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                    description: 错误码，0 表示成功。
+                  msg:
+                    type: string
+                    example: "success"
+                    description: 错误描述。
+                  data:
+                    $ref: '#/components/schemas/MessageCreateResponseData'
+                example:
+                  code: 0
+                  msg: success
+                  data:
+                    message_id: "om_dc13264520392913993dd051dba21dcf"
+                    root_id: "om_40eb06e7b84dc71c03e009ad3c754195"
+                    parent_id: "om_d4be107c616aed9c1da8ed8068570a9f"
+                    thread_id: "omt_d4be107c616a"
+                    msg_type: "interactive"
+                    create_time: "1615380573411"
+                    update_time: "1615380573411"
+                    deleted: false
+                    updated: false
+                    chat_id: "oc_5ad11d72b830411d72b836c20"
+                    sender:
+                      id: "cli_9f427eec54ae901b"
+                      id_type: "app_id"
+                      sender_type: "app"
+                      tenant_key: "736588c9260f175e"
+                    body:
+                      content: "{\"text\":\"@_user_1 test content\"}"
+                    mentions:
+                      - key: "@_user_1"
+                        id: "ou_155184d1e73cbfb8973e5a9e698e74f2"
+                        id_type: "open_id"
+                        name: "Tom"
+                        tenant_key: "736588c9260f175e"
+                    upper_message_id: "om_40eb06e7b84dc71c03e009ad3c754195"
+        '400':
+          description: 客户端错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /contact/v3/users:
+    post:
+      tags:
+        - 通讯录
+      summary: 创建用户
+      description: 向通讯录中创建一个新用户，相当于员工入职操作。
+      parameters:
+        - in: query
+          name: user_id_type
+          schema:
+            type: string
+            enum: ["open_id", "union_id", "user_id"]
+            example: "open_id"
+          description: 用户 ID 类型。默认为 open_id。
+        - in: query
+          name: department_id_type
+          schema:
+            type: string
+            enum: ["department_id", "open_department_id"]
+            example: "open_department_id"
+          description: 部门 ID 类型。默认为 open_department_id。
+        - in: query
+          name: client_token
+          schema:
+            type: string
+            example: "abcd-12345-e6f"
+          description: 幂等性令牌，避免重复创建。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+            example:
+              user_id: "3e3cf96b"
+              name: "张三"
+              en_name: "San Zhang"
+              nickname: "Alex Zhang"
+              email: "zhangsan@gmail.com"
+              mobile: "13011111111"
+              mobile_visible: false
+              gender: 1
+              avatar_key: "2500c7a9-5fff-4d9a-a2de-3d59614ae28g"
+              department_ids:
+                - "od-4e6ac4d14bcd5071a37a39de902c7141"
+              leader_user_id: "ou_7dab8a3d3cdcc9da365777c7ad535d62"
+              city: "杭州"
+              country: "CN"
+              work_station: "北楼-H34"
+              join_time: 2147483647
+              employee_no: "1"
+              employee_type: 1
+              orders:
+                - department_id: "od-4e6ac4d14bcd5071a37a39de902c7141"
+                  user_order: 100
+                  department_order: 100
+                  is_primary_dept: true
+              custom_attrs:
+                - type: "TEXT"
+                  id: "DemoId"
+                  value:
+                    text: "DemoText"
+                    url: "http://www.fs.cn"
+                    pc_url: "http://www.fs.cn"
+                    option_id: "edcvfrtg"
+                    generic_user:
+                      id: "9b2fabg5"
+                      type: 1
+              enterprise_email: "demo@mail.com"
+              job_title: "xxxxx"
+              geo: "cn"
+              job_level_id: "mga5oa8ayjlp9rb"
+              job_family_id: "mga5oa8ayjlp9rb"
+              subscription_ids:
+                - "23213213213123123"
+              dotted_line_leader_user_ids:
+                - "ou_7dab8a3d3cdcc9da365777c7ad535d62"
+      responses:
+        '200':
+          description: 成功创建用户
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  msg:
+                    type: string
+                    example: "success"
+                  data:
+                    $ref: '#/components/schemas/CreateUserResponseData'
+                example:
+                  code: 0
+                  msg: success
+                  data:
+                    user:
+                      union_id: "on_94a1ee5551019f18cd73d9f111898cf2"
+                      user_id: "3e3cf96b"
+                      open_id: "ou_7dab8a3d3cdcc9da365777c7ad535d62"
+                      name: "张三"
+                      en_name: "San Zhang"
+                      nickname: "Alex Zhang"
+                      email: "zhangsan@gmail.com"
+                      mobile: "13011111111"
+                      mobile_visible: false
+                      gender: 1
+                      avatar_key: "2500c7a9-5fff-4d9a-a2de-3d59614ae28g"
+                      avatar:
+                        avatar_72: "https://foo.icon.com/xxxx"
+                        avatar_240: "https://foo.icon.com/xxxx"
+                        avatar_640: "https://foo.icon.com/xxxx"
+                        avatar_origin: "https://foo.icon.com/xxxx"
+                      status:
+                        is_frozen: false
+                        is_resigned: false
+                        is_activated: true
+                        is_exited: false
+                        is_unjoin: false
+                      department_ids:
+                        - "od-4e6ac4d14bcd5071a37a39de902c7141"
+                      leader_user_id: "ou_7dab8a3d3cdcc9da365777c7ad535d62"
+                      city: "杭州"
+                      country: "CN"
+                      work_station: "北楼-H34"
+                      join_time: 2147483647
+                      is_tenant_manager: false
+                      employee_no: "1"
+                      employee_type: 1
+                      orders:
+                        - department_id: "od-4e6ac4d14bcd5071a37a39de902c7141"
+                          user_order: 100
+                          department_order: 100
+                          is_primary_dept: true
+                      custom_attrs:
+                        - type: "TEXT"
+                          id: "DemoId"
+                          value:
+                            text: "DemoText"
+                            url: "http://www.fs.cn"
+                            pc_url: "http://www.fs.cn"
+                            option_id: "edcvfrtg"
+                            option_value: "option"
+                            name: "name"
+                            picture_url: "https://xxxxxxxxxxxxxxxxxx"
+                            generic_user:
+                              id: "9b2fabg5"
+                              type: 1
+                      enterprise_email: "demo@mail.com"
+                      job_title: "xxxxx"
+                      is_frozen: false
+                      geo: "cn"
+                      job_level_id: "mga5oa8ayjlp9rb"
+                      job_family_id: "mga5oa8ayjlp9rb"
+                      dotted_line_leader_user_ids:
+                        - "ou_7dab8a3d3cdcc9da365777c7ad535d62"
+        '400':
+          description: 客户端错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /calendar/v4/calendars:
+    post:
+      tags:
+        - 日历
+      summary: 创建共享日历
+      description: 为当前身份（应用或用户）创建一个共享日历。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarCreateRequest'
+            example:
+              summary: "测试日历"
+              description: "使用开放接口创建日历"
+              permissions: "private"
+              color: -1
+              summary_alias: "日历备注名"
+      responses:
+        '200':
+          description: 成功创建日历
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  msg:
+                    type: string
+                    example: "success"
+                  data:
+                    $ref: '#/components/schemas/CalendarCreateResponseData'
+                example:
+                  code: 0
+                  msg: success
+                  data:
+                    calendar:
+                      calendar_id: "feishu.cn_xxxxxxxxxx@group.calendar.feishu.cn"
+                      summary: "测试日历"
+                      description: "使用开放接口创建日历"
+                      permissions: "private"
+                      color: -1
+                      type: "shared"
+                      summary_alias: "日历备注名"
+                      is_deleted: false
+                      is_third_party: false
+                      role: "owner"
+        '400':
+          description: 客户端错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /authen/v1/user_info:
+    get:
+      tags:
+        - 认证
+      summary: 获取用户信息
+      description: 通过 user_access_token 获取当前用户的详细信息。
+      responses:
+        '200':
+          description: 成功获取用户信息
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  msg:
+                    type: string
+                    example: "success"
+                  data:
+                    $ref: '#/components/schemas/GetUserInfoResponseData'
+                example:
+                  code: 0
+                  msg: success
+                  data:
+                    name: "zhangsan"
+                    en_name: "zhangsan"
+                    avatar_url: "www.feishu.cn/avatar/icon"
+                    avatar_thumb: "www.feishu.cn/avatar/icon_thumb"
+                    avatar_middle: "www.feishu.cn/avatar/icon_middle"
+                    avatar_big: "www.feishu.cn/avatar/icon_big"
+                    open_id: "ou-caecc734c2e3328a62489fe0648c4b98779515d3"
+                    union_id: "on-d89jhsdhjsajkda7828enjdj328ydhhw3u43yjhdj"
+                    email: "zhangsan@feishu.cn"
+                    enterprise_email: "demo@mail.com"
+                    user_id: "5d9bdxxx"
+                    mobile: "+86130002883xx"
+                    tenant_key: "736588c92lxf175d"
+                    employee_no: "111222333"
+        '400':
+          description: 客户端错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+      security:
+        - bearerAuth: []
+
+securitySchemes:
+  bearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: 使用 Bearer Token 进行认证。Token 类型为 tenant_access_token 或 user_access_token。
