@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# @Time   : 2023/07/01 10:00
+# @Time   : 2025/12/03 10:00
 # @Author : Smart Auto Platform
 # @File   : api_parser.py
 # @describe: API文档解析模块，支持多种API文档格式的解析
@@ -16,6 +16,7 @@ from utils.logging_tool.log_control import INFO, ERROR
 from utils.other_tools.exceptions import APIParserError
 from dataclasses import dataclass
 from typing import Optional, List, Dict, Any
+from urllib.parse import urlparse
 
 
 @dataclass
@@ -71,8 +72,8 @@ class APIParser:
         raise NotImplementedError("子类必须实现此方法")
 
 
-class SwaggerParser(APIParser):
-    """Swagger/OpenAPI文档解析器"""
+class OpenAPIParser(APIParser):
+    """OpenAPI文档解析器（兼容Swagger/OpenAPI）"""
     
     def __init__(self, api_doc_path: str):
         super().__init__(api_doc_path)
@@ -81,19 +82,33 @@ class SwaggerParser(APIParser):
         self.base_path = ""
         
     def load_api_doc(self) -> Dict:
-        """加载Swagger/OpenAPI文档"""
+        """加载OpenAPI/Swagger文档"""
         try:
-            path = Path(self.api_doc_path)
-            if not path.exists():
-                raise FileNotFoundError(f"API文档文件不存在: {self.api_doc_path}")
+            # 检查是否为URL
+            if self.api_doc_path.startswith(('http://', 'https://')):
+                # 从URL加载文档
+                import requests
+                response = requests.get(self.api_doc_path)
+                response.raise_for_status()
                 
-            with open(path, 'r', encoding='utf-8') as f:
-                if path.suffix.lower() in ['.yaml', '.yml']:
-                    self.api_data = yaml.safe_load(f)
-                elif path.suffix.lower() == '.json':
-                    self.api_data = json.load(f)
+                content_type = response.headers.get('content-type', '')
+                if 'application/json' in content_type:
+                    self.api_data = response.json()
                 else:
-                    raise APIParserError(f"不支持的文件格式: {path.suffix}")
+                    self.api_data = yaml.safe_load(response.text)
+            else:
+                # 从本地文件加载文档
+                path = Path(self.api_doc_path)
+                if not path.exists():
+                    raise FileNotFoundError(f"API文档文件不存在: {self.api_doc_path}")
+                    
+                with open(path, 'r', encoding='utf-8') as f:
+                    if path.suffix.lower() in ['.yaml', '.yml']:
+                        self.api_data = yaml.safe_load(f)
+                    elif path.suffix.lower() == '.json':
+                        self.api_data = json.load(f)
+                    else:
+                        raise APIParserError(f"不支持的文件格式: {path.suffix}")
                     
             # 提取基本信息
             self.api_info = {
@@ -116,10 +131,20 @@ class SwaggerParser(APIParser):
             
         except Exception as e:
             ERROR.logger.error(f"加载API文档失败: {str(e)}")
-            raise APIParserError(f"加载API文档失败: {str(e)}")
+            # 提供更详细的错误信息
+            if isinstance(e, FileNotFoundError):
+                raise APIParserError(f"API文档文件不存在: {self.api_doc_path}")
+            elif isinstance(e, yaml.YAMLError):
+                raise APIParserError(f"YAML格式错误: {str(e)}")
+            elif isinstance(e, json.JSONDecodeError):
+                raise APIParserError(f"JSON格式错误: {str(e)}")
+            elif isinstance(e, requests.exceptions.RequestException):
+                raise APIParserError(f"网络请求错误: {str(e)}")
+            else:
+                raise APIParserError(f"加载API文档失败: {str(e)}")
             
     def parse_apis(self) -> List[APIEndpoint]:
-        """解析Swagger/OpenAPI文档中的所有API"""
+        """解析OpenAPI/Swagger文档中的所有API"""
         if not self.api_data:
             self.load_api_doc()
             
@@ -136,7 +161,15 @@ class SwaggerParser(APIParser):
             
         except Exception as e:
             ERROR.logger.error(f"解析API文档失败: {str(e)}")
-            raise APIParserError(f"解析API文档失败: {str(e)}")
+            # 提供更详细的错误信息
+            if isinstance(e, KeyError):
+                raise APIParserError(f"API文档格式不正确，缺少必要的字段: {str(e)}")
+            elif isinstance(e, AttributeError):
+                raise APIParserError(f"API文档结构不正确: {str(e)}")
+            elif isinstance(e, TypeError):
+                raise APIParserError(f"API文档数据类型错误: {str(e)}")
+            else:
+                raise APIParserError(f"解析API文档失败: {str(e)}")
             
     def extract_api_info(self, api_path: str, api_method: str, api_detail: Dict) -> APIEndpoint:
         """提取单个API的详细信息"""
@@ -212,6 +245,10 @@ class SwaggerParser(APIParser):
         )
         
         return endpoint
+
+
+# 为了向后兼容，保留SwaggerParser作为OpenAPIParser的别名
+SwaggerParser = OpenAPIParser
 
 
 class PostmanParser(APIParser):
@@ -417,6 +454,19 @@ class APIParserFactory:
     @staticmethod
     def create_parser(api_doc_path: str) -> APIParser:
         """根据API文档类型创建对应的解析器"""
+        # 检查是否为URL
+        if api_doc_path.startswith(('http://', 'https://')):
+            parsed_url = urlparse(api_doc_path)
+            
+            # 检查是否为飞书开放平台API文档
+            if 'open.feishu.cn' in parsed_url.netloc and 'document' in parsed_url.path:
+                from .dynamic_feishu_parser import DynamicFeishuParser
+                return DynamicFeishuParser(api_doc_path)
+            else:
+                # 其他URL类型，默认使用OpenAPI解析器
+                return OpenAPIParser(api_doc_path)
+        
+        # 处理本地文件
         path = Path(api_doc_path)
         
         if not path.exists():
@@ -424,7 +474,7 @@ class APIParserFactory:
             
         # 尝试根据文件扩展名判断文档类型
         if path.suffix.lower() in ['.yaml', '.yml', '.json']:
-            # 进一步判断是否为Swagger/OpenAPI文档
+            # 进一步判断是否为OpenAPI/Swagger文档
             try:
                 with open(path, 'r', encoding='utf-8') as f:
                     if path.suffix.lower() in ['.yaml', '.yml']:
@@ -432,17 +482,17 @@ class APIParserFactory:
                     else:
                         doc = json.load(f)
                         
-                # 检查是否包含Swagger/OpenAPI的关键字段
+                # 检查是否包含OpenAPI/Swagger的关键字段
                 if 'swagger' in doc or 'openapi' in doc:
-                    return SwaggerParser(api_doc_path)
+                    return OpenAPIParser(api_doc_path)
                 elif 'info' in doc and 'item' in doc:  # Postman集合
                     return PostmanParser(api_doc_path)
                 else:
-                    # 默认使用Swagger解析器
-                    return SwaggerParser(api_doc_path)
+                    # 默认使用OpenAPI解析器
+                    return OpenAPIParser(api_doc_path)
             except:
-                # 如果解析失败，默认使用Swagger解析器
-                return SwaggerParser(api_doc_path)
+                # 如果解析失败，默认使用OpenAPI解析器
+                return OpenAPIParser(api_doc_path)
         else:
             raise APIParserError(f"不支持的API文档格式: {path.suffix}")
 
@@ -460,8 +510,8 @@ def parse_api_document(api_doc_path: str) -> List[APIEndpoint]:
 if __name__ == '__main__':
     # 示例用法
     try:
-        # 解析Swagger/OpenAPI文档
-        apis = parse_api_document('path/to/swagger.yaml')
+        # 解析OpenAPI/Swagger文档
+        apis = parse_api_document('path/to/openapi.yaml')
         print(f"解析到 {len(apis)} 个API")
         
         # 解析Postman集合

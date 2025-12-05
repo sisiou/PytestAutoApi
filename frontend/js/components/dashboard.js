@@ -140,8 +140,15 @@ function refreshDashboardData() {
     refreshBtn.classList.add('refreshing');
     refreshBtn.disabled = true;
     
-    // 模拟API请求
-    setTimeout(() => {
+    // 调用API获取数据
+    fetch('http://localhost:19028/api/dashboard/refresh', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
         // 更新统计数据
         updateStatistics();
         
@@ -157,111 +164,218 @@ function refreshDashboardData() {
         
         // 显示成功通知
         Notification.success('仪表板数据已更新');
-    }, 1500);
+    })
+    .catch(error => {
+        console.error('刷新仪表板数据失败:', error);
+        
+        // 如果API调用失败，仍然更新界面
+        updateStatistics();
+        updateRecentTestsTable();
+        updateHighPrioritySuggestions();
+        
+        // 移除刷新动画
+        refreshBtn.classList.remove('refreshing');
+        refreshBtn.disabled = false;
+        
+        // 显示错误通知
+        Notification.error('刷新数据失败，显示缓存数据');
+    });
 }
 
 // 更新统计数据
 function updateStatistics() {
-    // 模拟从API获取数据
-    const stats = {
-        totalApis: 9,
-        totalTestCases: 33,
-        passRate: 81.8,
-        coverage: 0.0
-    };
-    
-    // 更新DOM
-    document.getElementById('totalApis').textContent = stats.totalApis;
-    document.getElementById('totalTestCases').textContent = stats.totalTestCases;
-    document.getElementById('passRate').textContent = stats.passRate + '%';
-    document.getElementById('coverage').textContent = stats.coverage + '%';
+    // 调用API获取数据
+    fetch('http://localhost:19028/api/dashboard/statistics', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // 更新DOM
+        document.getElementById('totalApis').textContent = data.totalApis || 0;
+        document.getElementById('totalTestCases').textContent = data.totalTestCases || 0;
+        document.getElementById('passRate').textContent = (data.passRate || 0) + '%';
+        document.getElementById('coverage').textContent = (data.coverage || 0) + '%';
+    })
+    .catch(error => {
+        console.error('获取统计数据失败:', error);
+        
+        // 如果API调用失败，使用模拟数据
+        const stats = {
+            totalApis: 9,
+            totalTestCases: 33,
+            passRate: 81.8,
+            coverage: 0.0
+        };
+        
+        // 更新DOM
+        document.getElementById('totalApis').textContent = stats.totalApis;
+        document.getElementById('totalTestCases').textContent = stats.totalTestCases;
+        document.getElementById('passRate').textContent = stats.passRate + '%';
+        document.getElementById('coverage').textContent = stats.coverage + '%';
+    });
 }
 
 // 更新最新测试执行表格
 function updateRecentTestsTable() {
-    // 模拟从API获取数据
-    const recentTests = [
-        { name: '用户注册测试', status: 'pass', time: '2分钟前' },
-        { name: '用户登录测试', status: 'pass', time: '5分钟前' },
-        { name: '商品浏览测试', status: 'fail', time: '8分钟前' },
-        { name: '添加商品到购物车测试', status: 'pass', time: '10分钟前' },
-        { name: '创建订单测试', status: 'pass', time: '12分钟前' }
-    ];
-    
-    // 构建表格HTML
-    let tableHTML = '';
-    recentTests.forEach(test => {
-        const statusBadge = test.status === 'pass' 
-            ? '<span class="badge bg-success">通过</span>' 
-            : '<span class="badge bg-danger">失败</span>';
+    // 调用API获取数据
+    fetch('http://localhost:19028/api/dashboard/recent-tests', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // 构建表格HTML
+        let tableHTML = '';
+        data.forEach(test => {
+            const statusBadge = test.status === 'pass' 
+                ? '<span class="badge bg-success">通过</span>' 
+                : '<span class="badge bg-danger">失败</span>';
+            
+            tableHTML += `
+                <tr>
+                    <td>${test.name}</td>
+                    <td>${statusBadge}</td>
+                    <td>${test.time}</td>
+                </tr>
+            `;
+        });
         
-        tableHTML += `
-            <tr>
-                <td>${test.name}</td>
-                <td>${statusBadge}</td>
-                <td>${test.time}</td>
-            </tr>
-        `;
+        // 更新DOM
+        document.getElementById('recentTestsTable').innerHTML = tableHTML;
+    })
+    .catch(error => {
+        console.error('获取最新测试执行数据失败:', error);
+        
+        // 如果API调用失败，使用模拟数据
+        const recentTests = [
+            { name: '用户注册测试', status: 'pass', time: '2分钟前' },
+            { name: '用户登录测试', status: 'pass', time: '5分钟前' },
+            { name: '商品浏览测试', status: 'fail', time: '8分钟前' },
+            { name: '添加商品到购物车测试', status: 'pass', time: '10分钟前' },
+            { name: '创建订单测试', status: 'pass', time: '12分钟前' }
+        ];
+        
+        // 构建表格HTML
+        let tableHTML = '';
+        recentTests.forEach(test => {
+            const statusBadge = test.status === 'pass' 
+                ? '<span class="badge bg-success">通过</span>' 
+                : '<span class="badge bg-danger">失败</span>';
+            
+            tableHTML += `
+                <tr>
+                    <td>${test.name}</td>
+                    <td>${statusBadge}</td>
+                    <td>${test.time}</td>
+                </tr>
+            `;
+        });
+        
+        // 更新DOM
+        document.getElementById('recentTestsTable').innerHTML = tableHTML;
     });
-    
-    // 更新DOM
-    document.getElementById('recentTestsTable').innerHTML = tableHTML;
 }
 
 // 更新高优先级建议
 function updateHighPrioritySuggestions() {
-    // 模拟从API获取数据
-    const suggestions = [
-        {
-            title: '加强认证相关API的安全测试',
-            description: '增加对认证相关API的安全测试，包括SQL注入、XSS攻击等常见安全漏洞的测试。',
-            priority: 'critical',
-            type: '安全测试',
-            effort: '4-8小时'
-        },
-        {
-            title: '提高用户注册登录场景功能覆盖度',
-            description: '当前功能覆盖度为0.0%，建议增加测试用例以覆盖所有功能点。',
-            priority: 'high',
-            type: '覆盖度',
-            effort: '2-4小时'
-        },
-        {
-            title: '增加商品浏览购买场景的参数覆盖度',
-            description: '当前参数覆盖度为0.0%，建议增加不同参数组合的测试用例。',
-            priority: 'high',
-            type: '覆盖度',
-            effort: '3-6小时'
+    // 调用API获取数据
+    fetch('http://localhost:19028/api/dashboard/suggestions', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
         }
-    ];
-    
-    // 构建建议列表HTML
-    let suggestionsHTML = '';
-    suggestions.forEach((suggestion, index) => {
-        const isLast = index === suggestions.length - 1;
-        const borderClass = isLast ? '' : 'border-bottom';
-        
-        const priorityBadge = getPriorityBadge(suggestion.priority);
-        
-        suggestionsHTML += `
-            <div class="suggestion-item p-3 ${borderClass}">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h6 class="mb-1">${suggestion.title}</h6>
-                        <p class="text-muted small mb-2">${suggestion.description}</p>
+    })
+    .then(response => response.json())
+    .then(data => {
+        // 构建建议列表HTML
+        let suggestionsHTML = '';
+        data.forEach((suggestion, index) => {
+            const isLast = index === data.length - 1;
+            const borderClass = isLast ? '' : 'border-bottom';
+            
+            const priorityBadge = getPriorityBadge(suggestion.priority);
+            
+            suggestionsHTML += `
+                <div class="suggestion-item p-3 ${borderClass}">
+                    <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            ${priorityBadge}
-                            <span class="badge bg-secondary me-1">${suggestion.type}</span>
-                            <span class="badge bg-light text-dark">预计工作量: ${suggestion.effort}</span>
+                            <h6 class="mb-1">${suggestion.title}</h6>
+                            <p class="text-muted small mb-2">${suggestion.description}</p>
+                            <div>
+                                ${priorityBadge}
+                                <span class="badge bg-secondary me-1">${suggestion.type}</span>
+                                <span class="badge bg-light text-dark">预计工作量: ${suggestion.effort}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
+        });
+        
+        // 更新DOM
+        document.getElementById('highPrioritySuggestions').innerHTML = suggestionsHTML;
+    })
+    .catch(error => {
+        console.error('获取高优先级建议数据失败:', error);
+        
+        // 如果API调用失败，使用模拟数据
+        const suggestions = [
+            {
+                title: '加强认证相关API的安全测试',
+                description: '增加对认证相关API的安全测试，包括SQL注入、XSS攻击等常见安全漏洞的测试。',
+                priority: 'critical',
+                type: '安全测试',
+                effort: '4-8小时'
+            },
+            {
+                title: '提高用户注册登录场景功能覆盖度',
+                description: '当前功能覆盖度为0.0%，建议增加测试用例以覆盖所有功能点。',
+                priority: 'high',
+                type: '覆盖度',
+                effort: '2-4小时'
+            },
+            {
+                title: '增加商品浏览购买场景的参数覆盖度',
+                description: '当前参数覆盖度为0.0%，建议增加不同参数组合的测试用例。',
+                priority: 'high',
+                type: '覆盖度',
+                effort: '3-6小时'
+            }
+        ];
+        
+        // 构建建议列表HTML
+        let suggestionsHTML = '';
+        suggestions.forEach((suggestion, index) => {
+            const isLast = index === suggestions.length - 1;
+            const borderClass = isLast ? '' : 'border-bottom';
+            
+            const priorityBadge = getPriorityBadge(suggestion.priority);
+            
+            suggestionsHTML += `
+                <div class="suggestion-item p-3 ${borderClass}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">${suggestion.title}</h6>
+                            <p class="text-muted small mb-2">${suggestion.description}</p>
+                            <div>
+                                ${priorityBadge}
+                                <span class="badge bg-secondary me-1">${suggestion.type}</span>
+                                <span class="badge bg-light text-dark">预计工作量: ${suggestion.effort}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        // 更新DOM
+        document.getElementById('highPrioritySuggestions').innerHTML = suggestionsHTML;
     });
-    
-    // 更新DOM
-    document.getElementById('highPrioritySuggestions').innerHTML = suggestionsHTML;
 }
 
 // 获取优先级徽章HTML

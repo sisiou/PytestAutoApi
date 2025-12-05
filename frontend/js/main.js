@@ -54,29 +54,10 @@ function initPageSpecificFeatures() {
     
     // 根据不同页面初始化特定功能
     if (currentPath.includes('api-docs.html')) {
-        console.log('检测到API文档页面，将延迟初始化页面功能');
-        // 延迟初始化API文档页面功能，确保组件JS已加载
-        setTimeout(() => {
-            console.log('开始初始化API文档页面功能');
-            if (typeof initApiDocsPage === 'function') {
-                initApiDocsPage();
-                console.log('initApiDocsPage 执行完成');
-            } else {
-                console.error('initApiDocsPage 函数未定义');
-            }
-            if (typeof bindEventListeners === 'function') {
-                bindEventListeners();
-                console.log('bindEventListeners 执行完成');
-            } else {
-                console.error('bindEventListeners 函数未定义');
-            }
-            if (typeof loadApiData === 'function') {
-                loadApiData();
-                console.log('loadApiData 执行完成');
-            } else {
-                console.error('loadApiData 函数未定义');
-            }
-        }, 100); // 减少延迟时间
+        console.log('检测到API文档页面，但该页面已迁移，重定向到智能测试生成页面');
+        // 重定向到智能测试生成页面
+        window.location.href = 'smart-test-generation.html';
+        return;
     } else if (currentPath.includes('test-cases.html')) {
         // 测试用例页面特定初始化
         setTimeout(() => {
@@ -84,6 +65,11 @@ function initPageSpecificFeatures() {
                 initTestCasesPage();
             }
         }, 100);
+    } else if (currentPath.includes('smart-test-generation.html')) {
+        // 智能测试生成页面特定初始化
+        // 由smart-test-generation.js自行处理初始化
+        console.log('检测到智能测试生成页面，组件JS会自行处理初始化');
+        return;
     } else if (currentPath.includes('coverage.html')) {
         // 覆盖度页面特定初始化
         setTimeout(() => {
@@ -138,8 +124,8 @@ function animateElements() {
 
 // API请求封装
 const API = {
-    // 基础URL
-    baseUrl: '/api',
+    // 基础URL - 修改为与后端服务端口一致
+    baseUrl: 'http://localhost:5000/api',
     
     // GET请求
     get: async function(endpoint) {
@@ -207,6 +193,23 @@ const API = {
             return await response.json();
         } catch (error) {
             console.error('API DELETE Error:', error);
+            throw error;
+        }
+    },
+    
+    // 文件上传
+    upload: async function(endpoint, formData) {
+        try {
+            const response = await fetch(`${this.baseUrl}${endpoint}`, {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                throw new Error(`上传失败: ${response.status} ${response.statusText}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API Upload Error:', error);
             throw error;
         }
     }

@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试中心 - 智能自动化测试平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+    <link href="../css/main.css?v=20251205" rel="stylesheet">
+    <!-- 添加js-yaml库 -->
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <style>
+        /* 步骤指示器样式 */
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .step {
+            text-align: center;
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .step::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            right: -50%;
+            height: 2px;
+            background-color: #e9ecef;
+            z-index: -1;
+        }
+        
+        .step:last-child::before {
+            display: none;
+        }
+        
+        .step.active::before {
+            background-color: #0d6efd;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+        }
+        
+        .step.active .step-circle {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        .step.completed .step-circle {
+            background-color: #198754;
+            color: white;
+        }
+        
+        .step-title {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .step.active .step-title {
+            color: #0d6efd;
+            font-weight: 500;
+        }
+        
+        .step.completed .step-title {
+            color: #198754;
+        }
+        
+        /* 上传区域样式 */
+        .upload-container {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+        }
+        
+        .upload-container.dragover {
+            border-color: #0d6efd;
+            background-color: #e7f1ff;
+        }
+        
+        .upload-container.uploading {
+            border-color: #198754;
+            background-color: #d1e7dd;
+        }
+        
+        .upload-container.error {
+            border-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        
+        /* 卡片样式 */
+        .scene-card {
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .scene-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .relation-card {
+            margin-bottom: 15px;
+            border-left: 4px solid #0d6efd;
+        }
+        
+        .test-case-card {
+            margin-bottom: 15px;
+            border-left: 4px solid #198754;
+        }
+        
+        /* API方法标签样式 */
+        .api-badge {
+            font-size: 0.8rem;
+            padding: 3px 6px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .method-get { background-color: #d1ecf1; color: #0c5460; }
+        .method-post { background-color: #d4edda; color: #155724; }
+        .method-put { background-color: #fff3cd; color: #856404; }
+        .method-delete { background-color: #f8d7da; color: #721c24; }
+        .method-patch { background-color: #e2e3e5; color: #41464b; }
+        
+        /* 代码容器样式 */
+        .code-container {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        /* 加载遮罩样式 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        /* 标签页内容样式 */
+        .tab-content {
+            min-height: 400px;
+        }
+        
+        /* 文件图标样式 */
+        .file-icon {
+            font-size: 4rem;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+        
+        .file-icon-small {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            color: #495057;
+        }
+        
+        /* 文件列表样式 */
+        .file-list {
+            margin-top: 30px;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        
+        .file-info {
+            flex-grow: 1;
+        }
+        
+        .file-name {
+            font-weight: 500;
+        }
+        
+        .file-size {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .file-status {
+            margin-left: 15px;
+        }
+        
+        .file-actions {
+            margin-left: 15px;
+        }
+        
+        /* 处理状态样式 */
+        .processing-status {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        /* 方法标签样式 */
+        .method-badge {
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+        }
+        
+        .method-get {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .method-post {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .method-put {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .method-delete {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="fas fa-robot me-2"></i>智能自动化测试平台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html">
+                            <i class="fas fa-home me-1"></i>首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">
+                            <i class="fas fa-tachometer-alt me-1"></i>仪表板
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="test-center.html">
+                            <i class="fas fa-vial me-1"></i>测试中心
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="coverage.html">
+                            <i class="fas fa-chart-pie me-1"></i>覆盖度报告
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="suggestions.html">
+                            <i class="fas fa-lightbulb me-1"></i>智能建议
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>管理员
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-1"></i>设置</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-question-circle me-1"></i>帮助</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-1"></i>退出</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 面包屑导航 -->
+    <div class="container mt-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="../index.html">首页</a></li>
+                <li class="breadcrumb-item active">测试中心</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- 主要内容 -->
+    <main class="container mt-4">
+        <!-- 页面标题 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">测试中心</h1>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" id="refreshBtn">
+                    <i class="fas fa-sync-alt me-2"></i>刷新
+                </button>
+            </div>
+        </div>
+
+        <!-- 功能标签页 -->
+        <ul class="nav nav-tabs" id="testTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="smart-test-tab" data-bs-toggle="tab" data-bs-target="#smart-test" type="button" role="tab" aria-controls="smart-test" aria-selected="true">
+                    <i class="fas fa-magic me-2"></i>智能测试生成
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="test-cases-tab" data-bs-toggle="tab" data-bs-target="#test-cases" type="button" role="tab" aria-controls="test-cases" aria-selected="false">
+                    <i class="fas fa-vial me-2"></i>测试用例
+                </button>
+            </li>
+        </ul>
+
+        <!-- 标签页内容 -->
+        <div class="tab-content" id="testTabsContent">
+            <!-- 智能测试生成标签页 -->
+            <div class="tab-pane fade show active" id="smart-test" role="tabpanel" aria-labelledby="smart-test-tab">
+                <!-- 步骤指示器 -->
+                <div class="step-indicator mt-4">
+                    <div class="step active" id="step1">
+                        <div class="step-circle">1</div>
+                        <div class="step-title">上传接口文档</div>
+                    </div>
+                    <div class="step" id="step2">
+                        <div class="step-circle">2</div>
+                        <div class="step-title">分析API</div>
+                    </div>
+                    <div class="step" id="step3">
+                        <div class="step-circle">3</div>
+                        <div class="step-title">生成测试用例</div>
+                    </div>
+                </div>
+
+                <!-- 步骤1: 上传API文档 -->
+                <div class="step-content" id="step1Content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">步骤1: 上传接口文档</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- 上传区域 -->
+                            <div class="upload-container" id="smartUploadContainer">
+                                <i class="fas fa-cloud-upload-alt file-icon"></i>
+                                <h4>上传接口文档</h4>
+                                <p class="text-muted">支持OpenAPI 3.0规范的JSON或YAML格式文档</p>
+                                <button class="btn btn-primary" id="smartUploadBtn">
+                                    <i class="fas fa-upload me-2"></i>选择文件
+                                </button>
+                                <input type="file" id="smartFileInput" accept=".json,.yaml,.yml" style="display: none;">
+                                <div class="mt-3">
+                                    <p class="mb-0">或者</p>
+                                    <div class="input-group mt-2">
+                                        <input type="url" class="form-control" id="smartApiUrl" placeholder="输入接口文档URL">
+                                        <button class="btn btn-outline-primary" id="smartFetchUrlBtn">
+                                            <i class="fas fa-download me-2"></i>从URL获取
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 文本输入区域 -->
+                            <div class="mt-4">
+                                <h5>或者直接输入接口文档内容</h5>
+                                <textarea class="form-control" id="apiTextInput" rows="10" placeholder="在此输入JSON或YAML格式的接口文档内容..."></textarea>
+                                <div class="mt-2">
+                                    <button class="btn btn-success" id="parseTextBtn" disabled>
+                                        <i class="fas fa-code me-2"></i>解析文本
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 文件信息 -->
+                            <div class="file-info mt-4" id="smartFileInfo" style="display: none;">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">已上传的接口文档</h6>
+                                        <button class="btn btn-sm btn-outline-danger" id="smartRemoveFileBtn">
+                                            <i class="fas fa-trash me-1"></i>移除
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p><strong>文件名:</strong> <span id="smartFileName"></span></p>
+                                                <p><strong>文件大小:</strong> <span id="smartFileSize"></span></p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p><strong>API版本:</strong> <span id="smartApiVersion"></span></p>
+                                                <p><strong>API标题:</strong> <span id="smartApiTitle"></span></p>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <button class="btn btn-success" id="smartAnalyzeBtn">
+                                                <i class="fas fa-search me-2"></i>分析API并继续
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤2: 分析API -->
+                <div class="step-content" id="step2Content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">步骤2: 分析API</h5>
+                            <button class="btn btn-outline-secondary" id="backToStep1Btn">
+                                <i class="fas fa-arrow-left me-2"></i>返回上一步
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>API端点</h5>
+                                    <div class="api-list" id="apiList">
+                                        <!-- API端点列表将通过JavaScript动态生成 -->
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>测试场景</h5>
+                                    <div class="scenes-list" id="scenesList">
+                                        <!-- 场景列表将通过JavaScript动态生成 -->
+                                    </div>
+                                    <div class="mt-3">
+                                        <button class="btn btn-outline-primary" id="addSceneBtn">
+                                            <i class="fas fa-plus me-2"></i>添加自定义场景
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h5>API依赖关系</h5>
+                                    <div class="relations-list" id="relationsList">
+                                        <!-- 依赖关系列表将通过JavaScript动态生成 -->
+                                    </div>
+                                    <div class="mt-3">
+                                        <button class="btn btn-outline-primary" id="addRelationBtn">
+                                            <i class="fas fa-plus me-2"></i>添加自定义依赖关系
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-center">
+                                <button class="btn btn-success btn-lg" id="generateBtn">
+                                    <i class="fas fa-magic me-2"></i>生成测试用例
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤3: 生成测试用例 -->
+                <div class="step-content" id="step3Content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">步骤3: 生成的测试用例</h5>
+                            <div>
+                                <button class="btn btn-outline-secondary" id="backToStep2Btn">
+                                    <i class="fas fa-arrow-left me-2"></i>返回上一步
+                                </button>
+                                <button class="btn btn-primary" id="exportBtn">
+                                    <i class="fas fa-download me-2"></i>导出测试用例
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="searchCases" placeholder="搜索测试用例...">
+                                </div>
+                                <div class="col-md-6">
+                                    <select class="form-select" id="filterCases">
+                                        <option value="">所有测试用例</option>
+                                        <option value="basic">基础测试</option>
+                                        <option value="scenario">场景测试</option>
+                                        <option value="boundary">边界值测试</option>
+                                        <option value="exception">异常测试</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="test-cases-list" id="testCasesList">
+                                <!-- 测试用例列表将通过JavaScript动态生成 -->
+                            </div>
+                            <div class="mt-4 text-center">
+                                <button class="btn btn-success" id="runTestsBtn">
+                                    <i class="fas fa-play me-2"></i>运行所有测试
+                                </button>
+                                <button class="btn btn-outline-primary" id="saveBtn">
+                                    <i class="fas fa-save me-2"></i>保存配置
+                                </button>
+                                <button class="btn btn-outline-secondary" id="resetBtn">
+                                    <i class="fas fa-redo me-2"></i>重置
+                                </button>
+                                <button class="btn btn-primary" id="finishBtn">
+                                    <i class="fas fa-check me-2"></i>完成
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 测试用例标签页 -->
+            <div class="tab-pane fade" id="test-cases" role="tabpanel" aria-labelledby="test-cases-tab">
+                <!-- 页面标题和操作 -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="h4">测试用例管理</h3>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success" id="runAllCasesBtn">
+                            <i class="fas fa-play me-2"></i>运行所有测试
+                        </button>
+                        <button class="btn btn-primary" id="generateCasesBtn">
+                            <i class="fas fa-plus me-2"></i>生成测试用例
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 测试用例统计 -->
+                <section class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">测试用例总数</h5>
+                                <p class="card-text display-6" id="totalCases">33</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">通过</h5>
+                                <p class="card-text display-6 text-success" id="passedCases">27</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">失败</h5>
+                                <p class="card-text display-6 text-danger" id="failedCases">6</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">通过率</h5>
+                                <p class="card-text display-6" id="passRate">81.8%</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 筛选和搜索 -->
+                <section class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="searchCasesInput" placeholder="搜索测试用例...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">所有状态</option>
+                            <option value="passed">通过</option>
+                            <option value="failed">失败</option>
+                            <option value="skipped">跳过</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="typeFilter">
+                            <option value="">所有类型</option>
+                            <option value="basic">基础测试</option>
+                            <option value="scenario">场景测试</option>
+                            <option value="boundary">边界值测试</option>
+                            <option value="exception">异常测试</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="apiFilter">
+                            <option value="">所有API</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- 测试用例列表 -->
+                <section class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">测试用例列表</h5>
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="viewMode" id="listView" autocomplete="off" checked>
+                                    <label class="btn btn-outline-secondary" for="listView">
+                                        <i class="fas fa-list"></i>
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="viewMode" id="gridView" autocomplete="off">
+                                    <label class="btn btn-outline-secondary" for="gridView">
+                                        <i class="fas fa-th"></i>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="testCasesListContainer">
+                                    <!-- 测试用例列表将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- 模态框 -->
+    <!-- 添加场景模态框 -->
+    <div class="modal fade" id="addSceneModal" tabindex="-1" aria-labelledby="addSceneModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addSceneModalLabel">添加自定义场景</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="sceneName" class="form-label">场景名称</label>
+                            <input type="text" class="form-control" id="sceneName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sceneDescription" class="form-label">场景描述</label>
+                            <textarea class="form-control" id="sceneDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sceneApis" class="form-label">相关API</label>
+                            <div class="form-check" id="sceneApis">
+                                <!-- API复选框将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveSceneBtn">保存场景</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加依赖关系模态框 -->
+    <div class="modal fade" id="addRelationModal" tabindex="-1" aria-labelledby="addRelationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addRelationModalLabel">添加自定义依赖关系</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="relationSource" class="form-label">源API</label>
+                            <select class="form-select" id="relationSource" required>
+                                <!-- API选项将通过JavaScript动态生成 -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="relationTarget" class="form-label">目标API</label>
+                            <select class="form-select" id="relationTarget" required>
+                                <!-- API选项将通过JavaScript动态生成 -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="relationType" class="form-label">依赖类型</label>
+                            <select class="form-select" id="relationType" required>
+                                <option value="data">数据依赖</option>
+                                <option value="sequence">顺序依赖</option>
+                                <option value="auth">认证依赖</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="relationDescription" class="form-label">描述</label>
+                            <textarea class="form-control" id="relationDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveRelationBtn">保存依赖关系</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载遮罩 -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+            <h5 id="loadingMessage">正在处理，请稍候...</h5>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+    <script src="../js/test-center.js?v=20251205"></script>
+</body>
+</html>

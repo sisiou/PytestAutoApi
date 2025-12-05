@@ -1,0 +1,470 @@
+openapi: 3.0.0
+info:
+  title: 飞书即时消息接口
+  description: 调用该接口向指定用户或者群聊发送消息。支持发送的消息类型包括文本、富文本、卡片、群名片、个人名片、图片、视频、音频、文件以及表情包等。
+  version: v1
+  contact:
+    name: 飞书开放平台
+    url: https://open.feishu.cn
+  license:
+    name: 飞书开放平台协议
+    url: https://open.feishu.cn/document/ukTMukTMukTM/uYjN04SO2QjL24DN
+
+servers:
+  - url: https://open.feishu.cn
+    description: 飞书开放平台API服务器
+
+tags:
+  - name: 消息
+    description: 即时消息相关接口
+
+paths:
+  /open-apis/im/v1/messages:
+    post:
+      tags:
+        - 消息
+      summary: 发送消息
+      description: |
+        调用该接口向指定用户或者群聊发送消息。支持发送的消息类型包括文本、富文本、卡片、群名片、个人名片、图片、视频、音频、文件以及表情包等。
+        
+        前提条件：
+        - 应用需要开启机器人能力。开启能力后需要发布版本才能生效
+        - 给用户发送消息时，用户需要在机器人的可用范围内
+        - 给群组发送消息时，机器人需要在该群组中，且在群组内拥有发言权限
+        
+        使用限制：
+        - 为避免消息发送频繁对用户造成打扰，向同一用户发送消息的限频为5 QPS、向同一群组发送消息的限频为群内机器人共享5 QPS
+        - 该接口仅支持在开发者后台创建的应用机器人调用，群自定义机器人无法调用该接口
+      operationId: sendMessage
+      parameters:
+        - name: receive_id_type
+          in: query
+          description: |
+            消息接收者ID类型。支持open_id/union_id/user_id/email/chat_id
+            
+            当值为user_id，字段权限要求：获取用户user ID权限
+          required: true
+          schema:
+            type: string
+            enum:
+              - open_id
+              - union_id
+              - user_id
+              - email
+              - chat_id
+            example: open_id
+      requestBody:
+        required: true
+        content:
+          application/json; charset=utf-8:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+            examples:
+              default:
+                summary: 默认示例
+                value:
+                  receive_id: "ou_7d8a6e6df7621556ce0d21922b676706ccs"
+                  msg_type: "text"
+                  content: '{"text":"test content"}'
+                  uuid: "选填，每次调用前请更换，如a0d69e20-1dd1-458b-k525-dfeca4015204"
+      responses:
+        '200':
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendMessageResponse'
+              examples:
+                default:
+                  summary: 成功响应示例
+                  value:
+                    code: 0
+                    msg: "success"
+                    data:
+                      message_id: "om_dc13264520392913993dd051dba21dcf"
+                      root_id: "om_40eb06e7b84dc71c03e009ad3c754195"
+                      parent_id: "om_d4be107c616aed9c1da8ed8068570a9f"
+                      thread_id: "omt_d4be107c616a"
+                      msg_type: "interactive"
+                      create_time: "1615380573411"
+                      update_time: "1615380573411"
+                      deleted: false
+                      updated: false
+                      chat_id: "oc_5ad11d72b830411d72b836c20"
+                      sender:
+                        id: "cli_9f427eec54ae901b"
+                        id_type: "app_id"
+                        sender_type: "app"
+                        tenant_key: "736588c9260f175e"
+                      body:
+                        content: '{"text":"@_user_1 test content"}'
+                      mentions:
+                        - key: "@_user_1"
+                          id: "ou_155184d1e73cbfb8973e5a9e698e74f2"
+                          id_type: "open_id"
+                          name: "Tom"
+                          tenant_key: "736588c9260f175e"
+                      upper_message_id: "om_40eb06e7b84dc71c03e009ad3c754195"
+        '400':
+          description: 请求错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+      x-rate-limit:
+        description: 1000次/分钟、50次/秒
+      x-prerequisites:
+        - 应用需要开启机器人能力
+        - 用户需要在机器人的可用范围内
+        - 机器人需要在群组中且有发言权限
+      x-usage-limits:
+        - 同一用户限频5 QPS
+        - 同一群组限频5 QPS（群内机器人共享）
+        - 仅支持应用机器人调用
+
+components:
+  schemas:
+    SendMessageRequest:
+      type: object
+      required:
+        - receive_id
+        - msg_type
+        - content
+      properties:
+        receive_id:
+          type: string
+          description: |
+            消息接收者的ID，ID类型与查询参数receive_id_type的取值一致。
+            
+            注意事项：
+            - 给用户发送消息时，用户需要在机器人的可用范围内
+            - 给群组发送消息时，机器人需要在该群组中，且在群组内拥有发言权限
+            - 如果消息接收者为用户，推荐使用用户的open_id
+          example: "ou_7d8a6e6df7621556ce0d21922b676706ccs"
+        msg_type:
+          type: string
+          description: |
+            消息类型。
+            
+            可选值：
+            - text：文本
+            - post：富文本
+            - image：图片
+            - file：文件
+            - audio：语音
+            - media：视频
+            - sticker：表情包
+            - interactive：卡片
+            - share_chat：分享群名片（被分享的群名片有效期为7天）
+            - share_user：分享个人名片
+            - system：系统消息（仅支持在机器人单聊内推送系统消息）
+          enum:
+            - text
+            - post
+            - image
+            - file
+            - audio
+            - media
+            - sticker
+            - interactive
+            - share_chat
+            - share_user
+            - system
+          example: "text"
+        content:
+          type: string
+          description: |
+            消息内容，JSON结构序列化后的字符串。该参数的取值与msg_type对应。
+            
+            注意：
+            - JSON字符串需进行转义
+            - 文本消息请求体最大不能超过150KB
+            - 卡片消息、富文本消息请求体最大不能超过30KB
+            - 图片需要先上传图片，然后使用图片的Key发消息
+            - 音频、视频、文件需要先上传文件，然后使用文件的Key发消息
+          example: '{"text":"test content"}'
+        uuid:
+          type: string
+          description: |
+            自定义设置的唯一字符串序列，用于在发送消息时请求去重。
+            持有相同uuid的请求，在1小时内至多成功发送一条消息。
+            
+            注意：当发送不同的消息内容时，如果传入了该参数，则需要在每次请求时都更换该参数的取值。
+          maxLength: 50
+          example: "选填，每次调用前请更换，如a0d69e20-1dd1-458b-k525-dfeca4015204"
+
+    SendMessageResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码，非0表示失败
+          example: 0
+        msg:
+          type: string
+          description: 错误描述
+          example: "success"
+        data:
+          $ref: '#/components/schemas/MessageData'
+
+    MessageData:
+      type: object
+      properties:
+        message_id:
+          type: string
+          description: 消息ID。成功发送消息后，由系统生成的唯一ID标识。
+          example: "om_dc13264520392913993dd051dba21dcf"
+        root_id:
+          type: string
+          description: 根消息ID，仅在回复消息场景会有返回值。
+          example: "om_40eb06e7b84dc71c03e009ad3c754195"
+        parent_id:
+          type: string
+          description: 父消息ID，仅在回复消息场景会有返回值。
+          example: "om_d4be107c616aed9c1da8ed8068570a9f"
+        thread_id:
+          type: string
+          description: 消息所属的话题ID，仅在话题场景会有返回值。
+          example: "omt_d4be107c616a"
+        msg_type:
+          type: string
+          description: 消息类型
+          enum:
+            - text
+            - post
+            - image
+            - file
+            - audio
+            - media
+            - sticker
+            - interactive
+            - share_chat
+            - share_user
+            - system
+          example: "interactive"
+        create_time:
+          type: string
+          description: 消息生成的时间戳。单位：毫秒
+          example: "1615380573411"
+        update_time:
+          type: string
+          description: 消息更新的时间戳。单位：毫秒
+          example: "1615380573411"
+        deleted:
+          type: boolean
+          description: 消息是否被撤回。发送消息时只会返回false，表示未被撤回。
+          example: false
+        updated:
+          type: boolean
+          description: 消息是否被更新。发送消息时只会返回false，表示未被更新。
+          example: false
+        chat_id:
+          type: string
+          description: 消息所属的群ID。
+          example: "oc_5ad11d72b830411d72b836c20"
+        sender:
+          $ref: '#/components/schemas/Sender'
+        body:
+          $ref: '#/components/schemas/MessageBody'
+        mentions:
+          type: array
+          description: 发送的消息内，被@的用户列表。
+          items:
+            $ref: '#/components/schemas/Mention'
+        upper_message_id:
+          type: string
+          description: 合并转发消息中，上一层级的消息ID，仅在合并转发场景会有返回值。
+          example: "om_40eb06e7b84dc71c03e009ad3c754195"
+
+    Sender:
+      type: object
+      required:
+        - id
+        - id_type
+        - sender_type
+      properties:
+        id:
+          type: string
+          description: 发送者的ID
+          example: "cli_9f427eec54ae901b"
+        id_type:
+          type: string
+          description: |
+            发送者的ID类型。
+            
+            可能值：
+            - open_id：表示发送者为用户，且返回的ID是用户的open_id
+            - app_id：表示发送者为应用，且返回的ID是应用的app_id
+          enum:
+            - open_id
+            - app_id
+          example: "app_id"
+        sender_type:
+          type: string
+          description: |
+            发送者类型。
+            
+            可能值：
+            - user: 用户
+            - app: 应用
+            - anonymous: 匿名（未生效，不会返回该值）
+            - unknown: 未知（未生效，不会返回该值）
+          enum:
+            - user
+            - app
+            - anonymous
+            - unknown
+          example: "app"
+        tenant_key:
+          type: string
+          description: 租户唯一标识。该标识用来识别租户，也可以用来获取租户访问凭证。
+          example: "736588c9260f175e"
+
+    MessageBody:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: 消息内容，JSON结构序列化后的字符串，不同消息类型对应不同内容。
+          example: '{"text":"@_user_1 test content"}'
+
+    Mention:
+      type: object
+      required:
+        - key
+        - id
+        - id_type
+        - name
+      properties:
+        key:
+          type: string
+          description: 被@的用户序号。例如，第3个被@到的成员，取值为@_user_3。
+          example: "@_user_1"
+        id:
+          type: string
+          description: 被@的用户的open_id
+          example: "ou_155184d1e73cbfb8973e5a9e698e74f2"
+        id_type:
+          type: string
+          description: 被@的用户的ID类型，目前仅支持open_id
+          enum:
+            - open_id
+          example: "open_id"
+        name:
+          type: string
+          description: 被@的用户姓名
+          example: "Tom"
+        tenant_key:
+          type: string
+          description: 租户唯一标识。该标识用来识别被@用户的租户。
+          example: "736588c9260f175e"
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码
+        msg:
+          type: string
+          description: 错误描述
+        error:
+          type: object
+          properties:
+            log_id:
+              type: string
+              description: 日志ID
+            troubleshooter:
+              type: string
+              description: 排查建议链接
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: 租户访问令牌（tenant_access_token）
+      bearerFormat: "Bearer {access_token}"
+
+  parameters:
+    AuthorizationHeader:
+      name: Authorization
+      in: header
+      description: |
+        租户访问令牌。
+        
+        值格式："Bearer {access_token}"
+        
+        示例值："Bearer t-7f1bcd13fc57d46bac21793a18e560"
+      required: true
+      schema:
+        type: string
+        example: "Bearer t-7f1bcd13fc57d46bac21793a18e560"
+    ContentTypeHeader:
+      name: Content-Type
+      in: header
+      description: 固定值："application/json; charset=utf-8"
+      required: true
+      schema:
+        type: string
+        example: "application/json; charset=utf-8"
+
+  responses:
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            230001:
+              summary: 参数错误
+              value:
+                code: 230001
+                msg: "Your request contains an invalid request parameter."
+            230002:
+              summary: 机器人不在群组中
+              value:
+                code: 230002
+                msg: "The bot can not be outside the group."
+            230006:
+              summary: 未启用机器人能力
+              value:
+                code: 230006
+                msg: "Bot ability is not activated."
+            230013:
+              summary: 用户不在机器人可用范围内
+              value:
+                code: 230013
+                msg: "Bot has NO availability to this user."
+            230025:
+              summary: 消息体长度超出限制
+              value:
+                code: 230025
+                msg: "The length of the message content reaches its limit."
+            230099:
+              summary: 创建卡片内容失败
+              value:
+                code: 230099
+                msg: "Failed to create card content."
+
+x-extensions:
+  support-app-types:
+    - custom
+    - isv
+  required-scopes:
+    - im:message
+    - im:message:send_as_bot
+    - im:message:send
+  field-required-scopes:
+    - contact:user.employee_id:readonly
+  api-charging-strategy:
+    chargingMethod: basic
+    usageType: number
+    unitEquityPoint: "0"
+    featureKey: openapi_call_limit

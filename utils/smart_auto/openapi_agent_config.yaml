@@ -1,0 +1,62 @@
+# OpenAPI 3.0.0 Agent Configuration
+# This file contains configuration settings for the LangChain-based OpenAPI 3.0.0 API testing agent
+
+# OpenAI API Configuration - 使用硅基流动API
+openai:
+  api_key: "${SILICONFLOW_API_KEY}"  # 硅基流动API密钥
+  model: "Qwen/Qwen2.5-7B-Instruct"  # 使用硅基流动支持的Qwen模型
+  temperature: 0.1  # Lower temperature for more deterministic output
+  max_tokens: 2000  # Maximum tokens for API responses
+  base_url: "https://api.siliconflow.cn/v1"  # 硅基流动API的基础URL
+
+# OpenAPI 3.0.0 Parser Configuration
+openapi_parser:
+  timeout: 30  # Timeout in seconds for fetching OpenAPI docs
+  max_retries: 3  # Maximum retries for failed requests
+  validate_schema: true  # Whether to validate OpenAPI 3.0.0 schema
+  supported_versions: ["3.0.0", "3.0.1", "3.0.2", "3.0.3"]  # Supported OpenAPI versions
+
+# Feishu API Configuration
+feishu_api:
+  timeout: 30  # Timeout in seconds for fetching Feishu API docs
+  max_retries: 3  # Maximum retries for failed requests
+  app_id: ""  # Feishu application ID
+  app_secret: ""  # Feishu application secret
+  tenant_access_token_url: "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
+  api_doc_url: "https://open.feishu.cn/open-apis"  # Base URL for Feishu API documentation
+
+# Test Case Generation Configuration
+test_generator:
+  default_test_types: ["basic", "boundary", "error"]  # Types of tests to generate
+  max_test_cases_per_endpoint: 5  # Maximum test cases to generate per endpoint
+  include_negative_tests: true  # Whether to include negative test cases
+  generate_auth_tests: true  # Whether to generate authentication tests
+
+# Test Execution Configuration
+test_executor:
+  timeout: 30  # Timeout in seconds for test execution
+  max_concurrent_tests: 10  # Maximum number of tests to run concurrently
+  retry_failed_tests: true  # Whether to retry failed tests
+  max_retries: 2  # Maximum retries for failed tests
+  follow_redirects: true  # Whether to follow HTTP redirects
+  verify_ssl: true  # Whether to verify SSL certificates
+
+# Test Analysis Configuration
+test_analyzer:
+  performance_threshold_ms: 1000  # Performance threshold in milliseconds
+  security_checks: true  # Whether to perform security checks
+  generate_detailed_report: true  # Whether to generate detailed test reports
+
+# Output Configuration
+output:
+  save_test_results: true  # Whether to save test results to file
+  results_format: "json"  # Format for saving results: json, yaml, html
+  results_directory: "./test_results"  # Directory to save test results
+  include_request_response: true  # Whether to include full request/response in results
+
+# Logging Configuration
+logging:
+  level: "INFO"  # Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "./logs/openapi_agent.log"  # Log file path
+  max_file_size: "10MB"  # Maximum log file size
+  backup_count: 5  # Number of backup log files to keep

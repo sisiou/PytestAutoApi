@@ -1,0 +1,8 @@
+# AI配置文件
+ai_config:
+  # 硅基流动API配置
+  model_name: "Qwen/Qwen2.5-7B-Instruct"  # 硅基流动支持的模型，使用速度更快的7B模型
+  api_key: "${SILICONFLOW_API_KEY}"  # 您的硅基流动API密钥
+  temperature: 0.7
+  max_tokens: 8192
+  base_url: "https://api.siliconflow.cn/v1"  # 硅基流动API的基础URL

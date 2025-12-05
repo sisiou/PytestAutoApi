@@ -19,6 +19,7 @@ et-xmlfile==1.1.0
 execnet==1.9.0
 Faker==9.8.3
 Flask==2.0.3
+flask-cors==3.0.10
 h11==0.13.0
 h2==4.1.0
 hpack==4.0.0
@@ -83,3 +84,9 @@ crypto~=1.4.1
 redis~=4.3.4
 
 pydantic~=1.8.2
+
+# LangChain dependencies for Swagger Agent
+langchain>=0.0.350
+langchain-openai>=0.0.5
+openai>=1.0.0
+tiktoken>=0.5.0

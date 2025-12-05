@@ -29,7 +29,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.append(parent_dir)
 
-from utils.smart_auto.api_parser import APIParser, APIEndpoint, SwaggerParser
+from utils.smart_auto.api_parser import APIParser, APIEndpoint, OpenAPIParser
 from utils.smart_auto.dependency_analyzer import DependencyAnalyzer
 from utils.smart_auto.test_generator import TestCaseGenerator, TestSuite
 from utils.smart_auto.assertion_generator import AssertionGenerator

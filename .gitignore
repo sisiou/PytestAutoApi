@@ -73,3 +73,25 @@ report/
 results/
 logs/
 uploads/
+
+# 项目特定忽略文件
+clean_project.py
+debug_*.py
+test_*.py
+!test_case/
+!tests/
+API_*_Report.md
+LangChain_*_Report.md
+frontend_architecture.md
+oss.md
+generated_test_cases/
+smart_auto_demo/
+pytest-auto-api2/
+.trae/
+
+# 测试用例临时文件
+test_cases/*.json
+test_cases/*_test_analysis.md
+test_cases/test_*.py
+!test_cases/sendMessage.yaml
+test_cases/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/

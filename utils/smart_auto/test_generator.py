@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# @Time   : 2023/07/01 10:00
+# @Time   : 2025/12/04 10:00
 # @Author : Smart Auto Platform
 # @File   : test_generator.py
 # @describe: 测试用例自动生成模块，根据API文档和依赖关系生成测试用例
@@ -16,7 +16,6 @@ from typing import Dict, List, Set, Optional, Any, Union, Tuple
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-
 from utils.smart_auto.api_parser import parse_api_document, APIEndpoint
 from utils.smart_auto.dependency_analyzer import analyze_api_dependencies, BusinessFlow, DataDependency
 from utils.read_files_tools.yaml_control import GetYamlData
@@ -483,18 +482,58 @@ class TestCaseGenerator:
         if api.request_body:
             content_types = api.request_body.get('content_types', [])
             if content_types:
+                if 'headers' not in test_data:
+                    test_data['headers'] = {}
                 test_data['headers']['Content-Type'] = content_types[0]
                 
                 if 'application/json' in content_types[0]:
                     schema = api.request_body.get('schema', {})
-                    test_data['data'] = TestDataGenerator.generate_data_by_schema(schema)
+                    test_data['data'] = self._generate_data_from_schema(schema)
                 elif 'application/x-www-form-urlencoded' in content_types[0]:
                     schema = api.request_body.get('schema', {})
-                    test_data['data'] = TestDataGenerator.generate_data_by_schema(schema)
+                    test_data['data'] = self._generate_data_from_schema(schema)
                 elif 'multipart/form-data' in content_types[0]:
                     schema = api.request_body.get('schema', {})
-                    test_data['data'] = TestDataGenerator.generate_data_by_schema(schema)
+                    test_data['data'] = self._generate_data_from_schema(schema)
+        
+        # 针对飞书API的特殊处理
+        if hasattr(api, 'host') and 'open.feishu.cn' in api.host:
+            test_data = self._enhance_feishu_test_data(test_data, api)
             
+        return test_data
+    
+    def _enhance_feishu_test_data(self, test_data: Dict, api: APIEndpoint) -> Dict:
+        """增强飞书API的测试数据"""
+        # 飞书API通常需要特定的数据结构
+        if api.path.startswith('/open-apis/im/v1/messages'):
+            # 飞书发送消息API
+            if 'data' not in test_data:
+                test_data['data'] = {}
+            if 'receive_id_type' not in test_data['data']:
+                test_data['data']['receive_id_type'] = 'user_id'
+            if 'receive_id' not in test_data['data']:
+                test_data['data']['receive_id'] = 'test_user_id'
+            if 'msg_type' not in test_data['data']:
+                test_data['data']['msg_type'] = 'text'
+            if 'content' not in test_data['data']:
+                test_data['data']['content'] = json.dumps({"text": "这是一条测试消息"})
+                
+        elif api.path.startswith('/open-apis/contact/v3/users'):
+            # 飞书用户API
+            if 'data' not in test_data:
+                test_data['data'] = {}
+            if 'user_id_type' not in test_data['data']:
+                test_data['data']['user_id_type'] = 'user_id'
+                
+        elif api.path.startswith('/open-apis/authen/v1'):
+            # 飞书认证API
+            if 'data' not in test_data:
+                test_data['data'] = {}
+            if 'app_id' not in test_data['data']:
+                test_data['data']['app_id'] = 'test_app_id'
+            if 'app_secret' not in test_data['data']:
+                test_data['data']['app_secret'] = 'test_app_secret'
+                
         return test_data
         
     def _generate_data_from_schema(self, schema: Dict) -> Dict:
@@ -630,7 +669,11 @@ class TestCaseGenerator:
             content_types = api.request_body.get('content_types', [])
             if content_types:
                 headers['Content-Type'] = content_types[0]
-                
+        
+        # 检查是否为飞书API，添加特殊认证
+        if hasattr(api, 'host') and 'open.feishu.cn' in api.host:
+            headers["Authorization"] = "Bearer ${feishu_token()}"
+            
         return headers
         
     def _get_request_type(self, api: APIEndpoint) -> str:

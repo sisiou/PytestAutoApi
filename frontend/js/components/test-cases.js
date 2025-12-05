@@ -13,7 +13,7 @@ function initTestCasesPage() {
     // 加载API列表
     loadAPIList();
     
-    // 加载API文档列表
+    // 加载接口文档列表
     loadAPIDocList();
     
     // 绑定事件监听器
@@ -109,21 +109,50 @@ function switchViewMode(mode) {
 
 // 加载测试用例数据
 function loadTestCases() {
-    // 模拟API请求
-    setTimeout(function() {
-        const testCases = getMockTestCases();
-        window.currentTestCases = testCases;
-        updateStatistics(testCases);
+    showLoadingState();
+    
+    // 从后端API获取测试用例列表
+    fetch('http://localhost:19028/api/test-cases', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('获取测试用例列表失败');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('从后端加载的测试用例列表:', data);
         
+        // 存储测试用例数据
+        window.currentTestCases = data || [];
+        
+        // 更新统计数据
+        updateStatistics(window.currentTestCases);
+        
+        // 根据当前视图模式渲染测试用例
         const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
         if (viewMode === 'grid') {
             renderTestCasesGrid();
         } else {
             renderTestCasesList();
         }
+    })
+    .catch(error => {
+        console.error('加载测试用例失败:', error);
+        showNotification('加载测试用例失败: ' + error.message, 'error');
         
+        // 如果加载失败，显示空状态
+        window.currentTestCases = [];
+        updateStatistics(window.currentTestCases);
+        renderEmptyState();
+    })
+    .finally(() => {
         hideLoadingState();
-    }, 1000);
+    });
 }
 
 // 获取模拟测试用例数据
@@ -548,24 +577,7 @@ function renderTestCasesList() {
     const testCases = getFilteredTestCases();
     
     if (testCases.length === 0) {
-        testCasesList.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="fas fa-vial"></i>
-                </div>
-                <div class="empty-title">没有找到测试用例</div>
-                <div class="empty-description">请尝试调整搜索条件或筛选器</div>
-                <button class="btn btn-primary" id="generateFromEmptyBtn">
-                    <i class="fas fa-plus me-2"></i>生成测试用例
-                </button>
-            </div>
-        `;
-        
-        // 绑定空状态下的生成按钮事件
-        document.getElementById('generateFromEmptyBtn').addEventListener('click', function() {
-            showGenerateModal();
-        });
-        
+        renderEmptyState();
         return;
     }
     
@@ -626,24 +638,7 @@ function renderTestCasesGrid() {
     const testCases = getFilteredTestCases();
     
     if (testCases.length === 0) {
-        testCasesList.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="fas fa-vial"></i>
-                </div>
-                <div class="empty-title">没有找到测试用例</div>
-                <div class="empty-description">请尝试调整搜索条件或筛选器</div>
-                <button class="btn btn-primary" id="generateFromEmptyBtn">
-                    <i class="fas fa-plus me-2"></i>生成测试用例
-                </button>
-            </div>
-        `;
-        
-        // 绑定空状态下的生成按钮事件
-        document.getElementById('generateFromEmptyBtn').addEventListener('click', function() {
-            showGenerateModal();
-        });
-        
+        renderEmptyState();
         return;
     }
     
@@ -783,75 +778,87 @@ function filterTestCases() {
 
 // 显示测试用例详情
 function showTestCaseDetail(testCaseId) {
-    const testCase = window.currentTestCases.find(tc => tc.id == testCaseId);
-    if (!testCase) return;
-    
-    // 填充详情标签页
-    const detailsTab = document.getElementById('details');
-    detailsTab.innerHTML = `
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <h6>测试用例名称</h6>
-                <p>${testCase.name}</p>
-            </div>
-            <div class="col-md-6">
-                <h6>状态</h6>
-                <p><span class="status-badge ${testCase.status}">${getStatusText(testCase.status)}</span></p>
-            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <h6>类型</h6>
-                <p><span class="type-badge ${testCase.type}">${getTypeText(testCase.type)}</span></p>
-            </div>
-            <div class="col-md-6">
-                <h6>API</h6>
-                <p>${testCase.api}</p>
-            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-md-12">
-                <h6>描述</h6>
-                <p>${testCase.description}</p>
-            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <h6>最后运行时间</h6>
-                <p>${testCase.lastRun}</p>
-            </div>
-            <div class="col-md-6">
-                <h6>运行时长</h6>
-                <p>${testCase.duration}</p>
-            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-md-12">
-                <h6>标签</h6>
-                <div>
-                    ${testCase.tags.map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`).join('')}
+    // 从后端API获取测试用例详情
+    fetch(`http://localhost:19028/api/test-cases/${testCaseId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('获取测试用例详情失败');
+        }
+        return response.json();
+    })
+    .then(testCase => {
+        console.log('从后端加载的测试用例详情:', testCase);
+        
+        // 填充详情标签页
+        const detailsTab = document.getElementById('details');
+        detailsTab.innerHTML = `
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h6>测试用例名称</h6>
+                    <p>${testCase.name}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>状态</h6>
+                    <p><span class="status-badge ${testCase.status}">${getStatusText(testCase.status)}</span></p>
                 </div>
             </div>
-        </div>
-    `;
-    
-    // 填充代码标签页
-    const codeTab = document.getElementById('code');
-    codeTab.innerHTML = `
-        <div class="code-container">
-            <pre><code class="language-python"># ${testCase.name}
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h6>类型</h6>
+                    <p><span class="type-badge ${testCase.type}">${getTypeText(testCase.type)}</span></p>
+                </div>
+                <div class="col-md-6">
+                    <h6>API</h6>
+                    <p>${testCase.api || 'N/A'}</p>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <h6>描述</h6>
+                    <p>${testCase.description || '无描述'}</p>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h6>创建时间</h6>
+                    <p>${testCase.created_at || 'N/A'}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>HTTP方法</h6>
+                    <p>${testCase.method || 'N/A'}</p>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <h6>标签</h6>
+                    <div>
+                        ${testCase.tags && testCase.tags.length > 0 ? testCase.tags.map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`).join('') : '无标签'}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 填充代码标签页
+        const codeTab = document.getElementById('code');
+        const testName = testCase.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+        const codeContent = `# ${testCase.name}
 # ${testCase.description}
 
 import pytest
 import requests
 import json
 
-def test_${testCase.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}():
+def test_${testName}():
     """
     ${testCase.description}
     """
     # API端点
-    url = "https://api.example.com/${testCase.apiId}"
+    url = "https://api.example.com/${testCase.apiId || testCase.api}"
     
     # 请求头
     headers = {
@@ -878,56 +885,74 @@ def test_${testCase.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}():
     
     # 更多断言...
     
-    print("测试通过: ${testCase.name}")</code></pre>
-        </div>
-    `;
-    
-    // 填充测试结果标签页
-    const resultsTab = document.getElementById('results');
-    resultsTab.innerHTML = `
-        <div class="test-result-item ${testCase.status}">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <strong>测试执行结果</strong>
-                    <div class="result-message">
-                        ${testCase.status === 'passed' ? '测试通过' : '测试失败'}
+    print("测试通过: ${testCase.name}")`;
+        
+        codeTab.innerHTML = `
+            <div class="code-container">
+                <pre><code class="language-python">${codeContent}</code></pre>
+            </div>
+        `;
+        
+        // 填充测试结果标签页
+        const resultsTab = document.getElementById('results');
+        resultsTab.innerHTML = `
+            <div class="test-result-item ${testCase.status}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>测试执行结果</strong>
+                        <div class="result-message">
+                            ${testCase.status === 'passed' ? '测试通过' : '测试失败'}
+                        </div>
+                    </div>
+                    <div class="result-timestamp">
+                        ${testCase.lastRun}
                     </div>
                 </div>
-                <div class="result-timestamp">
-                    ${testCase.lastRun}
+                ${testCase.status === 'failed' ? `
+                <div class="mt-2">
+                    <strong>失败原因:</strong>
+                    <div class="alert alert-danger mt-1">
+                        断言失败: 预期状态码为200，实际返回404
+                    </div>
+                </div>
+                ` : ''}
+                <div class="mt-2">
+                    <strong>执行时长:</strong> ${testCase.duration}
                 </div>
             </div>
-            ${testCase.status === 'failed' ? `
-            <div class="mt-2">
-                <strong>失败原因:</strong>
-                <div class="alert alert-danger mt-1">
-                    断言失败: 预期状态码为200，实际返回404
-                </div>
-            </div>
-            ` : ''}
-            <div class="mt-2">
-                <strong>执行时长:</strong> ${testCase.duration}
-            </div>
-        </div>
-    `;
-    
-    // 绑定模态框按钮事件
-    document.getElementById('editBtn').onclick = function() {
-        hideTestCaseDetailModal();
-        editTestCase(testCaseId);
-    };
-    
-    document.getElementById('runBtn').onclick = function() {
-        hideTestCaseDetailModal();
-        showRunModal(testCaseId);
-    };
-    
-    // 显示模态框
-    const modal = new bootstrap.Modal(document.getElementById('testCaseDetailModal'));
-    modal.show();
-    
-    // 重新初始化代码高亮
-    Prism.highlightAll();
+        `;
+        
+        // 绑定模态框按钮事件
+        const editBtn = document.getElementById('editBtn');
+        const runBtn = document.getElementById('runBtn');
+        
+        if (editBtn) {
+            editBtn.onclick = function() {
+                hideTestCaseDetailModal();
+                editTestCase(testCaseId);
+            };
+        }
+        
+        if (runBtn) {
+            runBtn.onclick = function() {
+                hideTestCaseDetailModal();
+                showRunModal(testCaseId);
+            };
+        }
+        
+        // 显示模态框
+        const modal = new bootstrap.Modal(document.getElementById('testCaseDetailModal'));
+        modal.show();
+        
+        // 重新初始化代码高亮
+        if (window.Prism) {
+            Prism.highlightAll();
+        }
+    })
+    .catch(error => {
+        console.error('获取测试用例详情失败:', error);
+        showNotification('获取测试用例详情失败: ' + error.message, 'error');
+    });
 }
 
 // 隐藏测试用例详情模态框
@@ -979,8 +1004,7 @@ function showRunModal(testCaseId) {
     // 显示模态框
     modal.show();
     
-    // 模拟运行测试
-    let progress = 0;
+    // 调用后端API运行测试
     const testCases = testCaseId === 'all' 
         ? getFilteredTestCases() 
         : window.currentTestCases.filter(tc => tc.id == testCaseId);
@@ -988,41 +1012,60 @@ function showRunModal(testCaseId) {
     const totalTests = testCases.length;
     let completedTests = 0;
     
-    const interval = setInterval(() => {
-        completedTests++;
-        progress = Math.floor((completedTests / totalTests) * 100);
+    // 构建请求体
+    const requestBody = {
+        test_cases: testCases.map(tc => tc.id)
+    };
+    
+    // 发送运行请求
+    fetch('http://localhost:19028/api/test-cases/run', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('运行测试失败');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('测试运行结果:', data);
         
-        runProgress.style.width = progress + '%';
-        runProgress.setAttribute('aria-valuenow', progress);
-        
-        const currentTest = testCases[completedTests - 1];
-        runStatus.textContent = `正在运行: ${currentTest.name}`;
-        
-        if (completedTests >= totalTests) {
-            clearInterval(interval);
-            runStatus.textContent = `测试完成! 共运行 ${totalTests} 个测试用例`;
-            viewResultsBtn.disabled = false;
-            
-            // 更新测试用例状态
-            testCases.forEach(test => {
-                const index = window.currentTestCases.findIndex(tc => tc.id === test.id);
+        // 更新测试用例状态
+        if (data.results) {
+            data.results.forEach(result => {
+                const index = window.currentTestCases.findIndex(tc => tc.id === result.test_case_id);
                 if (index !== -1) {
-                    // 随机设置一些测试为失败状态
-                    window.currentTestCases[index].status = Math.random() > 0.8 ? 'failed' : 'passed';
-                    window.currentTestCases[index].lastRun = new Date().toLocaleString('zh-CN');
+                    window.currentTestCases[index].status = result.status;
+                    window.currentTestCases[index].lastRun = result.run_time;
+                    window.currentTestCases[index].duration = result.duration;
                 }
             });
-            
-            // 刷新界面
-            updateStatistics(window.currentTestCases);
-            const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
-            if (viewMode === 'grid') {
-                renderTestCasesGrid();
-            } else {
-                renderTestCasesList();
-            }
         }
-    }, 500);
+        
+        // 更新进度到100%
+        runProgress.style.width = '100%';
+        runProgress.setAttribute('aria-valuenow', 100);
+        runStatus.textContent = `测试完成! 共运行 ${totalTests} 个测试用例`;
+        viewResultsBtn.disabled = false;
+        
+        // 刷新界面
+        updateStatistics(window.currentTestCases);
+        const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
+        if (viewMode === 'grid') {
+            renderTestCasesGrid();
+        } else {
+            renderTestCasesList();
+        }
+    })
+    .catch(error => {
+        console.error('运行测试失败:', error);
+        runStatus.textContent = '运行测试失败: ' + error.message;
+        showNotification('运行测试失败: ' + error.message, 'error');
+    });
 }
 
 // 隐藏运行测试模态框
@@ -1046,7 +1089,7 @@ function generateTestCases() {
     const exceptionCheck = document.getElementById('exceptionCheck');
     
     if (!apiDocSelect.value) {
-        showNotification('请选择API文档', 'warning');
+        showNotification('请选择接口文档', 'warning');
         return;
     }
     
@@ -1068,26 +1111,51 @@ function generateTestCases() {
     // 显示加载状态
     showLoadingState();
     
-    // 模拟生成测试用例
-    setTimeout(() => {
-        // 生成新的测试用例
-        const newTestCases = generateMockTestCases(apiDocSelect.value, selectedTypes);
+    // 调用后端API生成测试用例
+    fetch('http://localhost:19028/api/test-cases/generate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            task_id: apiDocSelect.value,
+            test_types: selectedTypes
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('生成测试用例失败');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('测试用例生成结果:', data);
         
         // 添加到现有测试用例
-        window.currentTestCases = [...window.currentTestCases, ...newTestCases];
-        
-        // 更新统计和渲染
-        updateStatistics(window.currentTestCases);
-        const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
-        if (viewMode === 'grid') {
-            renderTestCasesGrid();
+        if (data.test_cases && data.test_cases.length > 0) {
+            window.currentTestCases = [...window.currentTestCases, ...data.test_cases];
+            
+            // 更新统计和渲染
+            updateStatistics(window.currentTestCases);
+            const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
+            if (viewMode === 'grid') {
+                renderTestCasesGrid();
+            } else {
+                renderTestCasesList();
+            }
+            
+            showNotification(`成功生成 ${data.test_cases.length} 个测试用例`, 'success');
         } else {
-            renderTestCasesList();
+            showNotification('未生成任何测试用例', 'warning');
         }
-        
+    })
+    .catch(error => {
+        console.error('生成测试用例失败:', error);
+        showNotification('生成测试用例失败: ' + error.message, 'error');
+    })
+    .finally(() => {
         hideLoadingState();
-        showNotification(`成功生成 ${newTestCases.length} 个测试用例`, 'success');
-    }, 2000);
+    });
 }
 
 // 生成模拟测试用例
@@ -1163,27 +1231,58 @@ function loadAPIList() {
     });
 }
 
-// 加载API文档列表
+// 加载接口文档列表
 function loadAPIDocList() {
     const apiDocSelect = document.getElementById('apiDocSelect');
     
-    // 获取所有API文档
-    const apiDocs = [
-        { id: 'api_1', name: '用户相关API文档' },
-        { id: 'api_2', name: '订单相关API文档' },
-        { id: 'api_3', name: '商品相关API文档' },
-        { id: 'api_4', name: '支付相关API文档' }
-    ];
-    
     // 清空现有选项
-    apiDocSelect.innerHTML = '<option value="">请选择API文档</option>';
+    apiDocSelect.innerHTML = '<option value="">请选择接口文档</option>';
     
-    // 添加API文档选项
-    apiDocs.forEach(doc => {
+    // 从后端API获取API文档列表
+    fetch('http://localhost:19028/api/docs/list', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('获取接口文档列表失败');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('从后端加载的接口文档列表:', data);
+        
+        // 如果没有接口文档，显示提示
+        if (!data || data.length === 0) {
+            const option = document.createElement('option');
+            option.value = "";
+            option.textContent = "暂无接口文档，请先解析接口文档";
+            option.disabled = true;
+            apiDocSelect.appendChild(option);
+            return;
+        }
+        
+        // 添加接口文档选项
+        data.forEach(doc => {
+            const option = document.createElement('option');
+            option.value = doc.task_id;
+            option.textContent = `${doc.source.name} (${doc.api_count}个API)`;
+            apiDocSelect.appendChild(option);
+        });
+    })
+    .catch(error => {
+        console.error('加载接口文档列表失败:', error);
+        
+        // 如果加载失败，显示错误提示
         const option = document.createElement('option');
-        option.value = doc.id;
-        option.textContent = doc.name;
+        option.value = "";
+        option.textContent = "加载失败，请刷新页面重试";
+        option.disabled = true;
         apiDocSelect.appendChild(option);
+        
+        showNotification('加载接口文档列表失败: ' + error.message, 'error');
     });
 }
 
@@ -1251,4 +1350,26 @@ function showNotification(message, type = 'info') {
             notification.parentNode.removeChild(notification);
         }
     }, 3000);
+}
+
+// 渲染空状态
+function renderEmptyState() {
+    const testCasesList = document.getElementById('testCasesList');
+    testCasesList.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-vial"></i>
+            </div>
+            <div class="empty-title">没有找到测试用例</div>
+            <div class="empty-description">请尝试调整搜索条件或筛选器</div>
+            <button class="btn btn-primary" id="generateFromEmptyBtn">
+                <i class="fas fa-plus me-2"></i>生成测试用例
+            </button>
+        </div>
+    `;
+    
+    // 绑定空状态下的生成按钮事件
+    document.getElementById('generateFromEmptyBtn').addEventListener('click', function() {
+        showGenerateModal();
+    });
 }

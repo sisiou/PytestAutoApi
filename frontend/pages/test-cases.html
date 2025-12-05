@@ -33,13 +33,18 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="api-docs.html">
-                            <i class="fas fa-code me-1"></i>API文档
+                        <a class="nav-link" href="smart-test-generation.html">
+                            <i class="fas fa-code me-1"></i>接口文档
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link active" href="test-cases.html">
                             <i class="fas fa-vial me-1"></i>测试用例
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="smart-test-generation.html">
+                            <i class="fas fa-magic me-1"></i>智能测试生成
                         </a>
                     </li>
                     <li class="nav-item">
@@ -250,10 +255,10 @@
                 <div class="modal-body">
                     <form id="generateForm">
                         <div class="mb-3">
-                            <label for="apiDocSelect" class="form-label">选择API文档</label>
+                            <label for="apiDocSelect" class="form-label">选择接口文档</label>
                             <select class="form-select" id="apiDocSelect" required>
-                                <option value="">请选择API文档</option>
-                                <!-- API文档选项将通过JavaScript动态生成 -->
+                                <option value="">请选择接口文档</option>
+                                <!-- 接口文档选项将通过JavaScript动态生成 -->
                             </select>
                         </div>
                         <div class="mb-3">
@@ -326,6 +331,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <script src="../js/main.js"></script>
-    <script src="../js/components/test-cases.js"></script>
+    <script src="../js/components/test-cases.js?v=1.1"></script>
 </body>
 </html>

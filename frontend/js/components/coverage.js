@@ -72,94 +72,186 @@ function animateValue(element, start, end, duration) {
 function initTrendChart() {
     const ctx = document.getElementById('coverageTrendChart').getContext('2d');
     
-    // 生成模拟数据
-    const labels = [];
-    const apiData = [];
-    const scenarioData = [];
-    const parameterData = [];
-    const overallData = [];
-    
-    // 生成最近7天的日期
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        labels.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
-        
-        // 生成随机但合理的覆盖度数据
-        apiData.push(Math.floor(Math.random() * 10) + 80);
-        scenarioData.push(Math.floor(Math.random() * 15) + 65);
-        parameterData.push(Math.floor(Math.random() * 20) + 60);
-        overallData.push(Math.floor(Math.random() * 12) + 70);
-    }
-    
-    window.coverageTrendChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'API覆盖度',
-                    data: apiData,
-                    borderColor: '#0d6efd',
-                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: '场景覆盖度',
-                    data: scenarioData,
-                    borderColor: '#198754',
-                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: '参数覆盖度',
-                    data: parameterData,
-                    borderColor: '#ffc107',
-                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: '综合覆盖度',
-                    data: overallData,
-                    borderColor: '#6f42c1',
-                    backgroundColor: 'rgba(111, 66, 193, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': ' + context.raw + '%';
+    // 调用API获取趋势数据
+    fetch('http://localhost:19028/api/coverage/trends?period=week', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('获取趋势数据失败');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 使用API返回的数据初始化图表
+        window.coverageTrendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    {
+                        label: 'API覆盖度',
+                        data: data.apiData,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: '场景覆盖度',
+                        data: data.scenarioData,
+                        borderColor: '#198754',
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: '参数覆盖度',
+                        data: data.parameterData,
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: '综合覆盖度',
+                        data: data.overallData,
+                        borderColor: '#6f42c1',
+                        backgroundColor: 'rgba(111, 66, 193, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.raw + '%';
+                            }
                         }
                     }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: {
-                        callback: function(value) {
-                            return value + '%';
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
                         }
                     }
                 }
             }
+        });
+    })
+    .catch(error => {
+        console.error('获取趋势数据失败:', error);
+        
+        // 如果API调用失败，生成模拟数据作为回退
+        const labels = [];
+        const apiData = [];
+        const scenarioData = [];
+        const parameterData = [];
+        const overallData = [];
+        
+        // 生成最近7天的日期
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            labels.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
+            
+            // 生成随机但合理的覆盖度数据
+            apiData.push(Math.floor(Math.random() * 10) + 80);
+            scenarioData.push(Math.floor(Math.random() * 15) + 65);
+            parameterData.push(Math.floor(Math.random() * 20) + 60);
+            overallData.push(Math.floor(Math.random() * 12) + 70);
         }
+        
+        window.coverageTrendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'API覆盖度',
+                        data: apiData,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: '场景覆盖度',
+                        data: scenarioData,
+                        borderColor: '#198754',
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: '参数覆盖度',
+                        data: parameterData,
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: '综合覆盖度',
+                        data: overallData,
+                        borderColor: '#6f42c1',
+                        backgroundColor: 'rgba(111, 66, 193, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.raw + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 显示错误提示
+        showNotification('无法获取最新趋势数据，显示模拟数据', 'warning');
     });
 }
 
@@ -167,59 +259,131 @@ function initTrendChart() {
 function initHeatmap() {
     const heatmapContainer = document.getElementById('coverageHeatmap');
     
-    // 生成模拟数据
-    const apis = ['用户管理', '订单处理', '支付接口', '库存管理', '数据分析', '通知服务'];
-    const scenarios = ['正常流程', '异常处理', '边界条件', '并发测试', '性能测试', '安全测试'];
-    
-    let heatmapHTML = '<div class="heatmap-container">';
-    
-    // 添加表头
-    heatmapHTML += '<div class="heatmap-row">';
-    heatmapHTML += '<div class="heatmap-label"></div>';
-    heatmapHTML += '<div class="heatmap-cells">';
-    scenarios.forEach(scenario => {
-        heatmapHTML += `<div class="heatmap-label text-center">${scenario}</div>`;
-    });
-    heatmapHTML += '</div></div>';
-    
-    // 添加数据行
-    apis.forEach(api => {
-        heatmapHTML += '<div class="heatmap-row">';
-        heatmapHTML += `<div class="heatmap-label">${api}</div>`;
-        heatmapHTML += '<div class="heatmap-cells">';
+    // 调用API获取热力图数据
+    fetch('http://localhost:19028/api/coverage/heatmap', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('获取热力图数据失败');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 使用API返回的数据生成热力图
+        let heatmapHTML = '<div class="heatmap-container">';
         
-        scenarios.forEach(scenario => {
-            // 生成随机覆盖度值
-            const coverage = Math.floor(Math.random() * 100);
-            const color = getHeatmapColor(coverage);
+        // 添加表头
+        heatmapHTML += '<div class="heatmap-row">';
+        heatmapHTML += '<div class="heatmap-label"></div>';
+        heatmapHTML += '<div class="heatmap-cells">';
+        data.scenarios.forEach(scenario => {
+            heatmapHTML += `<div class="heatmap-label text-center">${scenario}</div>`;
+        });
+        heatmapHTML += '</div></div>';
+        
+        // 添加数据行
+        data.apis.forEach(api => {
+            heatmapHTML += '<div class="heatmap-row">';
+            heatmapHTML += `<div class="heatmap-label">${api}</div>`;
+            heatmapHTML += '<div class="heatmap-cells">';
             
-            heatmapHTML += `<div class="heatmap-cell" style="background-color: ${color};" title="${api} - ${scenario}: ${coverage}%">${coverage}</div>`;
+            data.scenarios.forEach(scenario => {
+                // 从API数据中获取覆盖度值
+                const coverage = data.coverageData[api][scenario];
+                const color = getHeatmapColor(coverage);
+                
+                heatmapHTML += `<div class="heatmap-cell" style="background-color: ${color};" title="${api} - ${scenario}: ${coverage}%">${coverage}</div>`;
+            });
+            
+            heatmapHTML += '</div></div>';
         });
         
+        heatmapHTML += '</div>';
+        
+        // 添加图例
+        heatmapHTML += '<div class="heatmap-legend">';
+        const legendItems = [
+            { color: '#dc3545', label: '0-25%' },
+            { color: '#fd7e14', label: '26-50%' },
+            { color: '#ffc107', label: '51-75%' },
+            { color: '#198754', label: '76-100%' }
+        ];
+        
+        legendItems.forEach(item => {
+            heatmapHTML += `<div class="heatmap-legend-item">`;
+            heatmapHTML += `<div class="heatmap-legend-color" style="background-color: ${item.color};"></div>`;
+            heatmapHTML += `<span>${item.label}</span>`;
+            heatmapHTML += `</div>`;
+        });
+        
+        heatmapHTML += '</div>';
+        
+        heatmapContainer.innerHTML = heatmapHTML;
+    })
+    .catch(error => {
+        console.error('获取热力图数据失败:', error);
+        
+        // 如果API调用失败，生成模拟数据作为回退
+        const apis = ['用户管理', '订单处理', '支付接口', '库存管理', '数据分析', '通知服务'];
+        const scenarios = ['正常流程', '异常处理', '边界条件', '并发测试', '性能测试', '安全测试'];
+        
+        let heatmapHTML = '<div class="heatmap-container">';
+        
+        // 添加表头
+        heatmapHTML += '<div class="heatmap-row">';
+        heatmapHTML += '<div class="heatmap-label"></div>';
+        heatmapHTML += '<div class="heatmap-cells">';
+        scenarios.forEach(scenario => {
+            heatmapHTML += `<div class="heatmap-label text-center">${scenario}</div>`;
+        });
         heatmapHTML += '</div></div>';
+        
+        // 添加数据行
+        apis.forEach(api => {
+            heatmapHTML += '<div class="heatmap-row">';
+            heatmapHTML += `<div class="heatmap-label">${api}</div>`;
+            heatmapHTML += '<div class="heatmap-cells">';
+            
+            scenarios.forEach(scenario => {
+                // 生成随机覆盖度值
+                const coverage = Math.floor(Math.random() * 100);
+                const color = getHeatmapColor(coverage);
+                
+                heatmapHTML += `<div class="heatmap-cell" style="background-color: ${color};" title="${api} - ${scenario}: ${coverage}%">${coverage}</div>`;
+            });
+            
+            heatmapHTML += '</div></div>';
+        });
+        
+        heatmapHTML += '</div>';
+        
+        // 添加图例
+        heatmapHTML += '<div class="heatmap-legend">';
+        const legendItems = [
+            { color: '#dc3545', label: '0-25%' },
+            { color: '#fd7e14', label: '26-50%' },
+            { color: '#ffc107', label: '51-75%' },
+            { color: '#198754', label: '76-100%' }
+        ];
+        
+        legendItems.forEach(item => {
+            heatmapHTML += `<div class="heatmap-legend-item">`;
+            heatmapHTML += `<div class="heatmap-legend-color" style="background-color: ${item.color};"></div>`;
+            heatmapHTML += `<span>${item.label}</span>`;
+            heatmapHTML += `</div>`;
+        });
+        
+        heatmapHTML += '</div>';
+        
+        heatmapContainer.innerHTML = heatmapHTML;
+        
+        // 显示错误提示
+        showNotification('无法获取最新热力图数据，显示模拟数据', 'warning');
     });
-    
-    heatmapHTML += '</div>';
-    
-    // 添加图例
-    heatmapHTML += '<div class="heatmap-legend">';
-    const legendItems = [
-        { color: '#dc3545', label: '0-25%' },
-        { color: '#fd7e14', label: '26-50%' },
-        { color: '#ffc107', label: '51-75%' },
-        { color: '#198754', label: '76-100%' }
-    ];
-    
-    legendItems.forEach(item => {
-        heatmapHTML += `<div class="heatmap-legend-item">`;
-        heatmapHTML += `<div class="heatmap-legend-color" style="background-color: ${item.color};"></div>`;
-        heatmapHTML += `<span>${item.label}</span>`;
-        heatmapHTML += `</div>`;
-    });
-    
-    heatmapHTML += '</div>';
-    
-    heatmapContainer.innerHTML = heatmapHTML;
 }
 
 // 获取热力图颜色
@@ -235,8 +399,36 @@ function loadCoverageData() {
     // 显示加载状态
     showLoading();
     
-    // 模拟API请求
-    setTimeout(() => {
+    // 从API获取覆盖度数据
+    fetch('http://localhost:19028/api/coverage', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('获取覆盖度数据失败');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 加载API覆盖度数据
+        loadApiCoverageData(data.apiCoverage);
+        
+        // 加载场景覆盖度数据
+        loadScenarioCoverageData(data.scenarioCoverage);
+        
+        // 加载未覆盖部分数据
+        loadUncoveredData(data.uncovered);
+        
+        // 隐藏加载状态
+        hideLoading();
+    })
+    .catch(error => {
+        console.error('加载覆盖度数据失败:', error);
+        
+        // 如果API调用失败，使用模拟数据
         // 加载API覆盖度数据
         loadApiCoverageData();
         
@@ -248,26 +440,31 @@ function loadCoverageData() {
         
         // 隐藏加载状态
         hideLoading();
-    }, 1000);
+        
+        // 显示错误提示
+        showNotification('无法获取最新覆盖度数据，显示模拟数据', 'warning');
+    });
 }
 
 // 加载API覆盖度数据
-function loadApiCoverageData() {
+function loadApiCoverageData(apiData) {
     const apiCoverageTable = document.getElementById('apiCoverageTable');
     
-    // 生成模拟数据
-    const apiData = [
-        { name: '用户注册API', coverage: 95, status: 'high' },
-        { name: '用户登录API', coverage: 92, status: 'high' },
-        { name: '订单创建API', coverage: 88, status: 'high' },
-        { name: '订单查询API', coverage: 85, status: 'high' },
-        { name: '支付处理API', coverage: 78, status: 'medium' },
-        { name: '库存更新API', coverage: 72, status: 'medium' },
-        { name: '数据分析API', coverage: 65, status: 'medium' },
-        { name: '通知发送API', coverage: 58, status: 'low' },
-        { name: '报表生成API', coverage: 45, status: 'low' },
-        { name: '系统配置API', coverage: 32, status: 'low' }
-    ];
+    // 如果没有提供数据，使用模拟数据
+    if (!apiData) {
+        apiData = [
+            { name: '用户注册API', coverage: 95, status: 'high' },
+            { name: '用户登录API', coverage: 92, status: 'high' },
+            { name: '订单创建API', coverage: 88, status: 'high' },
+            { name: '订单查询API', coverage: 85, status: 'high' },
+            { name: '支付处理API', coverage: 78, status: 'medium' },
+            { name: '库存更新API', coverage: 72, status: 'medium' },
+            { name: '数据分析API', coverage: 65, status: 'medium' },
+            { name: '通知发送API', coverage: 58, status: 'low' },
+            { name: '报表生成API', coverage: 45, status: 'low' },
+            { name: '系统配置API', coverage: 32, status: 'low' }
+        ];
+    }
     
     let tableHTML = '';
     
@@ -297,22 +494,24 @@ function loadApiCoverageData() {
 }
 
 // 加载场景覆盖度数据
-function loadScenarioCoverageData() {
+function loadScenarioCoverageData(scenarioData) {
     const scenarioCoverageTable = document.getElementById('scenarioCoverageTable');
     
-    // 生成模拟数据
-    const scenarioData = [
-        { name: '用户注册流程', coverage: 90, status: 'high' },
-        { name: '用户登录流程', coverage: 88, status: 'high' },
-        { name: '订单创建流程', coverage: 85, status: 'high' },
-        { name: '支付处理流程', coverage: 80, status: 'high' },
-        { name: '库存管理流程', coverage: 75, status: 'medium' },
-        { name: '数据分析流程', coverage: 70, status: 'medium' },
-        { name: '异常处理流程', coverage: 65, status: 'medium' },
-        { name: '并发测试场景', coverage: 55, status: 'low' },
-        { name: '性能测试场景', coverage: 45, status: 'low' },
-        { name: '安全测试场景', coverage: 35, status: 'low' }
-    ];
+    // 如果没有提供数据，使用模拟数据
+    if (!scenarioData) {
+        scenarioData = [
+            { name: '用户注册流程', coverage: 90, status: 'high' },
+            { name: '用户登录流程', coverage: 88, status: 'high' },
+            { name: '订单创建流程', coverage: 85, status: 'high' },
+            { name: '支付处理流程', coverage: 80, status: 'high' },
+            { name: '库存管理流程', coverage: 75, status: 'medium' },
+            { name: '数据分析流程', coverage: 70, status: 'medium' },
+            { name: '异常处理流程', coverage: 65, status: 'medium' },
+            { name: '并发测试场景', coverage: 55, status: 'low' },
+            { name: '性能测试场景', coverage: 45, status: 'low' },
+            { name: '安全测试场景', coverage: 35, status: 'low' }
+        ];
+    }
     
     let tableHTML = '';
     
@@ -342,14 +541,38 @@ function loadScenarioCoverageData() {
 }
 
 // 加载未覆盖部分数据
-function loadUncoveredData() {
+function loadUncoveredData(uncoveredData) {
+    // 如果没有提供数据，使用模拟数据
+    if (!uncoveredData) {
+        uncoveredData = {
+            apis: [
+                { name: '用户注销API', description: '用户注销账户的API接口', priority: 'high' },
+                { name: '订单取消API', description: '取消未支付订单的API接口', priority: 'medium' },
+                { name: '批量导入API', description: '批量导入数据的API接口', priority: 'low' }
+            ],
+            scenarios: [
+                { name: '用户权限变更场景', description: '用户权限变更的测试场景', priority: 'high' },
+                { name: '订单退款场景', description: '订单退款处理的测试场景', priority: 'high' },
+                { name: '库存预警场景', description: '库存不足预警的测试场景', priority: 'medium' },
+                { name: '数据备份场景', description: '系统数据备份的测试场景', priority: 'medium' },
+                { name: '系统升级场景', description: '系统升级过程的测试场景', priority: 'low' }
+            ],
+            params: [
+                { name: '用户注册API - 验证码参数', description: '用户注册时的验证码参数', priority: 'high' },
+                { name: '订单创建API - 优惠券参数', description: '订单创建时的优惠券参数', priority: 'high' },
+                { name: '支付处理API - 分期付款参数', description: '支付处理时的分期付款参数', priority: 'medium' },
+                { name: '库存更新API - 批量操作参数', description: '库存更新时的批量操作参数', priority: 'medium' },
+                { name: '数据分析API - 时间范围参数', description: '数据分析时的时间范围参数', priority: 'medium' },
+                { name: '通知发送API - 模板参数', description: '通知发送时的模板参数', priority: 'low' },
+                { name: '报表生成API - 格式参数', description: '报表生成时的格式参数', priority: 'low' },
+                { name: '系统配置API - 安全参数', description: '系统配置时的安全参数', priority: 'low' }
+            ]
+        };
+    }
+    
     // 加载未覆盖的API
     const uncoveredApisList = document.getElementById('uncoveredApisList');
-    const uncoveredApis = [
-        { name: '用户注销API', description: '用户注销账户的API接口', priority: 'high' },
-        { name: '订单取消API', description: '取消未支付订单的API接口', priority: 'medium' },
-        { name: '批量导入API', description: '批量导入数据的API接口', priority: 'low' }
-    ];
+    const uncoveredApis = uncoveredData.apis || [];
     
     let apisHTML = '';
     uncoveredApis.forEach(api => {
@@ -377,13 +600,7 @@ function loadUncoveredData() {
     
     // 加载未覆盖的场景
     const uncoveredScenariosList = document.getElementById('uncoveredScenariosList');
-    const uncoveredScenarios = [
-        { name: '用户权限变更场景', description: '用户权限变更的测试场景', priority: 'high' },
-        { name: '订单退款场景', description: '订单退款处理的测试场景', priority: 'high' },
-        { name: '库存预警场景', description: '库存不足预警的测试场景', priority: 'medium' },
-        { name: '数据备份场景', description: '系统数据备份的测试场景', priority: 'medium' },
-        { name: '系统升级场景', description: '系统升级过程的测试场景', priority: 'low' }
-    ];
+    const uncoveredScenarios = uncoveredData.scenarios || [];
     
     let scenariosHTML = '';
     uncoveredScenarios.forEach(scenario => {
@@ -411,16 +628,7 @@ function loadUncoveredData() {
     
     // 加载未覆盖的参数
     const uncoveredParamsList = document.getElementById('uncoveredParamsList');
-    const uncoveredParams = [
-        { name: '用户注册API - 验证码参数', description: '用户注册时的验证码参数', priority: 'high' },
-        { name: '订单创建API - 优惠券参数', description: '订单创建时的优惠券参数', priority: 'high' },
-        { name: '支付处理API - 分期付款参数', description: '支付处理时的分期付款参数', priority: 'medium' },
-        { name: '库存更新API - 批量操作参数', description: '库存更新时的批量操作参数', priority: 'medium' },
-        { name: '数据分析API - 时间范围参数', description: '数据分析时的时间范围参数', priority: 'medium' },
-        { name: '通知发送API - 模板参数', description: '通知发送时的模板参数', priority: 'low' },
-        { name: '报表生成API - 格式参数', description: '报表生成时的格式参数', priority: 'low' },
-        { name: '系统配置API - 安全参数', description: '系统配置时的安全参数', priority: 'low' }
-    ];
+    const uncoveredParams = uncoveredData.params || [];
     
     let paramsHTML = '';
     uncoveredParams.forEach(param => {
@@ -505,8 +713,21 @@ function refreshData() {
     refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>刷新中...';
     refreshBtn.disabled = true;
     
-    // 重新加载数据
-    setTimeout(() => {
+    // 调用API刷新数据
+    fetch('http://localhost:19028/api/coverage/refresh', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('刷新数据失败');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 重新加载数据
         loadCoverageData();
         
         // 恢复按钮状态
@@ -515,7 +736,20 @@ function refreshData() {
         
         // 显示成功提示
         showNotification('数据已刷新', 'success');
-    }, 1500);
+    })
+    .catch(error => {
+        console.error('刷新数据失败:', error);
+        
+        // 即使API调用失败，也重新加载数据
+        loadCoverageData();
+        
+        // 恢复按钮状态
+        refreshBtn.innerHTML = originalHTML;
+        refreshBtn.disabled = false;
+        
+        // 显示错误提示
+        showNotification('刷新数据失败，请稍后再试', 'danger');
+    });
 }
 
 // 显示生成报告模态框
@@ -539,8 +773,28 @@ function generateReport() {
     generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>生成中...';
     generateBtn.disabled = true;
     
-    // 模拟生成报告
-    setTimeout(() => {
+    // 获取表单数据
+    const reportType = document.querySelector('input[name="reportType"]:checked').value;
+    const dateRange = document.getElementById('dateRange').value;
+    
+    // 调用API生成报告
+    fetch('http://localhost:19028/api/coverage/generate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            reportType: reportType,
+            dateRange: dateRange
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('生成报告失败');
+        }
+        return response.json();
+    })
+    .then(data => {
         // 恢复按钮状态
         generateBtn.innerHTML = originalHTML;
         generateBtn.disabled = false;
@@ -550,7 +804,20 @@ function generateReport() {
         
         // 显示成功提示
         showNotification('报告生成成功', 'success');
-    }, 2000);
+        
+        // 刷新数据
+        loadCoverageData();
+    })
+    .catch(error => {
+        console.error('生成报告失败:', error);
+        
+        // 恢复按钮状态
+        generateBtn.innerHTML = originalHTML;
+        generateBtn.disabled = false;
+        
+        // 显示错误提示
+        showNotification('生成报告失败，请稍后再试', 'danger');
+    });
 }
 
 // 导出报告
@@ -565,9 +832,29 @@ function exportReport() {
     // 获取表单数据
     const format = document.getElementById('exportFormat').value;
     const fileName = document.getElementById('exportFileName').value;
+    const includeDetails = document.getElementById('includeDetails').checked;
+    const dateRange = document.getElementById('exportDateRange').value;
     
-    // 模拟导出报告
-    setTimeout(() => {
+    // 调用API导出报告
+    fetch('http://localhost:19028/api/coverage/export', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            format: format,
+            fileName: fileName,
+            includeDetails: includeDetails,
+            dateRange: dateRange
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('导出报告失败');
+        }
+        return response.blob();
+    })
+    .then(blob => {
         // 恢复按钮状态
         exportBtn.innerHTML = originalHTML;
         exportBtn.disabled = false;
@@ -575,70 +862,116 @@ function exportReport() {
         // 关闭模态框
         bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
         
+        // 创建下载链接
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${fileName}.${format}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
         // 显示成功提示
         showNotification(`报告已导出为 ${format.toUpperCase()} 格式`, 'success');
+    })
+    .catch(error => {
+        console.error('导出报告失败:', error);
         
-        // 模拟下载
-        const link = document.createElement('a');
-        link.href = '#';
-        link.download = `${fileName}.${format}`;
-        link.click();
-    }, 2000);
+        // 恢复按钮状态
+        exportBtn.innerHTML = originalHTML;
+        exportBtn.disabled = false;
+        
+        // 显示错误提示
+        showNotification('导出报告失败，请稍后再试', 'danger');
+    });
 }
 
 // 更新趋势图
 function updateTrendChart(period) {
-    let labels = [];
-    let apiData = [];
-    let scenarioData = [];
-    let parameterData = [];
-    let overallData = [];
-    
-    // 根据时间范围生成数据
-    let days = 7; // 默认7天
-    if (period === 'monthTrend') days = 30;
-    if (period === 'quarterTrend') days = 90;
-    
-    // 生成日期标签和数据
-    for (let i = days - 1; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
+    // 调用API获取趋势数据
+    fetch(`http://localhost:19028/api/coverage/trends?period=${period}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('获取趋势数据失败');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 使用API返回的数据更新图表
+        window.coverageTrendChart.data.labels = data.labels;
+        window.coverageTrendChart.data.datasets[0].data = data.apiData;
+        window.coverageTrendChart.data.datasets[1].data = data.scenarioData;
+        window.coverageTrendChart.data.datasets[2].data = data.parameterData;
+        window.coverageTrendChart.data.datasets[3].data = data.overallData;
         
-        // 根据天数调整标签格式
-        if (days <= 7) {
-            labels.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
-        } else if (days <= 30) {
-            // 每5天显示一个标签
-            if (i % 5 === 0) {
+        // 刷新图表
+        window.coverageTrendChart.update();
+    })
+    .catch(error => {
+        console.error('获取趋势数据失败:', error);
+        
+        // 如果API调用失败，生成模拟数据作为回退
+        let labels = [];
+        let apiData = [];
+        let scenarioData = [];
+        let parameterData = [];
+        let overallData = [];
+        
+        // 根据时间范围生成数据
+        let days = 7; // 默认7天
+        if (period === 'monthTrend') days = 30;
+        if (period === 'quarterTrend') days = 90;
+        
+        // 生成日期标签和数据
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            
+            // 根据天数调整标签格式
+            if (days <= 7) {
                 labels.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
+            } else if (days <= 30) {
+                // 每5天显示一个标签
+                if (i % 5 === 0) {
+                    labels.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
+                } else {
+                    labels.push('');
+                }
             } else {
-                labels.push('');
+                // 每15天显示一个标签
+                if (i % 15 === 0) {
+                    labels.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
+                } else {
+                    labels.push('');
+                }
             }
-        } else {
-            // 每15天显示一个标签
-            if (i % 15 === 0) {
-                labels.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
-            } else {
-                labels.push('');
-            }
+            
+            // 生成随机但合理的覆盖度数据
+            apiData.push(Math.floor(Math.random() * 10) + 80);
+            scenarioData.push(Math.floor(Math.random() * 15) + 65);
+            parameterData.push(Math.floor(Math.random() * 20) + 60);
+            overallData.push(Math.floor(Math.random() * 12) + 70);
         }
         
-        // 生成随机但合理的覆盖度数据
-        apiData.push(Math.floor(Math.random() * 10) + 80);
-        scenarioData.push(Math.floor(Math.random() * 15) + 65);
-        parameterData.push(Math.floor(Math.random() * 20) + 60);
-        overallData.push(Math.floor(Math.random() * 12) + 70);
-    }
-    
-    // 更新图表数据
-    window.coverageTrendChart.data.labels = labels;
-    window.coverageTrendChart.data.datasets[0].data = apiData;
-    window.coverageTrendChart.data.datasets[1].data = scenarioData;
-    window.coverageTrendChart.data.datasets[2].data = parameterData;
-    window.coverageTrendChart.data.datasets[3].data = overallData;
-    
-    // 刷新图表
-    window.coverageTrendChart.update();
+        // 更新图表数据
+        window.coverageTrendChart.data.labels = labels;
+        window.coverageTrendChart.data.datasets[0].data = apiData;
+        window.coverageTrendChart.data.datasets[1].data = scenarioData;
+        window.coverageTrendChart.data.datasets[2].data = parameterData;
+        window.coverageTrendChart.data.datasets[3].data = overallData;
+        
+        // 刷新图表
+        window.coverageTrendChart.update();
+        
+        // 显示错误提示
+        showNotification('无法获取最新趋势数据，显示模拟数据', 'warning');
+    });
 }
 
 // 为未覆盖部分生成测试
@@ -649,8 +982,29 @@ function generateTestForUncovered(button) {
     button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>生成中';
     button.disabled = true;
     
-    // 模拟生成测试
-    setTimeout(() => {
+    // 获取未覆盖项的信息
+    const listItem = button.closest('.list-group-item');
+    const titleElement = listItem.querySelector('.uncovered-title').textContent.trim();
+    const descriptionElement = listItem.querySelector('.uncovered-description').textContent.trim();
+    
+    // 调用API生成测试
+    fetch('http://localhost:19028/api/coverage/generate-test', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            title: titleElement,
+            description: descriptionElement
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('生成测试失败');
+        }
+        return response.json();
+    })
+    .then(data => {
         // 恢复按钮状态
         button.innerHTML = '已生成';
         button.classList.remove('btn-outline-primary');
@@ -658,7 +1012,20 @@ function generateTestForUncovered(button) {
         
         // 显示成功提示
         showNotification('测试用例生成成功', 'success');
-    }, 1500);
+        
+        // 刷新数据
+        loadCoverageData();
+    })
+    .catch(error => {
+        console.error('生成测试失败:', error);
+        
+        // 恢复按钮状态
+        button.innerHTML = originalHTML;
+        button.disabled = false;
+        
+        // 显示错误提示
+        showNotification('生成测试失败，请稍后再试', 'danger');
+    });
 }
 
 // 显示加载状态
