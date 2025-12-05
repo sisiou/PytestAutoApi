@@ -1,0 +1,82 @@
+{
+  "relation_info": {
+    "title": "接口关联关系总览",
+    "description": "所有接口的依赖、数据流转、权限关联关系",
+    "total_apis": 4,
+    "relations": [
+      {
+        "api_path": "/open-apis/im/v1/messages",
+        "api_name": "发送消息",
+        "dependent_apis": [
+          "/open-apis/authen/v1/user_info"
+        ],
+        "dependent_reason": "需要先通过用户信息接口获取接收者身份标识（如 open_id）才能发送消息",
+        "data_flow": "从认证管理模块获取用户身份信息，结合消息内容输出至 IM 系统进行消息投递",
+        "permission_relation": "需具备机器人能力及相应消息权限（im:message:send 或 im:message:send_as_bot），且应用在目标用户/群组的可用范围内",
+        "upstream_apis": [
+          "/open-apis/authen/v1/user_info"
+        ],
+        "downstream_apis": []
+      },
+      {
+        "api_path": "/open-apis/contact/v3/users",
+        "api_name": "创建用户",
+        "dependent_apis": [],
+        "dependent_reason": "该接口为独立入口操作，不依赖其他接口前置调用",
+        "data_flow": "输入用户基本信息和组织架构信息，输出新创建的用户实体及其系统分配的唯一标识（user_id, open_id, union_id）",
+        "permission_relation": "需具备通讯录更新权限（contact:contact）以及相关字段读写权限",
+        "upstream_apis": [],
+        "downstream_apis": [
+          "/open-apis/im/v1/messages",
+          "/open-apis/calendar/v4/calendars"
+        ]
+      },
+      {
+        "api_path": "/open-apis/calendar/v4/calendars",
+        "api_name": "创建共享日历",
+        "dependent_apis": [
+          "/open-apis/authen/v1/user_info"
+        ],
+        "dependent_reason": "需使用 user_access_token 鉴权以确定当前操作身份；若使用应用身份则需确保已启用机器人能力",
+        "data_flow": "基于用户或应用身份创建日历资源，并返回日历 ID 及访问角色等元数据，供后续日程管理使用",
+        "permission_relation": "需具备 calendar:calendar 和 calendar:calendar:create 权限，且 token 类型合法（user_access_token 或 tenant_access_token）",
+        "upstream_apis": [
+          "/open-apis/authen/v1/user_info"
+        ],
+        "downstream_apis": []
+      },
+      {
+        "api_path": "/open-apis/authen/v1/user_info",
+        "api_name": "获取用户信息",
+        "dependent_apis": [],
+        "dependent_reason": "作为基础认证接口，用于获取用户身份上下文，是多数业务接口的前置依赖",
+        "data_flow": "输入 user_access_token，输出用户的身份标识（open_id, union_id, user_id）、联系方式及企业信息",
+        "permission_relation": "无需特殊 API 权限，但敏感字段需申请对应字段权限（如手机号、邮箱、user_id 等）",
+        "upstream_apis": [],
+        "downstream_apis": [
+          "/open-apis/im/v1/messages",
+          "/open-apis/calendar/v4/calendars"
+        ]
+      }
+    ],
+    "key_relation_scenarios": [
+      {
+        "scenario_name": "新员工入职并通知欢迎流程",
+        "api_sequence": [
+          "/open-apis/contact/v3/users",
+          "/open-apis/authen/v1/user_info",
+          "/open-apis/im/v1/messages"
+        ],
+        "description": "首先调用创建用户接口添加新员工，然后可选获取其用户信息以确认身份，最后向该员工发送欢迎消息。此流程体现了从人员创建到即时通信触达的完整链路。"
+      },
+      {
+        "scenario_name": "应用自动化日历服务开通",
+        "api_sequence": [
+          "/open-apis/authen/v1/user_info",
+          "/open-apis/calendar/v4/calendars"
+        ],
+        "description": "使用应用身份（tenant_access_token）或绑定用户身份获取上下文后，创建一个共享日历供团队使用。适用于构建会议调度、排班提醒等场景。"
+      }
+    ]
+  }
+}
