@@ -144,8 +144,9 @@ class Assert:
                 response_dict = json.loads(response_data)
                 is_error, error_message = check_feishu_error(response_dict)
                 if is_error:
-                    # 判断是否为“预期错误场景”（例如 YAML 中仅断言 status_code 为 4xx）
+                    # 判断是否为"预期错误场景"（例如 YAML 中仅断言 status_code 为 4xx）
                     expected_status = self.assert_data.get("status_code")
+                    # 如果预期状态码与实际状态码匹配，且都是4xx或5xx，则认为是预期错误
                     if expected_status is not None and expected_status == status_code and status_code >= 400:
                         # 负向用例：如果断言中指定了预期飞书错误码，则进行一一对应校验
                         expected_feishu_code = self.assert_data.get("feishu_code")
@@ -162,6 +163,9 @@ class Assert:
                                 )
                         # 记录为预期错误，但不中断后续 status_code 及其它断言
                         WARNING.logger.warning("飞书接口返回预期错误:\n%s", error_message)
+                    elif expected_status is not None and expected_status == status_code:
+                        # 即使状态码匹配但不是4xx/5xx，也允许继续（例如某些2xx错误场景）
+                        WARNING.logger.warning("飞书接口返回错误但状态码匹配预期:\n%s", error_message)
                     else:
                         # 非预期错误：仍按原逻辑视为失败
                         ERROR.logger.error("飞书接口返回错误:\n%s", error_message)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Time   : 2025-12-04 16:48:13
+# @Time   : 2025-12-05 11:52:54
 
 
 import allure
@@ -12,7 +12,7 @@ from utils.read_files_tools.regular_control import regular
 from utils.requests_tool.teardown_control import TearDownHandler
 
 
-case_id = ['01_open-apis_calendar_v4_calendars', '02_open-apis_calendar_v4_calendars', '03_open-apis_calendar_v4_calendars', '04_open-apis_calendar_v4_calendars', '05_open-apis_calendar_v4_calendars', '06_open-apis_calendar_v4_calendars', '07_open-apis_calendar_v4_calendars']
+case_id = ['01_calendars', '02_calendars', '03_calendars', '04_calendars', '05_calendars', '06_calendars', '07_calendars', '08_calendars', '09_calendars', '10_calendars', '11_calendars', '12_calendars', '13_calendars', '14_calendars', '15_calendars']
 TestData = GetTestCase.case_data(case_id)
 re_data = regular(str(TestData))
 

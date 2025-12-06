@@ -186,6 +186,20 @@ class DependentCase:
                     else:
                         re_data = regular(str(self.get_cache(_case_id)))
                         re_data = ast.literal_eval(cache_regular(str(re_data)))
+                        
+                        # 如果当前用例有 Authorization token，尝试使用当前用例的 token 替换依赖用例的 token
+                        # 这样可以避免依赖用例的 token 过期问题
+                        current_headers = self.__yaml_case.headers
+                        if current_headers and isinstance(current_headers, dict):
+                            current_token = current_headers.get("Authorization")
+                            if current_token and current_token.startswith("Bearer "):
+                                # 更新依赖用例的 headers，使用当前用例的 token
+                                if re_data.get("headers") is None:
+                                    re_data["headers"] = {}
+                                elif not isinstance(re_data["headers"], dict):
+                                    re_data["headers"] = dict(re_data["headers"])
+                                re_data["headers"]["Authorization"] = current_token
+                        
                         res = RequestControl(re_data).http_request()
                         if dependence_case_data.dependent_data is not None:
                             dependent_data = dependence_case_data.dependent_data
@@ -198,8 +212,24 @@ class DependentCase:
                                 _set_value = self.set_cache_value(i)
                                 # 判断依赖数据类型, 依赖 response 中的数据
                                 if i.dependent_type == DependentType.RESPONSE.value:
+                                    try:
+                                        response_data = json.loads(res.response_data)
+                                        # 检查飞书 API 响应，如果 code != 0，记录警告
+                                        if isinstance(response_data, dict) and response_data.get("code") != 0:
+                                            WARNING.logger.warning(
+                                                f"依赖用例 {_case_id} 执行失败: code={response_data.get('code')}, "
+                                                f"msg={response_data.get('msg')}。响应: {res.response_data[:200]}"
+                                            )
+                                    except json.JSONDecodeError as e:
+                                        WARNING.logger.warning(
+                                            f"依赖用例 {_case_id} 响应不是有效的 JSON: {e}。响应: {res.response_data[:200]}"
+                                        )
+                                        raise ValueNotFoundError(
+                                            f"依赖用例 {_case_id} 响应格式错误，无法提取数据"
+                                        ) from e
+                                    
                                     self.dependent_handler(
-                                        data=json.loads(res.response_data),
+                                        data=response_data,
                                         _jsonpath=_jsonpath,
                                         set_value=_set_value,
                                         replace_key=_replace_key,

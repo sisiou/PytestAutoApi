@@ -1,0 +1,618 @@
+openapi: 3.0.3
+info:
+  title: 消息发送与管理API
+  version: 1.0.0
+  description: 提供向指定用户或群组发送消息的能力，支持文本、富文本、卡片、图片、文件等多种消息类型，并返回消息发送结果及详细信息。
+servers:
+  - url: https://open.feishu.cn/open-apis
+    description: 飞书开放平台生产环境服务器
+paths:
+  /im/v1/messages:
+    post:
+      summary: 发送消息
+      description: 调用该接口向指定用户或者群聊发送消息。支持发送的消息类型包括文本、富文本、卡片、群名片、个人名片、图片、视频、音频、文件以及表情包等。
+      operationId: sendMessage
+      parameters:
+        - name: receive_id_type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ReceiveIdType'
+          example: open_id
+          description: 消息接收者 ID 类型。支持 open_id/union_id/user_id/email/chat_id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+            examples:
+              default:
+                value:
+                  receive_id: ou_7d8a6e6df7621556ce0d21922b676706ccs
+                  msg_type: text
+                  content: "{\"text\":\"test content\"}"
+                  uuid: "选填，每次调用前请更换，如a0d69e20-1dd1-458b-k525-dfeca4015204"
+              golang-sdk:
+                value: |
+                  package main
+
+                  import (
+                  	"context"
+                  	"fmt"
+                  	"github.com/larksuite/oapi-sdk-go/v3"
+                  	"github.com/larksuite/oapi-sdk-go/v3/core"
+                  	"github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
+                  )
+
+                  func main() {
+                  	client := lark.NewClient("YOUR_APP_ID", "YOUR_APP_SECRET")
+                  	req := larkim.NewCreateMessageReqBuilder().
+                  		ReceiveIdType(`open_id`).
+                  		Body(larkim.NewCreateMessageReqBodyBuilder().
+                  			ReceiveId(`ou_7d8a6e6df7621556ce0d21922b676706ccs`).
+                  			MsgType(`text`).
+                  			Content(`{"text":"test content"}`).
+                  			Uuid(`选填，每次调用前请更换，如a0d69e20-1dd1-458b-k525-dfeca4015204`).
+                  			Build()).
+                  		Build()
+
+                  	resp, err := client.Im.V1.Message.Create(context.Background(), req)
+
+                  	if err != nil {
+                  		fmt.Println(err)
+                  		return
+                  	}
+
+                  	if !resp.Success() {
+                  		fmt.Printf("logId: %s, error response: \n%s", resp.RequestId(), larkcore.Prettify(resp.CodeError))
+                  		return
+                  	}
+
+                  	fmt.Println(larkcore.Prettify(resp))
+                  }
+              python-sdk:
+                value: |
+                  import json
+
+                  import lark_oapi as lark
+                  from lark_oapi.api.im.v1 import *
+
+
+                  def main():
+                      client = lark.Client.builder() \
+                          .app_id("YOUR_APP_ID") \
+                          .app_secret("YOUR_APP_SECRET") \
+                          .log_level(lark.LogLevel.DEBUG) \
+                          .build()
+
+                      request: CreateMessageRequest = CreateMessageRequest.builder() \
+                          .receive_id_type("open_id") \
+                          .request_body(CreateMessageRequestBody.builder()
+                              .receive_id("ou_7d8a6e6df7621556ce0d21922b676706ccs")
+                              .msg_type("text")
+                              .content("{\"text\":\"test content\"}")
+                              .uuid("选填，每次调用前请更换，如a0d69e20-1dd1-458b-k525-dfeca4015204")
+                              .build()) \
+                          .build()
+
+                      response: CreateMessageResponse = client.im.v1.message.create(request)
+
+                      if not response.success():
+                          lark.logger.error(
+                              f"client.im.v1.message.create failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}, resp: \n{json.dumps(json.loads(response.raw.content), indent=4, ensure_ascii=False)}")
+                          return
+
+                      lark.logger.info(lark.JSON.marshal(response.data, indent=4))
+
+
+                  if __name__ == "__main__":
+                      main()
+              java-sdk:
+                value: |
+                  package com.lark.oapi.sample.apiall.imv1;
+                  import com.google.gson.JsonParser;
+                  import com.lark.oapi.Client;
+                  import com.lark.oapi.core.utils.Jsons;
+                  import com.lark.oapi.service.im.v1.model.*;
+                  import java.util.HashMap;
+                  import com.lark.oapi.core.request.RequestOptions;
+
+                  public class CreateMessageSample{
+
+                    public static void main(String arg[]) throws Exception {
+                        Client client = Client.newBuilder("YOUR_APP_ID", "YOUR_APP_SECRET").build();
+
+                        CreateMessageReq req = CreateMessageReq.newBuilder()
+                               .receiveIdType("open_id")
+                               .createMessageReqBody(CreateMessageReqBody.newBuilder()
+                                   .receiveId("ou_7d8a6e6df7621556ce0d21922b676706ccs")
+                                   .msgType("text")
+                                   .content("{\"text\":\"test content\"}")
+                                   .uuid("选填，每次调用前请更换，如a0d69e20-1dd1-458b-k525-dfeca4015204")
+                                    .build())
+                               .build();
+
+                        CreateMessageResp resp = client.im().v1().message().create(req);
+
+                         if (!resp.success()) {
+                           System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                                      resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))))));
+                           return;
+                         }
+
+                         System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+                    }
+                  }
+              nodejs-sdk:
+                value: |
+                  const lark = require('@larksuiteoapi/node-sdk');
+
+                  const client = new lark.Client({
+                      appId: 'app id',
+                      appSecret: 'app secret',
+                      disableTokenCache: true
+                  });
+
+                  client.im.v1.message.create({
+                          params: {
+                                  receive_id_type:'open_id',
+                          },
+                          data: {
+                                  receive_id:'ou_7d8a6e6df7621556ce0d21922b676706ccs',
+                                  msg_type:'text',
+                                  content:'{"text":"test content"}',
+                                  uuid:'选填，每次调用前请更换，如a0d69e20-1dd1-458b-k525-dfeca4015204',
+                          },
+                  },
+                      lark.withTenantToken("t-7f1b******8e560")
+                  ).then(res => {
+                      console.log(res);
+                  }).catch(e => {
+                      console.error(JSON.stringify(e.response.data, null, 4));
+                  });
+              c#-restsharp:
+                value: |
+                  var client = new RestClient("https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id");
+                  client.Timeout = -1;
+                  var request = new RestRequest(Method.POST);
+                  request.AddHeader("Authorization", "Bearer t-7f1b******8e560");
+                  request.AddHeader("Content-Type", "application/json");
+                  var body = "{\"content\":\"{\\\"text\\\":\\\"test content\\\"}\",\"msg_type\":\"text\",\"receive_id\":\"ou_7d8a6e6df7621556ce0d21922b676706ccs\",\"uuid\":\"选填，每次调用前请更换，如a0d69e20-1dd1-458b-k525-dfeca4015204\"}";
+                  request.AddParameter("application/json", body,  ParameterType.RequestBody);
+                  IRestResponse response = client.Execute(request);
+                  Console.WriteLine(response.Content);
+              php-guzzle:
+                value: |
+                  <?php
+                  $client = new Client();
+                  $headers = [
+                    'Authorization' => 'Bearer t-7f1b******8e560',
+                    'Content-Type' => 'application/json'
+                  ];
+                  $body = '{
+                      "receive_id": "ou_7d8a6e6df7621556ce0d21922b676706ccs",
+                      "msg_type": "text",
+                      "content": "{\\\"text\\\":\\\"test content\\\"}",
+                      "uuid": "选填，每次调用前请更换，如a0d69e20-1dd1-458b-k525-dfeca4015204"
+                  }';
+                  $request = new Request('POST', 'https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id', $headers, $body);
+                  $res = $client->sendAsync($request)->wait();
+                  echo $res->getBody();
+              curl:
+                value: |
+                  curl -i -X POST 'https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id' \
+                  -H 'Authorization: Bearer t-7f1b******8e560' \
+                  -H 'Content-Type: application/json' \
+                  -d '{
+                  	"content": "{\\\"text\\\":\\\"test content\\\"}",
+                  	"msg_type": "text",
+                  	"receive_id": "ou_7d8a6e6df7621556ce0d21922b676706ccs",
+                  	"uuid": "选填，每次调用前请更换，如a0d69e20-1dd1-458b-k525-dfeca4015204"
+                  }'
+        required: true
+      responses:
+        '200':
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendMessageResponse'
+              examples:
+                default:
+                  value:
+                    code: 0
+                    msg: success
+                    data:
+                      message_id: om_dc13264520392913993dd051dba21dcf
+                      root_id: om_40eb06e7b84dc71c03e009ad3c754195
+                      parent_id: om_d4be107c616aed9c1da8ed8068570a9f
+                      thread_id: omt_d4be107c616a
+                      msg_type: interactive
+                      create_time: "1615380573411"
+                      update_time: "1615380573411"
+                      deleted: false
+                      updated: false
+                      chat_id: oc_5ad11d72b830411d72b836c20
+                      sender:
+                        id: cli_9f427eec54ae901b
+                        id_type: app_id
+                        sender_type: app
+                        tenant_key: "736588c9260f175e"
+                      body:
+                        content: "{\"text\":\"@_user_1 test content\"}"
+                      mentions:
+                        - key: "@_user_1"
+                          id: ou_155184d1e73cbfb8973e5a9e698e74f2
+                          id_type: open_id
+                          name: Tom
+                          tenant_key: "736588c9260f175e"
+                      upper_message_id: om_40eb06e7b84dc71c03e009ad3c754195
+        '400':
+          description: 请求参数错误或业务校验失败
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              examples:
+                invalid_param:
+                  value:
+                    code: 230001
+                    msg: Your request contains an invalid request parameter.
+                    error:
+                      troubleshooter: https://open.feishu.cn/search?from=openapi&log_id=202409131613579778D691D6E05516DE2D&code=230001
+                bot_not_in_group:
+                  value:
+                    code: 230002
+                    msg: The bot can not be outside the group.
+                    error:
+                      troubleshooter: https://open.feishu.cn/search?from=openapi&log_id=202409131613579778D691D6E05516DE2D&code=230002
+                rate_limit_exceeded:
+                  value:
+                    code: 230020
+                    msg: This operation triggers the frequency limit.
+                    error:
+                      troubleshooter: https://open.feishu.cn/search?from=openapi&log_id=202409131613579778D691D6E05516DE2D&code=230020
+        '500':
+          description: 服务端内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                code: 500
+                msg: Internal Server Error
+                error:
+                  log_id: "202409131613579778D691D6E05516DE2D"
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ReceiveIdType:
+      type: string
+      enum:
+        - open_id
+        - union_id
+        - user_id
+        - email
+        - chat_id
+      description: |
+        消息接收者 ID 类型。
+
+        **可能值有**：
+        - `open_id`：标识一个用户在某个应用中的身份。
+        - `union_id`：标识一个用户在某个应用开发商下的身份。
+        - `user_id`：标识一个用户在某个租户内的身份。
+        - `email`：以用户的真实邮箱来标识用户。
+        - `chat_id`：以群 ID 来标识群聊。
+    Sender:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 发送者的 ID。
+          example: cli_9f427eec54ae901b
+        id_type:
+          type: string
+          enum:
+            - open_id
+            - app_id
+          description: |
+            发送者的 ID 类型。
+
+            **可能值有：**
+            - `open_id`：表示发送者为用户，且返回的 ID 是用户的 open_id。
+            - `app_id`：表示发送者为应用，且返回的 ID 是应用的 app_id。
+          example: app_id
+        sender_type:
+          type: string
+          enum:
+            - user
+            - app
+            - anonymous
+            - unknown
+          description: |
+            发送者类型。
+
+            **可能值有：**
+            - `user`: 用户
+            - `app`: 应用
+            - `anonymous`: 匿名（未生效，不会返回该值）
+            - `unknown`: 未知（未生效，不会返回该值）
+          example: app
+        tenant_key:
+          type: string
+          description: 租户唯一标识。该标识用来识别租户，也可以用来获取租户访问凭证（tenant_access_token）。
+          example: "736588c9260f175e"
+      required:
+        - id
+        - id_type
+        - sender_type
+    MessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+          description: |
+            消息内容，JSON 结构序列化后的字符串，不同消息类型（`msg_type`）对应不同内容。
+          example: "{\"text\":\"@_user_1 test content\"}"
+      required:
+        - content
+    Mention:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 被 @ 的用户序号。例如，第 3 个被 @ 到的成员，取值为 `@_user_3`。
+          example: "@_user_1"
+        id:
+          type: string
+          description: 被 @ 的用户的 open_id。
+          example: ou_155184d1e73cbfb8973e5a9e698e74f2
+        id_type:
+          type: string
+          enum:
+            - open_id
+          description: |
+            被 @ 的用户的 ID 类型，目前仅支持 `open_id`。
+          example: open_id
+        name:
+          type: string
+          description: 被 @ 的用户姓名。
+          example: Tom
+        tenant_key:
+          type: string
+          description: 租户唯一标识。该标识用来识别被 @ 用户的租户，也可以用来获取租户访问凭证（tenant_access_token）。
+          example: "736588c9260f175e"
+      required:
+        - key
+        - id
+        - id_type
+        - name
+    Message:
+      type: object
+      properties:
+        message_id:
+          type: string
+          description: |
+            消息 ID。成功发送消息后，由系统生成的唯一 ID 标识。后续对消息的管理维护操作均需要使用该 ID。
+          example: om_dc13264520392913993dd051dba21dcf
+        root_id:
+          type: string
+          description: |
+            根消息 ID，仅在回复消息场景会有返回值。了解 root_id 可参见[消息管理概述](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/im-v1/message/intro)。
+          example: om_40eb06e7b84dc71c03e009ad3c754195
+        parent_id:
+          type: string
+          description: |
+            父消息 ID，仅在回复消息场景会有返回值。了解 parent_id 可参见[消息管理概述](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/im-v1/message/intro)。
+          example: om_d4be107c616aed9c1da8ed8068570a9f
+        thread_id:
+          type: string
+          description: |
+            消息所属的话题 ID，仅在话题场景会有返回值。了解话题可参见[话题概述](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/im-v1/message/thread-introduction)。
+          example: omt_d4be107c616a
+        msg_type:
+          type: string
+          description: |
+            消息类型。
+
+            **可能值有**：
+            - text：文本
+            - post：富文本
+            - image：图片
+            - file：文件
+            - audio：语音
+            - media：视频
+            - sticker：表情包
+            - interactive：卡片
+            - share_chat：分享群名片（被分享的群名片有效期为 7 天）
+            - share_user：分享个人名片
+            - system：系统消息
+          example: interactive
+        create_time:
+          type: string
+          description: 消息生成的时间戳。单位：毫秒
+          example: "1615380573411"
+        update_time:
+          type: string
+          description: 消息更新的时间戳。单位：毫秒
+          example: "1615380573411"
+        deleted:
+          type: boolean
+          description: 消息是否被撤回。发送消息时只会返回 false，表示未被撤回。
+          example: false
+        updated:
+          type: boolean
+          description: 消息是否被更新。发送消息时只会返回 false，表示未被更新。
+          example: false
+        chat_id:
+          type: string
+          description: |
+            消息所属的群 ID。你可以调用[获取群信息](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/im-v1/chat/get)接口，根据群 ID 获取群详情。
+          example: oc_5ad11d72b830411d72b836c20
+        sender:
+          $ref: '#/components/schemas/Sender'
+        body:
+          $ref: '#/components/schemas/MessageBody'
+        mentions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mention'
+          description: 发送的消息内，被 @ 的用户列表。
+        upper_message_id:
+          type: string
+          description: |
+            合并转发消息中，上一层级的消息 ID，仅在合并转发场景会有返回值。了解 upper_message_id 可参见[消息管理概述](/ssl:ttdoc/uAjLw4CM/ukTMukTMukTM/reference/im-v1/message/intro)。
+          example: om_40eb06e7b84dc71c03e009ad3c754195
+    SendMessageRequest:
+      type: object
+      properties:
+        receive_id:
+          type: string
+          description: |
+            消息接收者的 ID，ID 类型与查询参数 `receive_id_type` 的取值一致。
+
+            **注意事项**：
+            - 给用户发送消息时，用户需要在机器人的[可用范围](/ssl:ttdoc/home/introduction-to-scope-and-authorization/availability)内。
+            - 给群组发送消息时，机器人需要在该群组中，且在群组内拥有发言权限。
+            - 如果消息接收者为用户，推荐使用用户的 `open_id`。
+          example: ou_7d8a6e6df7621556ce0d21922b676706ccs
+          maxLength: 50
+        msg_type:
+          type: string
+          description: |
+            消息类型。
+
+            **可选值有**：
+            - text：文本
+            - post：富文本
+            - image：图片
+            - file：文件
+            - audio：语音
+            - media：视频
+            - sticker：表情包
+            - interactive：卡片
+            - share_chat：分享群名片
+            - share_user：分享个人名片
+            - system：系统消息
+          example: text
+        content:
+          type: string
+          description: |
+            消息内容，JSON 结构序列化后的字符串。该参数的取值与 `msg_type` 对应。
+
+            **注意**：
+            - JSON 字符串需进行转义。
+            - 文本消息请求体最大不能超过 150 KB。
+            - 卡片消息、富文本消息请求体最大不能超过 30 KB。
+            - 图片/音频/视频/文件需先上传获取 key 再发送。
+          example: "{\"text\":\"test content\"}"
+        uuid:
+          type: string
+          description: |
+            自定义设置的唯一字符串序列，用于在发送消息时请求去重。持有相同 uuid 的请求，在 1 小时内至多成功发送一条消息。
+
+            **注意**：当发送不同的消息内容时，如果传入了该参数，则需要在每次请求时都更换该参数的取值。
+          example: a0d69e20-1dd1-458b-k525-dfeca4015204
+          maxLength: 50
+      required:
+        - receive_id
+        - msg_type
+        - content
+    SendMessageResponseData:
+      type: object
+      properties:
+        message_id:
+          type: string
+          description: 消息 ID
+          example: om_dc13264520392913993dd051dba21dcf
+        root_id:
+          type: string
+          description: 根消息 ID
+          example: om_40eb06e7b84dc71c03e009ad3c754195
+        parent_id:
+          type: string
+          description: 父消息 ID
+          example: om_d4be107c616aed9c1da8ed8068570a9f
+        thread_id:
+          type: string
+          description: 话题 ID
+          example: omt_d4be107c616a
+        msg_type:
+          type: string
+          description: 消息类型
+          example: interactive
+        create_time:
+          type: string
+          description: 创建时间戳（毫秒）
+          example: "1615380573411"
+        update_time:
+          type: string
+          description: 更新时间戳（毫秒）
+          example: "1615380573411"
+        deleted:
+          type: boolean
+          description: 是否被撤回
+          example: false
+        updated:
+          type: boolean
+          description: 是否被更新
+          example: false
+        chat_id:
+          type: string
+          description: 所属群 ID
+          example: oc_5ad11d72b830411d72b836c20
+        sender:
+          $ref: '#/components/schemas/Sender'
+        body:
+          $ref: '#/components/schemas/MessageBody'
+        mentions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mention'
+        upper_message_id:
+          type: string
+          description: 上一层级消息 ID
+          example: om_40eb06e7b84dc71c03e009ad3c754195
+    SendMessageResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码，非 0 表示失败
+          example: 0
+        msg:
+          type: string
+          description: 错误描述
+          example: success
+        data:
+          $ref: '#/components/schemas/Message'
+    ErrorInfo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码
+          example: 230001
+        msg:
+          type: string
+          description: 错误描述
+          example: Your request contains an invalid request parameter.
+        error:
+          type: object
+          properties:
+            log_id:
+              type: string
+              description: 日志ID，用于问题排查
+              example: 202409131613579778D691D6E05516DE2D
+            troubleshooter:
+              type: string
+              description: 排查建议链接
+              example: https://open.feishu.cn/search?from=openapi&log_id=202409131613579778D691D6E05516DE2D&code=230001

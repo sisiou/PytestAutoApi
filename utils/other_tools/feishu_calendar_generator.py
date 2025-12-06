@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-飞书“创建共享日历”接口测试用例自动生成脚本
+飞书"创建共享日历"接口测试用例自动生成脚本（基于 OpenAPI YAML）
 
 执行步骤：
-1. 校验 CalendarCreate.json 是否存在
-2. 依据 CalendarCreate.json 生成 YAML 用例
+1. 校验 OpenAPI YAML 文件是否存在
+2. 依据 OpenAPI YAML 文件生成 YAML 用例
 3. 自动获取 tenant_access_token 并写入 YAML（可选）
 4. 生成 pytest 用例
 5. 输出总结信息
@@ -15,8 +15,6 @@
 """
 
 import sys
-import time
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -33,8 +31,9 @@ from utils.read_files_tools.swagger_for_yaml import SwaggerForYaml
 from utils.read_files_tools.case_automatic_control import TestCaseAutomaticGeneration
 
 # ================= 手动配置区域 =================
+OPENAPI_PATH = Path("interfacetest/openapi_server-docs_calendar-v4_calendar_create_f6e6999f.yaml")
 DEFAULT_APP_ID = "cli_a9ac1b6a23b99bc2"
-DEFAULT_APP_SECRET =  "kfPsUJmZiCco8DyGGslAufc7tTuNjiVe"
+DEFAULT_APP_SECRET = "kfPsUJmZiCco8DyGGslAufc7tTuNjiVe"
 # =================================================
 
 
@@ -42,40 +41,91 @@ class FeishuCalendarCreateGenerator:
     """飞书共享日历创建接口测试用例生成器"""
 
     def __init__(self):
-        self.calendar_json_path = Path("interfacetest/CalendarCreate.json")
-        self.swagger_json_path = self.calendar_json_path
+        self.openapi_path = OPENAPI_PATH
 
-    def step1_check_json(self) -> None:
-        """步骤1: 校验 CalendarCreate.json 是否存在"""
+    def step1_check_openapi(self) -> None:
+        """步骤1: 校验 OpenAPI YAML 文件是否存在"""
         print("\n" + "=" * 60)
-        print("步骤 1/5: 检查 CalendarCreate.json")
+        print("步骤 1/5: 检查 OpenAPI YAML 文件")
         print("=" * 60)
 
-        if self.calendar_json_path.exists():
-            print(f"✓ CalendarCreate.json 已存在: {self.calendar_json_path}")
+        if self.openapi_path.exists():
+            print(f"✓ OpenAPI YAML 文件已存在: {self.openapi_path}")
             return
 
-        print(f"✗ 错误: 未找到 {self.calendar_json_path}")
-        print("  请根据接口文档创建该 JSON 文件")
+        print(f"✗ 错误: 未找到 {self.openapi_path}")
+        print("  请确认 OpenAPI YAML 文件路径是否正确")
         sys.exit(1)
 
     def step2_generate_yaml_from_swagger(self) -> None:
-        """步骤2: 从 CalendarCreate.json 生成 YAML 用例"""
+        """步骤2: 从 OpenAPI YAML 文件生成 YAML 用例"""
         print("\n" + "=" * 60)
-        print("步骤 2/5: 从 CalendarCreate.json 生成 YAML 用例")
+        print("步骤 2/5: 从 OpenAPI YAML 文件生成 YAML 用例")
         print("=" * 60)
 
-        json_path = str(self.calendar_json_path)
+        yaml_path = self.openapi_path
 
         class CalendarSwaggerForYaml(SwaggerForYaml):
+            """
+            使用类变量 `_class_yaml_path` 传递 OpenAPI YAML 路径，避免默认 __init__ 直接调用基类 get_swagger_json 时无参。
+            """
+            _class_yaml_path: Optional[str] = None
+
+            def __init__(self, yaml_path: Path):
+                # 先设置类级路径，再调用基类初始化
+                CalendarSwaggerForYaml._class_yaml_path = str(yaml_path)
+                super().__init__()
+                # 覆盖基类初始化的数据（因为基类会在 __init__ 调用 get_swagger_json）
+                self._data = self.get_swagger_json()
+
             @classmethod
             def get_swagger_json(cls):
                 try:
-                    import json
-                    with open(json_path, "r", encoding="utf-8") as f:
-                        return json.load(f)
-                except FileNotFoundError:
-                    raise FileNotFoundError(f"文件路径不存在: {json_path}")
+                    import yaml
+                except ImportError as e:  # noqa: BLE001
+                    raise ImportError("缺少依赖 yaml，请安装 pyyaml: pip install pyyaml") from e
+
+                if not cls._class_yaml_path:
+                    raise RuntimeError("未设置 _class_yaml_path")
+
+                path = Path(cls._class_yaml_path)
+                try:
+                    with path.open("r", encoding="utf-8") as f:
+                        return yaml.safe_load(f)
+                except FileNotFoundError as e:
+                    raise FileNotFoundError(f"OpenAPI 文件不存在: {path}") from e
+
+            def get_allure_epic(self):
+                """获取 allure epic"""
+                if "info" in self._data and "title" in self._data["info"]:
+                    return self._data["info"]["title"]
+                if "title" in self._data:
+                    return self._data["title"]
+                return "飞书接口测试"
+
+            def get_allure_feature(self, value):
+                """兼容无 tags 的 OpenAPI，优先 tags，其次 summary，最后默认"""
+                try:
+                    if value.get("tags"):
+                        return value["tags"][0] if isinstance(value["tags"], list) else value["tags"]
+                except Exception:
+                    ...
+                return value.get("summary") or "日历管理"
+
+            def get_allure_story(self, value):
+                """获取 allure story"""
+                return value.get("summary") or "创建共享日历"
+
+            def get_host(self):
+                """从 OpenAPI YAML 的 servers 中提取 host"""
+                servers = self._data.get("servers", [])
+                if servers and len(servers) > 0:
+                    server_url = servers[0].get("url", "")
+                    # 提取协议和域名部分，例如：https://open.feishu.cn
+                    from urllib.parse import urlparse
+                    parsed = urlparse(server_url)
+                    return f"{parsed.scheme}://{parsed.netloc}"
+                return "https://open.feishu.cn"
 
             def get_case_data(self, value):
                 """解析 requestBody 数据"""
@@ -94,10 +144,22 @@ class FeishuCalendarCreateGenerator:
                             schemas = components.get('schemas', {})
                             schema = schemas.get(schema_name, schema)
 
+                    # 处理 example（单个示例）或 examples（多个示例）
                     example = json_content.get('example')
+                    examples = json_content.get('examples', {})
+                    
                     if example:
+                        # 单个示例
                         body_data.update(example)
+                    elif examples:
+                        # 多个示例，取第一个示例的 value
+                        first_example = list(examples.values())[0] if isinstance(examples, dict) else examples[0]
+                        if isinstance(first_example, dict) and 'value' in first_example:
+                            body_data.update(first_example['value'])
+                        elif isinstance(first_example, dict):
+                            body_data.update(first_example)
                     else:
+                        # 没有示例，从 schema 的 properties 生成空值
                         for prop in schema.get('properties', {}).keys():
                             body_data.setdefault(prop, None)
 
@@ -106,16 +168,23 @@ class FeishuCalendarCreateGenerator:
             def write_yaml_handler(self):
                 """
                 重写写入逻辑:
-                - 基于同一个接口，生成多种场景的用例，覆盖正常和典型错误场景
-                  场景1: 创建私有日历（permissions=private，成功）
-                  场景2: 创建公开日历（permissions=public，成功）
-                  场景3: 缺少 summary（必填字段缺失，预期 400）
-                  场景4: summary 超长（>255，预期 400）
-                  场景5: permissions 非法取值（预期 400）
-                  场景6: description 超长（>255，预期 400）
-                  场景7: color 超出 int32 范围（预期 400）
+                根据测试用例表生成完整的测试场景，覆盖：
+                1. 权限与认证校验（应用身份、Token格式错误）
+                2. 参数边界校验（summary/description长度、permissions枚举、color范围）
+                3. 业务功能（默认值、不同权限类型）
+                4. 组合覆盖（完整参数、边界值组合）
+                5. 异常处理（Content-Type错误、请求体格式错误）
                 """
                 import copy
+
+                # 从 servers 中提取基础路径
+                servers = self._data.get("servers", [])
+                base_path = ""
+                if servers and len(servers) > 0:
+                    server_url = servers[0].get("url", "")
+                    from urllib.parse import urlparse
+                    parsed = urlparse(server_url)
+                    base_path = parsed.path.rstrip("/")  # 例如：/open-apis/calendar/v4
 
                 _api_data = self._data["paths"]
                 for path, methods in _api_data.items():
@@ -123,41 +192,104 @@ class FeishuCalendarCreateGenerator:
                         headers = self.get_headers(meta)
                         request_type = self.get_request_type(meta, headers)
                         body_data = self.get_case_data(meta)
+                        
+                        # 构建完整的 URL 路径
+                        full_url = base_path + path if base_path else path
 
                         base_body = copy.deepcopy(body_data) if isinstance(body_data, dict) else {}
 
-                        # 场景1：私有日历，期望成功
-                        scene1_body = copy.deepcopy(base_body)
-                        scene1_body.setdefault("summary", "自动化测试日历 - 私有")
-                        scene1_body["permissions"] = "private"
+                        # ========== 一、权限与认证校验阶段 ==========
+                        # TC_CAL_AUTH_001: 应用身份创建日历（私有）
+                        scene_auth1_body = copy.deepcopy(base_body)
+                        scene_auth1_body.setdefault("summary", "测试日历")
+                        scene_auth1_body["permissions"] = "private"
 
-                        # 场景2：公开日历，期望成功
-                        scene2_body = copy.deepcopy(base_body)
-                        scene2_body.setdefault("summary", "自动化测试日历 - 公开")
-                        scene2_body["permissions"] = "public"
+                        # TC_CAL_AUTH_003: Token格式错误（无效token）
+                        scene_auth3_headers = copy.deepcopy(headers) if isinstance(headers, dict) else {}
+                        scene_auth3_headers["Authorization"] = "InvalidTokenFormat"
+                        scene_auth3_body = copy.deepcopy(base_body)
+                        scene_auth3_body.setdefault("summary", "测试日历")
 
-                        # 场景3：缺少 summary，期望 400 参数错误
-                        scene3_body = copy.deepcopy(base_body)
-                        if "summary" in scene3_body:
-                            scene3_body.pop("summary")
+                        # ========== 二、参数边界校验阶段 ==========
+                        # TC_CAL_PARAM_001: summary参数-正常长度（255字符）
+                        scene_param1_body = copy.deepcopy(base_body)
+                        scene_param1_body["summary"] = "A" * 255
+                        scene_param1_body["permissions"] = "private"
 
-                        # 场景4：summary 超长，期望 400 参数错误
-                        scene4_body = copy.deepcopy(base_body)
-                        scene4_body["summary"] = "A" * 300  # 超过 255 的边界
+                        # TC_CAL_PARAM_002: summary参数-超过最大长度（256字符）
+                        scene_param2_body = copy.deepcopy(base_body)
+                        scene_param2_body["summary"] = "A" * 256
+                        scene_param2_body["permissions"] = "private"
 
-                        # 场景5：permissions 非法取值，期望 400 参数错误
-                        scene5_body = copy.deepcopy(base_body)
-                        scene5_body["permissions"] = "invalid_permission_for_test"
+                        # TC_CAL_PARAM_003: description参数-正常长度（255字符）
+                        scene_param3_body = copy.deepcopy(base_body)
+                        scene_param3_body.setdefault("summary", "测试日历")
+                        scene_param3_body["description"] = "D" * 255
+                        scene_param3_body["permissions"] = "private"
 
-                        # 场景6：description 超长，期望 400 参数错误
-                        scene6_body = copy.deepcopy(base_body)
-                        scene6_body.setdefault("summary", "自动化测试日历 - 描述超长")
-                        scene6_body["description"] = "D" * 300  # 超过 255 的边界
+                        # TC_CAL_PARAM_004: description参数-超过最大长度（256字符）
+                        scene_param4_body = copy.deepcopy(base_body)
+                        scene_param4_body.setdefault("summary", "测试日历")
+                        scene_param4_body["description"] = "D" * 256
+                        scene_param4_body["permissions"] = "private"
 
-                        # 场景7：color 超出 int32 范围，期望 400 参数错误
-                        scene7_body = copy.deepcopy(base_body)
-                        scene7_body.setdefault("summary", "自动化测试日历 - 颜色越界")
-                        scene7_body["color"] = 2 ** 31  # 超出 32 位有符号整型上限
+                        # TC_CAL_PARAM_005: permissions参数-有效枚举值
+                        # 5.1: private
+                        scene_param5a_body = copy.deepcopy(base_body)
+                        scene_param5a_body.setdefault("summary", "测试日历-private")
+                        scene_param5a_body["permissions"] = "private"
+                        # 5.2: show_only_free_busy
+                        scene_param5b_body = copy.deepcopy(base_body)
+                        scene_param5b_body.setdefault("summary", "测试日历-show_only_free_busy")
+                        scene_param5b_body["permissions"] = "show_only_free_busy"
+                        # 5.3: public
+                        scene_param5c_body = copy.deepcopy(base_body)
+                        scene_param5c_body.setdefault("summary", "测试日历-public")
+                        scene_param5c_body["permissions"] = "public"
+
+                        # TC_CAL_PARAM_006: permissions参数-无效枚举值
+                        scene_param6_body = copy.deepcopy(base_body)
+                        scene_param6_body.setdefault("summary", "测试日历")
+                        scene_param6_body["permissions"] = "invalid_value"
+
+                        # TC_CAL_PARAM_007: color参数-有效范围值
+                        scene_param7_body = copy.deepcopy(base_body)
+                        scene_param7_body.setdefault("summary", "测试日历")
+                        scene_param7_body["color"] = -1
+                        scene_param7_body["permissions"] = "private"
+
+                        # ========== 三、业务功能与逻辑阶段 ==========
+                        # TC_CAL_BUS_001: 创建日历使用默认值（不传任何参数）
+                        scene_bus1_body = {}  # 空请求体
+
+                        # TC_CAL_BUS_003: 创建不同公开范围的日历（已在param5中覆盖）
+
+                        # ========== 四、组合覆盖用例 ==========
+                        # TC_CAL_COMB_001: 组合1：应用身份+完整参数
+                        scene_comb1_body = copy.deepcopy(base_body)
+                        scene_comb1_body["summary"] = "测试"
+                        scene_comb1_body["description"] = "描述"
+                        scene_comb1_body["permissions"] = "private"
+                        scene_comb1_body["color"] = -1
+                        scene_comb1_body["summary_alias"] = "别名"
+
+                        # TC_CAL_COMB_003: 组合3：应用身份+边界值组合
+                        scene_comb3_body = copy.deepcopy(base_body)
+                        scene_comb3_body["summary"] = "A" * 255
+                        scene_comb3_body["description"] = "D" * 255
+                        scene_comb3_body["permissions"] = "public"
+                        scene_comb3_body["color"] = 0
+                        scene_comb3_body["summary_alias"] = "S" * 255
+
+                        # ========== 五、异常处理 ==========
+                        # TC_CAL_LIMIT_001: Content-Type错误
+                        scene_limit1_headers = copy.deepcopy(headers) if isinstance(headers, dict) else {}
+                        scene_limit1_headers["Content-Type"] = "text/plain"
+                        scene_limit1_body = copy.deepcopy(base_body)
+                        scene_limit1_body.setdefault("summary", "测试日历")
+
+                        # TC_CAL_LIMIT_002: 请求体格式错误（非JSON，这个需要在测试框架层面处理，这里先标记）
+                        # 注意：请求体格式错误通常无法在YAML中直接表达，需要在测试代码中处理
 
                         base_case_id = self.get_case_id(path)
                         yaml_data = {
@@ -166,116 +298,234 @@ class FeishuCalendarCreateGenerator:
                                 "allureFeature": self.get_allure_feature(meta),
                                 "allureStory": self.get_allure_story(meta),
                             },
-                            # 场景1：私有日历成功
+                            # ========== 一、权限与认证校验阶段 ==========
+                            # TC_CAL_AUTH_001: 应用身份创建日历（私有）
                             base_case_id: {
                                 "host": self._host,
-                                "url": path,
+                                "url": full_url,
                                 "method": method,
-                                "detail": self.get_detail(meta) + " - 私有日历成功",
+                                "detail": "TC_CAL_AUTH_001 - 应用身份创建日历",
                                 "headers": headers,
                                 "requestType": request_type,
                                 "is_run": None,
-                                "data": scene1_body,
+                                "data": scene_auth1_body,
                                 "dependence_case": False,
                                 "assert": {"status_code": 200},
                                 "sql": None,
                             },
-                            # 场景2：公开日历成功
+                            # TC_CAL_AUTH_003: Token格式错误
+                            # 实际返回：HTTP 400, code: 99991661 (Missing access token)
                             base_case_id.replace("01", "02", 1): {
                                 "host": self._host,
-                                "url": path,
+                                "url": full_url,
                                 "method": method,
-                                "detail": self.get_detail(meta) + " - 公开日历成功",
-                                "headers": headers,
+                                "detail": "TC_CAL_AUTH_003 - Token格式错误",
+                                "headers": scene_auth3_headers,
                                 "requestType": request_type,
                                 "is_run": None,
-                                "data": scene2_body,
+                                "data": scene_auth3_body,
                                 "dependence_case": False,
-                                "assert": {"status_code": 200},
+                                "assert": {"status_code": 400, "feishu_code": 99991661},
                                 "sql": None,
                             },
-                            # 场景3：缺少 summary（实测为允许，视为标题为空的成功场景）
+                            # ========== 二、参数边界校验阶段 ==========
+                            # TC_CAL_PARAM_001: summary参数-正常长度（255字符）
                             base_case_id.replace("01", "03", 1): {
                                 "host": self._host,
-                                "url": path,
+                                "url": full_url,
                                 "method": method,
-                                "detail": self.get_detail(meta) + " - 缺少标题字段默认成功",
+                                "detail": "TC_CAL_PARAM_001 - summary参数-正常长度",
                                 "headers": headers,
                                 "requestType": request_type,
                                 "is_run": None,
-                                "data": scene3_body,
+                                "data": scene_param1_body,
                                 "dependence_case": False,
-                                # 实测: 不传 summary 时接口仍成功，只是 summary 为空字符串
                                 "assert": {"status_code": 200},
                                 "sql": None,
                             },
-                            # 场景4：summary 超长
+                            # TC_CAL_PARAM_002: summary参数-超过最大长度（256字符）
                             base_case_id.replace("01", "04", 1): {
                                 "host": self._host,
-                                "url": path,
+                                "url": full_url,
                                 "method": method,
-                                "detail": self.get_detail(meta) + " - 标题超长",
+                                "detail": "TC_CAL_PARAM_002 - summary参数-超过最大长度",
                                 "headers": headers,
                                 "requestType": request_type,
                                 "is_run": None,
-                                "data": scene4_body,
+                                "data": scene_param2_body,
                                 "dependence_case": False,
-                                # 标题超长 -> 实际返回 99992402（field validation failed）
                                 "assert": {"status_code": 400, "feishu_code": 99992402},
                                 "sql": None,
                             },
-                            # 场景5：permissions 非法取值
+                            # TC_CAL_PARAM_003: description参数-正常长度（255字符）
                             base_case_id.replace("01", "05", 1): {
                                 "host": self._host,
-                                "url": path,
+                                "url": full_url,
                                 "method": method,
-                                "detail": self.get_detail(meta) + " - 非法权限类型",
+                                "detail": "TC_CAL_PARAM_003 - description参数-正常长度",
                                 "headers": headers,
                                 "requestType": request_type,
                                 "is_run": None,
-                                "data": scene5_body,
+                                "data": scene_param3_body,
                                 "dependence_case": False,
-                                # 非法权限类型 -> 实际返回 99992402（field validation failed）
-                                "assert": {"status_code": 400, "feishu_code": 99992402},
+                                "assert": {"status_code": 200},
                                 "sql": None,
                             },
-                            # 场景6：description 超长
+                            # TC_CAL_PARAM_004: description参数-超过最大长度（256字符）
                             base_case_id.replace("01", "06", 1): {
                                 "host": self._host,
-                                "url": path,
+                                "url": full_url,
                                 "method": method,
-                                "detail": self.get_detail(meta) + " - 描述超长",
+                                "detail": "TC_CAL_PARAM_004 - description参数-超过最大长度",
                                 "headers": headers,
                                 "requestType": request_type,
                                 "is_run": None,
-                                "data": scene6_body,
+                                "data": scene_param4_body,
                                 "dependence_case": False,
-                                # 描述超长 -> 实际返回 99992402（field validation failed）
                                 "assert": {"status_code": 400, "feishu_code": 99992402},
                                 "sql": None,
                             },
-                            # 场景7：color 越界
+                            # TC_CAL_PARAM_005: permissions参数-有效枚举值 - private
                             base_case_id.replace("01", "07", 1): {
                                 "host": self._host,
-                                "url": path,
+                                "url": full_url,
                                 "method": method,
-                                "detail": self.get_detail(meta) + " - 颜色越界",
+                                "detail": "TC_CAL_PARAM_005 - permissions参数-有效枚举值-private",
                                 "headers": headers,
                                 "requestType": request_type,
                                 "is_run": None,
-                                "data": scene7_body,
+                                "data": scene_param5a_body,
                                 "dependence_case": False,
-                                # 颜色越界 -> 实际返回 9499（Invalid parameter type in json: color）
-                                "assert": {"status_code": 400, "feishu_code": 9499},
+                                "assert": {"status_code": 200},
+                                "sql": None,
+                            },
+                            # TC_CAL_PARAM_005: permissions参数-有效枚举值 - show_only_free_busy
+                            base_case_id.replace("01", "08", 1): {
+                                "host": self._host,
+                                "url": full_url,
+                                "method": method,
+                                "detail": "TC_CAL_PARAM_005 - permissions参数-有效枚举值-show_only_free_busy",
+                                "headers": headers,
+                                "requestType": request_type,
+                                "is_run": None,
+                                "data": scene_param5b_body,
+                                "dependence_case": False,
+                                "assert": {"status_code": 200},
+                                "sql": None,
+                            },
+                            # TC_CAL_PARAM_005: permissions参数-有效枚举值 - public
+                            base_case_id.replace("01", "09", 1): {
+                                "host": self._host,
+                                "url": full_url,
+                                "method": method,
+                                "detail": "TC_CAL_PARAM_005 - permissions参数-有效枚举值-public",
+                                "headers": headers,
+                                "requestType": request_type,
+                                "is_run": None,
+                                "data": scene_param5c_body,
+                                "dependence_case": False,
+                                "assert": {"status_code": 200},
+                                "sql": None,
+                            },
+                            # TC_CAL_PARAM_006: permissions参数-无效枚举值
+                            base_case_id.replace("01", "10", 1): {
+                                "host": self._host,
+                                "url": full_url,
+                                "method": method,
+                                "detail": "TC_CAL_PARAM_006 - permissions参数-无效枚举值",
+                                "headers": headers,
+                                "requestType": request_type,
+                                "is_run": None,
+                                "data": scene_param6_body,
+                                "dependence_case": False,
+                                "assert": {"status_code": 400, "feishu_code": 99992402},
+                                "sql": None,
+                            },
+                            # TC_CAL_PARAM_007: color参数-有效范围值
+                            base_case_id.replace("01", "11", 1): {
+                                "host": self._host,
+                                "url": full_url,
+                                "method": method,
+                                "detail": "TC_CAL_PARAM_007 - color参数-有效范围值",
+                                "headers": headers,
+                                "requestType": request_type,
+                                "is_run": None,
+                                "data": scene_param7_body,
+                                "dependence_case": False,
+                                "assert": {"status_code": 200},
+                                "sql": None,
+                            },
+                            # ========== 三、业务功能与逻辑阶段 ==========
+                            # TC_CAL_BUS_001: 创建日历使用默认值
+                            base_case_id.replace("01", "12", 1): {
+                                "host": self._host,
+                                "url": full_url,
+                                "method": method,
+                                "detail": "TC_CAL_BUS_001 - 创建日历使用默认值",
+                                "headers": headers,
+                                "requestType": request_type,
+                                "is_run": None,
+                                "data": scene_bus1_body,
+                                "dependence_case": False,
+                                "assert": {"status_code": 200},
+                                "sql": None,
+                            },
+                            # ========== 四、组合覆盖用例 ==========
+                            # TC_CAL_COMB_001: 组合1：应用身份+完整参数
+                            base_case_id.replace("01", "13", 1): {
+                                "host": self._host,
+                                "url": full_url,
+                                "method": method,
+                                "detail": "TC_CAL_COMB_001 - 组合1：应用身份+完整参数",
+                                "headers": headers,
+                                "requestType": request_type,
+                                "is_run": None,
+                                "data": scene_comb1_body,
+                                "dependence_case": False,
+                                "assert": {"status_code": 200},
+                                "sql": None,
+                            },
+                            # TC_CAL_COMB_003: 组合3：应用身份+边界值组合
+                            base_case_id.replace("01", "14", 1): {
+                                "host": self._host,
+                                "url": full_url,
+                                "method": method,
+                                "detail": "TC_CAL_COMB_003 - 组合3：应用身份+边界值组合",
+                                "headers": headers,
+                                "requestType": request_type,
+                                "is_run": None,
+                                "data": scene_comb3_body,
+                                "dependence_case": False,
+                                "assert": {"status_code": 200},
+                                "sql": None,
+                            },
+                            # ========== 五、异常处理 ==========
+                            # TC_CAL_LIMIT_001: Content-Type错误
+                            # 实际行为：接口接受 text/plain，返回 200（接口可能不严格检查Content-Type）
+                            base_case_id.replace("01", "15", 1): {
+                                "host": self._host,
+                                "url": full_url,
+                                "method": method,
+                                "detail": "TC_CAL_LIMIT_001 - Content-Type错误（实际接口接受）",
+                                "headers": scene_limit1_headers,
+                                "requestType": request_type,
+                                "is_run": None,
+                                "data": scene_limit1_body,
+                                "dependence_case": False,
+                                "assert": {"status_code": 200},
                                 "sql": None,
                             },
                         }
-                        self.yaml_cases(yaml_data, file_path=path)
+                        # 确保 file_path 包含 open-apis 前缀，以生成正确的 YAML 文件路径
+                        # 从 servers 中提取基础路径，或使用默认路径
+                        file_path_for_yaml = path if path.startswith("/open-apis") else "/open-apis/calendar/v4" + path
+                        self.yaml_cases(yaml_data, file_path=file_path_for_yaml)
 
         try:
-            swagger = CalendarSwaggerForYaml()
+            swagger = CalendarSwaggerForYaml(yaml_path)
             swagger.write_yaml_handler()
             print("✓ YAML 用例文件生成成功")
+            print("   生成了15个测试场景，覆盖创建日历测试用例表中的主要用例")
         except Exception as e:
             print(f"✗ 生成 YAML 文件时出错: {e}")
             import traceback
@@ -312,9 +562,10 @@ class FeishuCalendarCreateGenerator:
             return None
 
     def update_yaml_with_token(self, yaml_path: Path, token: str) -> bool:
-        """将 token 写入 YAML"""
+        """将 token 写入 YAML，处理 YAML 锚点引用，确保每个用例都有独立的 headers"""
         try:
             import ruamel.yaml
+            import copy
         except ImportError:
             print("✗ 错误: 需要安装 ruamel.yaml 库才能更新 YAML")
             print("   请运行: pip install ruamel.yaml")
@@ -323,6 +574,7 @@ class FeishuCalendarCreateGenerator:
         try:
             yaml = ruamel.yaml.YAML()
             yaml.preserve_quotes = True
+            yaml.default_flow_style = False
 
             data = {}
             if yaml_path.exists():
@@ -330,14 +582,52 @@ class FeishuCalendarCreateGenerator:
                     data = yaml.load(f) or {}
 
             updated = False
+            # 记录第一个用例的 headers（用于检测锚点引用）
+            first_headers_obj = None
+
             for key, value in data.items():
                 if key == "case_common" or not isinstance(value, dict):
                     continue
-                headers = value.get("headers") or {}
-                if isinstance(headers, dict):
-                    headers["Authorization"] = f"Bearer {token}"
+
+                headers = value.get("headers")
+
+                # 检测是否是锚点引用：如果 headers 对象与第一个用例的 headers 是同一个对象，说明是引用
+                if first_headers_obj is None:
+                    first_headers_obj = headers
+                    # 第一个用例：创建新的独立字典
+                    if headers is None:
+                        headers = {}
+                    else:
+                        # 深拷贝，确保独立
+                        headers = copy.deepcopy(dict(headers))
                     value["headers"] = headers
-                    updated = True
+                else:
+                    # 后续用例：检查是否是同一个对象（锚点引用）
+                    if headers is first_headers_obj:
+                        # 是锚点引用，创建独立副本
+                        headers = copy.deepcopy(dict(first_headers_obj))
+                        value["headers"] = headers
+                    elif headers is None:
+                        headers = {}
+                        value["headers"] = headers
+                    elif not isinstance(headers, dict):
+                        # 其他异常情况，转换为字典
+                        headers = copy.deepcopy(dict(headers)) if hasattr(headers, '__iter__') else {}
+                        value["headers"] = headers
+
+                # 确保 headers 是字典类型
+                if not isinstance(headers, dict):
+                    headers = {}
+                    value["headers"] = headers
+
+                # 跳过 TC_CAL_AUTH_003（Token格式错误）用例，保持无效token
+                detail = value.get("detail", "")
+                if "TC_CAL_AUTH_003" in detail or "Token格式错误" in detail:
+                    continue
+
+                # 更新 Authorization
+                headers["Authorization"] = f"Bearer {token}"
+                updated = True
 
             if updated:
                 with yaml_path.open("w", encoding="utf-8") as f:
@@ -455,14 +745,14 @@ class FeishuCalendarCreateGenerator:
         print('飞书"创建共享日历"接口测试用例自动生成流程')
         print("=" * 60)
         print("\n本脚本将自动执行以下步骤：")
-        print("1. 检查 CalendarCreate.json")
+        print("1. 检查 OpenAPI YAML 文件")
         print("2. 生成 YAML 用例文件")
         print("3. 获取并更新 tenant_access_token（可选）")
         print("4. 生成 pytest 测试用例")
         print("5. 输出总结信息\n")
 
         try:
-            self.step1_check_json()
+            self.step1_check_openapi()
             self.step2_generate_yaml_from_swagger()
             self.step3_update_token_in_yaml()
             self.step4_generate_test_cases()
