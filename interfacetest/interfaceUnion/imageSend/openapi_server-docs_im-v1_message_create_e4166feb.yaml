@@ -1,0 +1,411 @@
+openapi: 3.0.3
+info:
+  title: 即时通讯API
+  version: 1.0.0
+  description: 提供向用户或群组发送消息的能力，支持文本、图片、文件、卡片等多种消息类型。适用于机器人应用在飞书平台内进行自动化消息推送与交互。
+
+servers:
+  - url: https://open.feishu.cn/open-apis
+    description: 生产环境服务器
+
+paths:
+  /im/v1/messages:
+    post:
+      summary: 发送消息
+      description: 向指定用户或群聊发送消息。支持的消息类型包括文本、富文本、卡片、群名片、个人名片、图片、视频、音频、文件、表情包等。
+      operationId: createMessage
+      parameters:
+        - name: receive_id_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - open_id
+              - union_id
+              - user_id
+              - email
+              - chat_id
+            example: open_id
+          description: |
+            消息接收者 ID 类型。
+            
+            **可选值说明**：
+            - `open_id`：标识一个用户在某个应用中的身份。
+            - `union_id`：标识一个用户在某个应用开发商下的身份。
+            - `user_id`：标识一个用户在租户内的身份（需权限 `contact:user.employee_id:readonly`）。
+            - `email`：以邮箱标识用户。
+            - `chat_id`：以群 ID 标识群聊。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+            examples:
+              text-example:
+                summary: 发送文本消息示例
+                value:
+                  receive_id: "ou_7d8a6e6df7621556ce0d21922b676706ccs"
+                  msg_type: text
+                  content: '{"text":"test content"}'
+              image-example:
+                summary: 发送图片消息示例
+                value:
+                  receive_id: "oc_84983ff6516d731e5b5f68d4ea2e1da5"
+                  msg_type: image
+                  content: '{"image_key":"asdlkjasdlkjsadlkj"}'
+              file-example:
+                summary: 发送文件消息示例
+                value:
+                  receive_id: "oc_84983ff6516d731e5b5f68d4ea2e1da5"
+                  msg_type: file
+                  content: '{"file_key":"asdlkjasdlkjsadlkj"}'
+              audio-example:
+                summary: 发送语音消息示例
+                value:
+                  receive_id: "oc_84983ff6516d731e5b5f68d4ea2e1da5"
+                  msg_type: audio
+                  content: '{"file_key":"asdlkjasdlkjsadlkj"}'
+              media-example:
+                summary: 发送视频消息示例
+                value:
+                  receive_id: "oc_84983ff6516d731e5b5f68d4ea2e1da5"
+                  msg_type: media
+                  content: '{"file_key":"asdlkjasdlkjsadlkj"}'
+              sticker-example:
+                summary: 发送表情包消息示例
+                value:
+                  receive_id: "oc_84983ff6516d731e5b5f68d4ea2e1da5"
+                  msg_type: sticker
+                  content: '{"sticker_id":"asdlkjasdlkjsadlkj"}'
+              interactive-example:
+                summary: 发送卡片消息示例
+                value:
+                  receive_id: "ou_7d8a6e6df7621556ce0d21922b676706ccs"
+                  msg_type: interactive
+                  content: >-
+                    {"elements":[{"tag":"markdown","content":"普通文本\\n\\n<at id=\"ou_cf986xxxx\"></at>"}]}
+              share_chat-example:
+                summary: 发送群名片消息示例
+                value:
+                  receive_id: "oc_84983ff6516d731e5b5f68d4ea2e1da5"
+                  msg_type: share_chat
+                  content: '{"share_chat_id":"oc_asdlkjasdlkjsadlkj"}'
+              share_user-example:
+                summary: 发送个人名片消息示例
+                value:
+                  receive_id: "oc_84983ff6516d731e5b5f68d4ea2e1da5"
+                  msg_type: share_user
+                  content: '{"user_id":"ou_asdlkjasdlkjsadlkj"}'
+              system-example:
+                summary: 发送系统消息示例
+                value:
+                  receive_id: "ou_7d8a6e6df7621556ce0d21922b676706ccs"
+                  msg_type: system
+                  content: '{"text":"新会话开始"}'
+        required: true
+      responses:
+        '200':
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseMessage'
+              examples:
+                success-response:
+                  value:
+                    code: 0
+                    msg: success
+                    data:
+                      message_id: "om_dc13264520392913993dd051dba21dcf"
+                      root_id: "om_40eb06e7b84dc71c03e009ad3c754195"
+                      parent_id: "om_d4be107c616aed9c1da8ed8068570a9f"
+                      thread_id: "omt_d4be107c616a"
+                      msg_type: interactive
+                      create_time: "1615380573411"
+                      update_time: "1615380573411"
+                      deleted: false
+                      updated: false
+                      chat_id: "oc_5ad11d72b830411d72b836c20"
+                      sender:
+                        id: "cli_9f427eec54ae901b"
+                        id_type: app_id
+                        sender_type: app
+                        tenant_key: "736588c9260f175e"
+                      body:
+                        content: "{\"text\":\"@_user_1 test content\"}"
+                      mentions:
+                        - key: "@_user_1"
+                          id: "ou_155184d1e73cbfb8973e5a9e698e74f2"
+                          id_type: open_id
+                          name: Tom
+                          tenant_key: "736588c9260f175e"
+                      upper_message_id: "om_40eb06e7b84dc71c03e009ad3c754195"
+        '400':
+          description: 请求错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                error-response:
+                  value:
+                    code: 230001
+                    msg: "Your request contains an invalid request parameter."
+        '500':
+          description: 服务端内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+components:
+  schemas:
+    ApiResponseMessage:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码，非0表示失败
+          example: 0
+        msg:
+          type: string
+          description: 错误描述
+          example: success
+        data:
+          $ref: '#/components/schemas/Message'
+      required:
+        - code
+        - msg
+        - data
+
+    ApiErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码
+        msg:
+          type: string
+          description: 错误信息
+        error:
+          type: object
+          properties:
+            log_id:
+              type: string
+            troubleshooter:
+              type: string
+
+    Message:
+      type: object
+      description: 消息对象
+      properties:
+        message_id:
+          type: string
+          description: 消息 ID，由系统生成的唯一标识
+          example: om_dc13264520392913993dd051dba21dcf
+        root_id:
+          type: string
+          description: 根消息 ID，仅在回复消息场景返回
+          example: om_40eb06e7b84dc71c03e009ad3c754195
+        parent_id:
+          type: string
+          description: 父消息 ID，仅在回复消息场景返回
+          example: om_d4be107c616aed9c1da8ed8068570a9f
+        thread_id:
+          type: string
+          description: 消息所属话题 ID，仅在话题场景返回
+          example: omt_d4be107c616a
+        msg_type:
+          type: string
+          enum:
+            - text
+            - post
+            - image
+            - file
+            - audio
+            - media
+            - sticker
+            - interactive
+            - share_chat
+            - share_user
+            - system
+          description: 消息类型
+          example: interactive
+        create_time:
+          type: string
+          description: 消息创建时间戳（毫秒）
+          example: "1615380573411"
+        update_time:
+          type: string
+          description: 消息更新时间戳（毫秒）
+          example: "1615380573411"
+        deleted:
+          type: boolean
+          description: 是否被撤回
+          example: false
+        updated:
+          type: boolean
+          description: 是否被更新
+          example: false
+        chat_id:
+          type: string
+          description: 所属群聊 ID
+          example: oc_5ad11d72b830411d72b836c20
+        sender:
+          $ref: '#/components/schemas/Sender'
+        body:
+          $ref: '#/components/schemas/MessageBody'
+        mentions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mention'
+        upper_message_id:
+          type: string
+          description: 合并转发中上一层级消息 ID
+          example: om_40eb06e7b84dc71c03e009ad3c754195
+
+    Sender:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 发送者 ID
+          example: cli_9f427eec54ae901b
+        id_type:
+          type: string
+          enum:
+            - open_id
+            - app_id
+          description: 发送者 ID 类型
+          example: app_id
+        sender_type:
+          type: string
+          enum:
+            - user
+            - app
+            - anonymous
+            - unknown
+          description: 发送者类型
+          example: app
+        tenant_key:
+          type: string
+          description: 租户唯一标识
+          example: 736588c9260f175e
+      required:
+        - id
+        - id_type
+        - sender_type
+
+    MessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+          description: 消息内容，JSON 序列化字符串，格式取决于 msg_type
+          example: "{\"text\":\"@_user_1 test content\"}"
+      required:
+        - content
+
+    Mention:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 被 @ 用户序号，如 @_user_1
+          example: "@_user_1"
+        id:
+          type: string
+          description: 被 @ 用户的 open_id
+          example: ou_155184d1e73cbfb8973e5a9e698e74f2
+        id_type:
+          type: string
+          enum:
+            - open_id
+          description: 被 @ 用户的 ID 类型
+          example: open_id
+        name:
+          type: string
+          description: 被 @ 用户姓名
+          example: Tom
+        tenant_key:
+          type: string
+          description: 被 @ 用户的租户标识
+          example: 736588c9260f175e
+      required:
+        - key
+        - id
+        - id_type
+        - name
+
+    SendMessageRequest:
+      type: object
+      properties:
+        receive_id:
+          type: string
+          description: |
+            消息接收者的 ID，ID 类型与查询参数 `receive_id_type` 的取值一致。
+            
+            **注意事项**：
+            - 给用户发送消息时，用户需在机器人的可用范围内。
+            - 给群组发送消息时，机器人需在该群组中且有发言权限。
+            - 推荐使用用户的 `open_id`。
+          example: ou_7d8a6e6df7621556ce0d21922b676706ccs
+          minLength: 1
+        msg_type:
+          type: string
+          enum:
+            - text
+            - post
+            - image
+            - file
+            - audio
+            - media
+            - sticker
+            - interactive
+            - share_chat
+            - share_user
+            - system
+          description: |
+            消息类型。
+            
+            **详细说明**：
+            - `text`: 文本消息
+            - `post`: 富文本消息
+            - `image`: 图片消息（需先上传获取 `image_key`）
+            - `file`: 文件消息（需先上传获取 `file_key`）
+            - `audio`: 语音消息（需先上传获取 `file_key`）
+            - `media`: 视频消息（需先上传获取 `file_key`）
+            - `sticker`: 表情包消息
+            - `interactive`: 卡片消息
+            - `share_chat`: 分享群名片
+            - `share_user`: 分享个人名片
+            - `system`: 系统消息（仅支持机器人单聊）
+          example: text
+          minLength: 1
+        content:
+          type: string
+          description: |
+            消息内容，为 JSON 结构序列化后的字符串，具体结构根据 `msg_type` 决定。
+            
+            **注意**：
+            - JSON 字符串需转义（如 `\n` → `\\n`）。
+            - 文本消息最大不超过 150 KB；卡片和富文本最大不超过 30 KB。
+            - 图片需先调用 [上传图片](https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/image/create) 获取 `image_key`。
+            - 音频、视频、文件需先调用 [上传文件](https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/file/create) 获取 `file_key`。
+          example: '{"text":"test content"}'
+          minLength: 1
+        uuid:
+          type: string
+          maxLength: 50
+          description: |
+            自定义唯一字符串，用于请求去重。相同 uuid 的请求在 1 小时内最多成功一次。
+            
+            **建议**：每次调用更换 uuid 值。
+          example: a0d69e20-1dd1-458b-k525-dfeca4015204
+      required:
+        - receive_id
+        - msg_type
+        - content

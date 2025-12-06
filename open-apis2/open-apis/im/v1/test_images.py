@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Time   : 2025-12-05 11:52:54
+# @Time   : 2025-12-06 19:50:57
 
 
 import allure
@@ -12,18 +12,18 @@ from utils.read_files_tools.regular_control import regular
 from utils.requests_tool.teardown_control import TearDownHandler
 
 
-case_id = ['01_open-apis_calendar_v4_calendars_feishu_cn_8gMLRsXuysjxMgLrGsDt7a_group_calendar_feishu_cn']
+case_id = ['01_open-apis_im_v1_images']
 TestData = GetTestCase.case_data(case_id)
 re_data = regular(str(TestData))
 
 
-@allure.epic("查询日历信息")
-@allure.feature("['日历']")
-class TestFeishuCn8gmlrsxuysjxmglrgsdt7aGroupCalendarFeishuCn:
+@allure.epic("即时通讯图片上传API")
+@allure.feature("上传图片")
+class TestImages:
 
-    @allure.story("查询日历信息")
+    @allure.story("上传图片")
     @pytest.mark.parametrize('in_data', eval(re_data), ids=[i['detail'] for i in TestData])
-    def test_feishu_cn_8gMLRsXuysjxMgLrGsDt7a_group_calendar_feishu_cn(self, in_data, case_skip):
+    def test_images(self, in_data, case_skip):
         """
         :param :
         :return:
@@ -35,4 +35,4 @@ class TestFeishuCn8gmlrsxuysjxmglrgsdt7aGroupCalendarFeishuCn:
 
 
 if __name__ == '__main__':
-    pytest.main(['test_feishu_cn_8gMLRsXuysjxMgLrGsDt7a_group_calendar_feishu_cn.py', '-s', '-W', 'ignore:Module already imported:pytest.PytestWarning'])
+    pytest.main(['test_images.py', '-s', '-W', 'ignore:Module already imported:pytest.PytestWarning'])

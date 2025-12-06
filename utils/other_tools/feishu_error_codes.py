@@ -120,6 +120,16 @@ FEISHU_ERROR_CODES = {
         "description": "服务暂不可用",
         "suggestion": "请稍后重试"
     },
+    99992402: {
+        "http_status": 400,
+        "description": "字段验证失败",
+        "suggestion": "请检查请求参数，确保所有必填字段都已正确填写（如 receive_id_type、content 等）"
+    },
+    99992351: {
+        "http_status": 400,
+        "description": "接收者 ID 无效或不存在",
+        "suggestion": "请检查 receive_id 是否正确，确保该 ID 在当前环境中存在且有效。如果是 open_id，请确保使用正确的 open_id 格式"
+    },
 }
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Time   : 2025-12-05 15:24:01
+# @Time   : 2025-12-06 18:58:22
 
 
 import allure
@@ -17,11 +17,11 @@ TestData = GetTestCase.case_data(case_id)
 re_data = regular(str(TestData))
 
 
-@allure.epic("飞书IM")
+@allure.epic("即时通讯图片上传API")
 @allure.feature("上传图片")
 class TestImages:
 
-    @allure.story("获取 image_key 后续发送图片")
+    @allure.story("上传图片")
     @pytest.mark.parametrize('in_data', eval(re_data), ids=[i['detail'] for i in TestData])
     def test_images(self, in_data, case_skip):
         """

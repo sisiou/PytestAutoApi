@@ -189,9 +189,10 @@ class FeishuImageUploadGenerator:
         print(f"✓ YAML 用例已生成: {self.yaml_path}")
 
     def update_yaml_with_token(self, token: str) -> bool:
-        """将 token 写入 YAML"""
+        """将 token 写入 YAML，处理 YAML 锚点引用问题"""
         try:
             import ruamel.yaml
+            import copy
         except ImportError:
             print("✗ 错误: 需要安装 ruamel.yaml 库才能更新 YAML")
             print("   请运行: pip install ruamel.yaml")
@@ -200,20 +201,61 @@ class FeishuImageUploadGenerator:
         try:
             yaml = ruamel.yaml.YAML()
             yaml.preserve_quotes = True
+            yaml.default_flow_style = False
 
             if not self.yaml_path.exists():
+                print(f"⚠ 警告: YAML 文件不存在: {self.yaml_path}")
                 return False
 
-            data = yaml.load(self.yaml_path.read_text(encoding="utf-8")) or {}
+            with self.yaml_path.open("r", encoding="utf-8") as f:
+                data = yaml.load(f) or {}
+            
             updated = False
+            first_headers_obj = None  # 用于检测锚点引用
+            
             for key, value in data.items():
                 if key == "case_common" or not isinstance(value, Dict):
                     continue
-                headers = value.get("headers") or {}
-                if isinstance(headers, dict):
-                    headers["Authorization"] = f"Bearer {token}"
+                
+                headers = value.get("headers")
+                
+                # 检测是否是锚点引用：如果 headers 对象与第一个用例的 headers 是同一个对象，说明是引用
+                if first_headers_obj is None:
+                    first_headers_obj = headers
+                    # 第一个用例：创建新的独立字典
+                    if headers is None:
+                        headers = {}
+                    else:
+                        # 深拷贝，确保独立
+                        headers = copy.deepcopy(dict(headers))
                     value["headers"] = headers
-                    updated = True
+                else:
+                    # 后续用例：检查是否是同一个对象（锚点引用）
+                    if headers is first_headers_obj:
+                        # 是锚点引用，创建独立副本
+                        headers = copy.deepcopy(dict(first_headers_obj))
+                        value["headers"] = headers
+                    elif headers is None:
+                        headers = {}
+                        value["headers"] = headers
+                    elif not isinstance(headers, dict):
+                        # 其他异常情况，转换为字典
+                        headers = copy.deepcopy(dict(headers)) if hasattr(headers, '__iter__') else {}
+                        value["headers"] = headers
+                
+                # 确保 headers 是字典类型
+                if not isinstance(headers, dict):
+                    headers = {}
+                    value["headers"] = headers
+                
+                # 跳过无效 token 的用例（用于测试认证失败场景）
+                detail = value.get("detail", "")
+                if "Token无效" in detail or "Token过期" in detail or "TC_AUTH_001" in detail:
+                    continue
+                
+                # 更新 Authorization
+                headers["Authorization"] = f"Bearer {token}"
+                updated = True
 
             if updated:
                 with self.yaml_path.open("w", encoding="utf-8") as f:
@@ -224,6 +266,8 @@ class FeishuImageUploadGenerator:
             return updated
         except Exception as exc:  # noqa: BLE001
             print(f"✗ 更新 YAML 文件时出错: {exc}")
+            import traceback
+            traceback.print_exc()
             return False
 
     def generate_tests(self) -> None:

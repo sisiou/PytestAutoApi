@@ -1,0 +1,233 @@
+openapi: 3.0.3
+info:
+  title: 日历服务API
+  version: 1.0.0
+  description: 提供日历信息的查询能力，支持以应用或用户身份访问指定日历的基本信息、权限、类型等数据。
+servers:
+  - url: https://open.feishu.cn/open-apis
+    description: 飞书开放平台生产环境服务器
+
+paths:
+  /calendar/v4/calendars/{calendar_id}:
+    get:
+      summary: 查询日历信息
+      description: 调用该接口以当前身份（应用或用户）查询指定日历的信息。
+      operationId: getCalendar
+      parameters:
+        - name: calendar_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: feishu.cn_xxxxxxxxxx@group.calendar.feishu.cn
+          description: 日历 ID。创建共享日历时会返回日历 ID。你也可以调用以下接口获取某一日历的 ID：
+            - [查询主日历信息](/reference/calendar-v4/calendar/primary)
+            - [查询日历列表](/reference/calendar-v4/calendar/list)
+            - [搜索日历](/reference/calendar-v4/calendar/search)
+
+      responses:
+        '200':
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCalendarResponse'
+              examples:
+                successExample:
+                  value:
+                    code: 0
+                    msg: success
+                    data:
+                      calendar_id: feishu.cn_xxxxxxxxxx@group.calendar.feishu.cn
+                      summary: 测试日历
+                      description: 使用开放接口创建日历
+                      permissions: private
+                      color: -1
+                      type: shared
+                      summary_alias: 日历备注名
+                      is_deleted: false
+                      is_third_party: false
+                      role: owner
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+              examples:
+                invalidParam:
+                  value:
+                    code: 190002
+                    msg: invalid parameters in request
+        '403':
+          description: 权限不足或资源不可访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+              examples:
+                noAccess:
+                  value:
+                    code: 191002
+                    msg: no calendar access_role
+        '404':
+          description: 资源未找到
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+              examples:
+                notFound:
+                  value:
+                    code: 191000
+                    msg: calendar not found
+        '429':
+          description: 请求频率超限
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+              examples:
+                rateLimited:
+                  value:
+                    code: 190004
+                    msg: method rate limited
+        '500':
+          description: 服务内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+              examples:
+                internalError:
+                  value:
+                    code: 190003
+                    msg: internal service error
+
+      security:
+        - tenant_access_token: []
+          user_access_token: []
+
+components:
+  schemas:
+    CalendarObject:
+      type: object
+      properties:
+        calendar_id:
+          type: string
+          description: 日历 ID。后续可以通过该 ID 查询、更新或删除日历信息。
+          example: feishu.cn_xxxxxxxxxx@group.calendar.feishu.cn
+        summary:
+          type: string
+          maxLength: 255
+          description: 日历标题。
+          example: 测试日历
+        description:
+          type: string
+          maxLength: 255
+          description: 日历描述。
+          example: 使用开放接口创建日历
+        permissions:
+          type: string
+          enum:
+            - private
+            - show_only_free_busy
+            - public
+          description: |
+            日历公开范围。
+            - `private`: 私密
+            - `show_only_free_busy`: 仅展示忙闲信息
+            - `public`: 公开，他人可查看日程详情
+          example: private
+        color:
+          type: integer
+          format: int32
+          description: 日历颜色，由颜色 RGB 值的 int32 表示。实际在客户端展示时会映射到色板上最接近的一种颜色，且该字段仅对当前身份生效。
+          example: -1
+        type:
+          type: string
+          enum:
+            - unknown
+            - primary
+            - shared
+            - google
+            - resource
+            - exchange
+          description: |
+            日历类型。
+            - `unknown`: 未知类型
+            - `primary`: 用户或应用的主日历
+            - `shared`: 由用户或应用创建的共享日历
+            - `google`: 用户绑定的谷歌日历
+            - `resource`: 会议室日历
+            - `exchange`: 用户绑定的 Exchange 日历
+          example: shared
+        summary_alias:
+          type: string
+          maxLength: 255
+          description: 日历备注名，仅对当前身份生效。
+          example: 日历备注名
+        is_deleted:
+          type: boolean
+          default: false
+          description: 对于当前身份，日历是否已经被标记为删除。
+          example: false
+        is_third_party:
+          type: boolean
+          default: false
+          description: 当前日历是否是第三方数据。三方日历及日程只支持读，不支持写入。
+          example: false
+        role:
+          type: string
+          enum:
+            - unknown
+            - free_busy_reader
+            - reader
+            - writer
+            - owner
+          description: |
+            当前身份对于该日历的访问权限。
+            - `unknown`: 未知权限
+            - `free_busy_reader`: 游客，只能看到忙碌、空闲信息
+            - `reader`: 订阅者，可查看所有日程详情
+            - `writer`: 编辑者，可创建及修改日程
+            - `owner`: 管理员，可管理日历及共享设置
+          example: owner
+
+    GetCalendarResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码，非 0 表示失败
+          example: 0
+        msg:
+          type: string
+          description: 错误描述
+          example: success
+        data:
+          $ref: '#/components/schemas/CalendarObject'
+
+    CommonErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码
+        msg:
+          type: string
+          description: 错误描述
+
+  securitySchemes:
+    tenant_access_token:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 应用身份令牌，用于调用需要应用权限的接口。
+    user_access_token:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 用户身份令牌，用于调用需要用户权限的接口。

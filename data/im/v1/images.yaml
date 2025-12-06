@@ -1,0 +1,19 @@
+case_common:
+  allureEpic: 即时通讯图片上传API
+  allureFeature: 上传图片
+  allureStory: 上传图片
+01_open-apis_im_v1_images:
+  host: https://open.feishu.cn/open-apis
+  url: /im/v1/images
+  method: post
+  detail: 测试上传图片
+  headers:
+    Content-Type: multipart/form-data
+  requestType: data
+  is_run:
+  data:
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+

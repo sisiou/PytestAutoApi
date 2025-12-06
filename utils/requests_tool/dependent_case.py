@@ -154,7 +154,37 @@ class DependentCase:
                 CacheHandler.update_cache(cache_name=set_value, value=jsonpath_data[0])
         if replace_key is not None:
             if dependent_type == 0:
-                jsonpath_dates[replace_key] = jsonpath_data[0]
+                # 特殊处理：如果 replace_key 是 data.content，且当前 content 值包含 $cache{redis:xxx} 格式
+                # 需要替换 JSON 字符串中的占位符，而不是替换整个 content 字段
+                if replace_key == "data.content" or replace_key.endswith(".content"):
+                    # 获取当前的 content 值（从 yaml_case.data 中获取原始值）
+                    current_content = None
+                    try:
+                        if hasattr(self, '__yaml_case') and hasattr(self.__yaml_case, 'data'):
+                            # replace_key 格式是 "data.content"，需要获取 "content" 字段
+                            content_field = replace_key.split(".")[-1]  # 获取 "content"
+                            if isinstance(self.__yaml_case.data, dict):
+                                current_content = self.__yaml_case.data.get(content_field)
+                    except Exception:
+                        pass
+                    
+                    # 如果当前 content 是字符串且包含 $cache{redis:xxx} 格式，进行替换
+                    if current_content and isinstance(current_content, str):
+                        import re
+                        # 查找 $cache{redis:xxx} 格式的占位符
+                        cache_pattern = r'\$cache\{redis:([^}]+)\}'
+                        if re.search(cache_pattern, current_content):
+                            # 替换占位符为实际值
+                            replaced_content = re.sub(cache_pattern, jsonpath_data[0], current_content)
+                            jsonpath_dates[replace_key] = replaced_content
+                        else:
+                            # 如果没有占位符，直接替换
+                            jsonpath_dates[replace_key] = jsonpath_data[0]
+                    else:
+                        # 如果当前 content 不是字符串或不存在，直接替换
+                        jsonpath_dates[replace_key] = jsonpath_data[0]
+                else:
+                    jsonpath_dates[replace_key] = jsonpath_data[0]
             self.url_replace(replace_key=replace_key, jsonpath_dates=jsonpath_dates,
                              jsonpath_data=jsonpath_data)
 
@@ -286,5 +316,37 @@ class DependentCase:
                 yaml_case = self.__yaml_case
                 _new_data = jsonpath_replace(change_data=_change_data, key_name='yaml_case')
                 # 最终提取到的数据,转换成 __yaml_case.data
-                _new_data += ' = ' + str(value)
+                # 特殊处理：如果 key 是 data.content，且原始值包含 $cache{redis:xxx} 格式
+                # 需要保持 JSON 格式，而不是直接替换
+                if key == "data.content" or key.endswith(".content"):
+                    # 获取原始 content 值
+                    original_content = None
+                    try:
+                        if hasattr(self.__yaml_case, 'data') and isinstance(self.__yaml_case.data, dict):
+                            content_field = key.split(".")[-1]  # 获取 "content"
+                            original_content = self.__yaml_case.data.get(content_field)
+                    except:
+                        pass
+                    
+                    # 如果原始 content 是字符串且包含 $cache{redis:xxx} 格式，且 value 不包含 JSON 结构
+                    # 说明 value 是直接的 image_key 值，需要构建 JSON 格式
+                    if original_content and isinstance(original_content, str):
+                        import re
+                        cache_pattern = r'\$cache\{redis:([^}]+)\}'
+                        if re.search(cache_pattern, original_content):
+                            # 原始值包含占位符，value 应该是替换后的值
+                            # 检查 value 是否是直接的 image_key（不包含 JSON 结构）
+                            if isinstance(value, str) and not value.strip().startswith('{'):
+                                # value 是直接的 image_key，需要构建 JSON 格式
+                                # 从原始值中提取 JSON 结构，替换占位符
+                                replaced_content = re.sub(cache_pattern, value, original_content)
+                                value = replaced_content
+                
+                # 如果值是字符串，需要加引号；如果是数字、布尔值等，直接使用
+                if isinstance(value, str):
+                    # 字符串值需要加引号，并转义内部引号
+                    escaped_value = value.replace('"', '\\"')
+                    _new_data += f' = "{escaped_value}"'
+                else:
+                    _new_data += ' = ' + str(value)
                 exec(_new_data)
