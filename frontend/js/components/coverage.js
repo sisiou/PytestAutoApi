@@ -73,7 +73,7 @@ function initTrendChart() {
     const ctx = document.getElementById('coverageTrendChart').getContext('2d');
     
     // 调用API获取趋势数据
-    fetch('http://localhost:19028/api/coverage/trends?period=week', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.TRENDS) + '?period=week', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -251,7 +251,7 @@ function initTrendChart() {
         });
         
         // 显示错误提示
-        showNotification('无法获取最新趋势数据，显示模拟数据', 'warning');
+        showSmartTestNotification('无法获取最新覆盖度趋势数据，显示模拟数据', 'warning');
     });
 }
 
@@ -260,7 +260,7 @@ function initHeatmap() {
     const heatmapContainer = document.getElementById('coverageHeatmap');
     
     // 调用API获取热力图数据
-    fetch('http://localhost:19028/api/coverage/heatmap', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.HEATMAP), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -382,7 +382,7 @@ function initHeatmap() {
         heatmapContainer.innerHTML = heatmapHTML;
         
         // 显示错误提示
-        showNotification('无法获取最新热力图数据，显示模拟数据', 'warning');
+        showSmartTestNotification('无法获取最新热力图数据，显示模拟数据', 'warning');
     });
 }
 
@@ -400,7 +400,7 @@ function loadCoverageData() {
     showLoading();
     
     // 从API获取覆盖度数据
-    fetch('http://localhost:19028/api/coverage', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.LIST), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -442,7 +442,7 @@ function loadCoverageData() {
         hideLoading();
         
         // 显示错误提示
-        showNotification('无法获取最新覆盖度数据，显示模拟数据', 'warning');
+        showSmartTestNotification('无法获取最新覆盖度数据，显示模拟数据', 'warning');
     });
 }
 
@@ -714,7 +714,7 @@ function refreshData() {
     refreshBtn.disabled = true;
     
     // 调用API刷新数据
-    fetch('http://localhost:19028/api/coverage/refresh', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.REFRESH), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -735,7 +735,7 @@ function refreshData() {
         refreshBtn.disabled = false;
         
         // 显示成功提示
-        showNotification('数据已刷新', 'success');
+        showSmartTestNotification('数据已刷新', 'success');
     })
     .catch(error => {
         console.error('刷新数据失败:', error);
@@ -748,7 +748,7 @@ function refreshData() {
         refreshBtn.disabled = false;
         
         // 显示错误提示
-        showNotification('刷新数据失败，请稍后再试', 'danger');
+        showSmartTestNotification('刷新数据失败，请稍后再试', 'danger');
     });
 }
 
@@ -778,7 +778,7 @@ function generateReport() {
     const dateRange = document.getElementById('dateRange').value;
     
     // 调用API生成报告
-    fetch('http://localhost:19028/api/coverage/generate', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.GENERATE), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -803,7 +803,7 @@ function generateReport() {
         bootstrap.Modal.getInstance(document.getElementById('generateModal')).hide();
         
         // 显示成功提示
-        showNotification('报告生成成功', 'success');
+        showSmartTestNotification('报告生成成功', 'success');
         
         // 刷新数据
         loadCoverageData();
@@ -816,7 +816,7 @@ function generateReport() {
         generateBtn.disabled = false;
         
         // 显示错误提示
-        showNotification('生成报告失败，请稍后再试', 'danger');
+        showSmartTestNotification('生成报告失败，请稍后再试', 'danger');
     });
 }
 
@@ -836,7 +836,7 @@ function exportReport() {
     const dateRange = document.getElementById('exportDateRange').value;
     
     // 调用API导出报告
-    fetch('http://localhost:19028/api/coverage/export', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.EXPORT), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -873,7 +873,7 @@ function exportReport() {
         window.URL.revokeObjectURL(url);
         
         // 显示成功提示
-        showNotification(`报告已导出为 ${format.toUpperCase()} 格式`, 'success');
+        showSmartTestNotification(`报告已导出为 ${format.toUpperCase()} 格式`, 'success');
     })
     .catch(error => {
         console.error('导出报告失败:', error);
@@ -883,14 +883,14 @@ function exportReport() {
         exportBtn.disabled = false;
         
         // 显示错误提示
-        showNotification('导出报告失败，请稍后再试', 'danger');
+        showSmartTestNotification('导出报告失败，请稍后再试', 'danger');
     });
 }
 
 // 更新趋势图
 function updateTrendChart(period) {
     // 调用API获取趋势数据
-    fetch(`http://localhost:19028/api/coverage/trends?period=${period}`, {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.TRENDS) + `?period=${period}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -970,7 +970,7 @@ function updateTrendChart(period) {
         window.coverageTrendChart.update();
         
         // 显示错误提示
-        showNotification('无法获取最新趋势数据，显示模拟数据', 'warning');
+        showSmartTestNotification('无法获取最新趋势数据，显示模拟数据', 'warning');
     });
 }
 
@@ -988,7 +988,7 @@ function generateTestForUncovered(button) {
     const descriptionElement = listItem.querySelector('.uncovered-description').textContent.trim();
     
     // 调用API生成测试
-    fetch('http://localhost:19028/api/coverage/generate-test', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.GENERATE_TEST), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1011,7 +1011,7 @@ function generateTestForUncovered(button) {
         button.classList.add('btn-success');
         
         // 显示成功提示
-        showNotification('测试用例生成成功', 'success');
+        showSmartTestNotification('测试用例生成成功', 'success');
         
         // 刷新数据
         loadCoverageData();
@@ -1024,7 +1024,7 @@ function generateTestForUncovered(button) {
         button.disabled = false;
         
         // 显示错误提示
-        showNotification('生成测试失败，请稍后再试', 'danger');
+        showSmartTestNotification('生成测试失败，请稍后再试', 'danger');
     });
 }
 

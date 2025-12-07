@@ -13,558 +13,309 @@ document.addEventListener('DOMContentLoaded', function() {
     initTestCenter();
 });
 
+// 加载已保存的数据
+function loadSavedData() {
+    const savedConfig = localStorage.getItem('testCenterConfig');
+    if (savedConfig) {
+        try {
+            const configuration = JSON.parse(savedConfig);
+            apiDocData = configuration.apiDocData;
+            testCases = configuration.testCases || [];
+            scenarios = configuration.scenarios || [];
+            relations = configuration.relations || [];
+            
+            // 如果有API文档数据，显示文件信息
+            if (apiDocData) {
+                showSmartFileInfo('已保存的API文档', 0, apiDocData);
+                
+                const smartAnalyzeBtn = document.getElementById('smartAnalyzeBtn');
+                if (smartAnalyzeBtn) {
+                    smartAnalyzeBtn.disabled = false;
+                } else {
+                    console.warn('Element with ID "smartAnalyzeBtn" not found');
+                }
+            }
+            
+            // 加载测试用例
+            if (testCases.length > 0) {
+                loadTestCases();
+            }
+        } catch (error) {
+            console.error('加载保存的配置失败:', error);
+        }
+    }
+}
+
 // 初始化测试中心
 function initTestCenter() {
-    // 初始化智能测试生成功能
-    initSmartTestTab();
-    
-    // 初始化测试用例功能
+    // 初始化测试用例标签页
     initTestCasesTab();
     
-    // 加载已保存的数据
-    loadSavedData();
+    // 初始化已上传文档标签页
+    initUploadedDocsTab();
+    
+    // 注意：不要在这里调用loadSavedData，因为它会在components/test-center.js中被调用
+    // 避免重复初始化
 }
 
 
-
-// 初始化智能测试标签页
-function initSmartTestTab() {
-    // 文件上传按钮
-    document.getElementById('smartUploadBtn').addEventListener('click', function() {
-        document.getElementById('smartFileInput').click();
-    });
-    
-    // 文件选择
-    document.getElementById('smartFileInput').addEventListener('change', handleSmartFileSelect);
-    
-    // URL获取按钮
-    document.getElementById('smartFetchUrlBtn').addEventListener('click', fetchSmartApiFromUrl);
-    
-    // 移除文件按钮
-    document.getElementById('smartRemoveFileBtn').addEventListener('click', removeSmartFile);
-    
-    // 分析按钮
-    document.getElementById('smartAnalyzeBtn').addEventListener('click', analyzeSmartApiDoc);
-    
-    // 文本输入监听
-    document.getElementById('apiTextInput').addEventListener('input', function() {
-        const parseBtn = document.getElementById('parseTextBtn');
-        parseBtn.disabled = this.value.trim() === '';
-    });
-    
-    // 解析文本按钮
-    document.getElementById('parseTextBtn').addEventListener('click', parseApiText);
-    
-    // 步骤导航按钮
-    document.getElementById('backToStep1Btn').addEventListener('click', function() {
-        goToStep(1);
-    });
-    
-    document.getElementById('backToStep2Btn').addEventListener('click', function() {
-        goToStep(2);
-    });
-    
-    document.getElementById('generateBtn').addEventListener('click', generateTestCases);
-    
-    // 添加场景按钮
-    document.getElementById('addSceneBtn').addEventListener('click', showAddSceneModal);
-    
-    // 添加依赖关系按钮
-    document.getElementById('addRelationBtn').addEventListener('click', showAddRelationModal);
-    
-    // 保存场景按钮
-    document.getElementById('saveSceneBtn').addEventListener('click', saveScene);
-    
-    // 保存依赖关系按钮
-    document.getElementById('saveRelationBtn').addEventListener('click', saveRelation);
-    
-    // 导出按钮
-    document.getElementById('exportBtn').addEventListener('click', exportTestCases);
-    
-    // 运行测试按钮
-    document.getElementById('runTestsBtn').addEventListener('click', runAllTests);
-    
-    // 保存配置按钮
-    document.getElementById('saveBtn').addEventListener('click', saveConfiguration);
-    
-    // 重置按钮
-    document.getElementById('resetBtn').addEventListener('click', resetConfiguration);
-    
-    // 完成按钮
-    document.getElementById('finishBtn').addEventListener('click', finishProcess);
-    
-    // 拖拽上传
-    setupDragAndDrop('smartUploadContainer');
-}
 
 // 初始化测试用例标签页
 function initTestCasesTab() {
     // 运行所有测试按钮
-    document.getElementById('runAllCasesBtn').addEventListener('click', runAllCases);
+    const runAllCasesBtn = document.getElementById('runAllCasesBtn');
+    if (runAllCasesBtn) {
+        runAllCasesBtn.addEventListener('click', runAllCases);
+    }
     
     // 生成测试用例按钮
-    document.getElementById('generateCasesBtn').addEventListener('click', function() {
-        // 切换到智能测试生成标签页
-        document.getElementById('smart-test-tab').click();
-    });
+    const generateCasesBtn = document.getElementById('generateCasesBtn');
+    if (generateCasesBtn) {
+        generateCasesBtn.addEventListener('click', function() {
+            // 显示提示信息，需要从API文档生成测试用例
+            alert('请先在"接口文档"标签页中上传API文档，然后可以生成测试用例');
+        });
+    }
     
     // 搜索输入
-    document.getElementById('searchCasesInput').addEventListener('input', filterTestCases);
+    const searchCasesInput = document.getElementById('searchCasesInput');
+    if (searchCasesInput) {
+        searchCasesInput.addEventListener('input', filterTestCases);
+    }
     
     // 筛选器
-    document.getElementById('statusFilter').addEventListener('change', filterTestCases);
-    document.getElementById('typeFilter').addEventListener('change', filterTestCases);
-    document.getElementById('apiFilter').addEventListener('change', filterTestCases);
+    const statusFilter = document.getElementById('statusFilter');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterTestCases);
+    }
+    
+    const typeFilter = document.getElementById('typeFilter');
+    if (typeFilter) {
+        typeFilter.addEventListener('change', filterTestCases);
+    }
+    
+    const apiFilter = document.getElementById('apiFilter');
+    if (apiFilter) {
+        apiFilter.addEventListener('change', filterTestCases);
+    }
     
     // 视图模式切换
-    document.getElementById('listView').addEventListener('change', function() {
-        if (this.checked) {
-            renderTestCasesList('list');
-        }
-    });
+    const listView = document.getElementById('listView');
+    if (listView) {
+        listView.addEventListener('change', function() {
+            if (this.checked) {
+                renderTestCasesList('list');
+            }
+        });
+    }
     
-    document.getElementById('gridView').addEventListener('change', function() {
-        if (this.checked) {
-            renderTestCasesList('grid');
-        }
-    });
+    const gridView = document.getElementById('gridView');
+    if (gridView) {
+        gridView.addEventListener('change', function() {
+            if (this.checked) {
+                renderTestCasesList('grid');
+            }
+        });
+    }
     
     // 加载测试用例
     loadTestCases();
 }
 
-// 设置拖拽上传
-function setupDragAndDrop(containerId) {
-    const container = document.getElementById(containerId);
+// 初始化已上传文档标签页
+function initUploadedDocsTab() {
+    console.log('初始化已上传文档标签页');
     
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        container.addEventListener(eventName, preventDefaults, false);
-    });
-    
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
+    // 刷新文档按钮
+    const refreshDocsBtn = document.getElementById('refreshDocsBtn');
+    if (refreshDocsBtn) {
+        refreshDocsBtn.addEventListener('click', loadUploadedDocs);
+    } else {
+        console.warn('Element with ID "refreshDocsBtn" not found');
     }
     
-    ['dragenter', 'dragover'].forEach(eventName => {
-        container.addEventListener(eventName, function() {
-            container.classList.add('dragover');
-        }, false);
-    });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-        container.addEventListener(eventName, function() {
-            container.classList.remove('dragover');
-        }, false);
-    });
-    
-    container.addEventListener('drop', function(e) {
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            handleSmartFile(files[0]);
-        }
-    }, false);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// 处理文件选择 (智能测试标签页)
-function handleSmartFileSelect(e) {
-    const file = e.target.files[0];
-    if (file) {
-        handleSmartFile(file);
-    }
-}
-
-// 处理文件 (智能测试标签页)
-function handleSmartFile(file) {
-    // 验证文件类型
-    const validTypes = ['application/json', 'text/yaml', 'application/x-yaml', 'text/plain'];
-    const validExtensions = ['.json', '.yaml', '.yml'];
-    
-    const isValidType = validTypes.includes(file.type) || 
-                       validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
-    
-    if (!isValidType) {
-        showNotification('请上传JSON或YAML格式的API文档', 'error');
-        return;
-    }
-    
-    // 显示上传进度
-    showUploadProgress();
-    
-    // 读取文件
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const content = e.target.result;
-            parseSmartApiDocContent(content, file.name, file.size);
-        } catch (error) {
-            showNotification('文件解析失败: ' + error.message, 'error');
-            hideUploadProgress();
-        }
-    };
-    
-    reader.onerror = function() {
-        showNotification('文件读取失败', 'error');
-        hideUploadProgress();
-    };
-    
-    reader.readAsText(file);
-}
-
-// 从URL获取API文档 (智能测试标签页)
-function fetchSmartApiFromUrl() {
-    const url = document.getElementById('smartApiUrl').value.trim();
-    if (!url) {
-        showNotification('请输入API文档URL', 'error');
-        return;
-    }
-    
-    showUploadProgress();
-    
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.text();
-        })
-        .then(content => {
-            const fileName = url.split('/').pop() || 'api-doc';
-            parseSmartApiDocContent(content, fileName, content.length);
-        })
-        .catch(error => {
-            showNotification('获取API文档失败: ' + error.message, 'error');
-            hideUploadProgress();
+    // 监听接口文档标签页激活事件
+    const apiDocsTab = document.getElementById('api-docs-tab');
+    if (apiDocsTab) {
+        apiDocsTab.addEventListener('shown.bs.tab', function() {
+            console.log('接口文档标签页被激活，加载已上传文档列表');
+            loadUploadedDocs();
         });
-}
-
-// 解析API文档内容 (智能测试标签页)
-function parseSmartApiDocContent(content, fileName, fileSize) {
-    try {
-        // 尝试解析为JSON
-        let apiDoc;
-        try {
-            apiDoc = JSON.parse(content);
-        } catch (e) {
-            // 如果不是JSON，尝试解析为YAML
-            apiDoc = jsyaml.load(content);
-        }
-        
-        // 验证是否为有效的OpenAPI文档
-        if (!apiDoc.openapi) {
-            throw new Error('不是有效的OpenAPI 3.0.0文档');
-        }
-        
-        // 保存API文档数据
-        apiDocData = apiDoc;
-        
-        // 显示文件信息
-        showSmartFileInfo(fileName, fileSize, apiDoc);
-        
-        hideUploadProgress();
-        showNotification('API文档上传成功', 'success');
-    } catch (error) {
-        showNotification('API文档解析失败: ' + error.message, 'error');
-        hideUploadProgress();
-    }
-}
-
-// 显示文件信息 (智能测试标签页)
-function showSmartFileInfo(fileName, fileSize, apiDoc) {
-    document.getElementById('smartFileName').textContent = fileName;
-    document.getElementById('smartFileSize').textContent = formatFileSize(fileSize);
-    document.getElementById('smartApiVersion').textContent = apiDoc.openapi || '未知';
-    document.getElementById('smartApiTitle').textContent = apiDoc.info?.title || '未知';
-    document.getElementById('smartFileInfo').style.display = 'block';
-}
-
-// 移除文件 (智能测试标签页)
-function removeSmartFile() {
-    apiDocData = null;
-    document.getElementById('smartFileInfo').style.display = 'none';
-    document.getElementById('smartFileInput').value = '';
-    document.getElementById('smartApiUrl').value = '';
-    document.getElementById('apiTextInput').value = '';
-    document.getElementById('parseTextBtn').disabled = true;
-}
-
-// 解析API文本 (智能测试标签页)
-function parseApiText() {
-    const content = document.getElementById('apiTextInput').value.trim();
-    if (!content) {
-        showNotification('请输入API文档内容', 'error');
-        return;
+    } else {
+        console.warn('Element with ID "api-docs-tab" not found');
     }
     
-    try {
-        // 尝试解析为JSON
-        let apiDoc;
-        try {
-            apiDoc = JSON.parse(content);
-        } catch (e) {
-            // 如果不是JSON，尝试解析为YAML
-            apiDoc = jsyaml.load(content);
-        }
-        
-        // 验证是否为有效的OpenAPI文档
-        if (!apiDoc.openapi) {
-            throw new Error('不是有效的OpenAPI 3.0.0文档');
-        }
-        
-        // 保存API文档数据
-        apiDocData = apiDoc;
-        
-        // 显示文件信息
-        showSmartFileInfo('文本输入', content.length, apiDoc);
-        
-        showNotification('API文档解析成功', 'success');
-    } catch (error) {
-        showNotification('API文档解析失败: ' + error.message, 'error');
-    }
-}
-
-// 分析API文档 (智能测试标签页)
-function analyzeSmartApiDoc() {
-    if (!apiDocData) {
-        showNotification('请先上传API文档', 'error');
-        return;
-    }
-    
-    showLoading('正在分析API文档...');
-    
-    // 提取API端点
-    extractApiEndpoints(apiDocData)
-        .then(endpoints => {
-            // 生成场景和依赖关系
-            generateScenariosAndRelations(endpoints)
-                .then(data => {
-                    scenarios = data.scenarios;
-                    relations = data.relations;
-                    
-                    // 显示步骤2内容
-                    displayStep2Content(endpoints, scenarios, relations);
-                    
-                    hideLoading();
-                    showNotification('API文档分析完成', 'success');
-                    
-                    // 进入步骤2
-                    goToStep(2);
-                })
-                .catch(error => {
-                    hideLoading();
-                    showNotification('API文档分析失败: ' + error.message, 'error');
-                });
-        })
-        .catch(error => {
-            hideLoading();
-            showNotification('API文档分析失败: ' + error.message, 'error');
-        });
-}
-
-// 显示步骤2内容
-function displayStep2Content(endpoints, scenarios, relations) {
-    // 显示API列表
-    displayApiList(endpoints);
-    
-    // 显示场景列表
-    displayScenariosList(scenarios);
-    
-    // 显示依赖关系列表
-    displayRelationsList(relations);
-}
-
-// 显示API列表
-function displayApiList(endpoints) {
-    const apiList = document.getElementById('apiList');
-    apiList.innerHTML = '';
-    
-    endpoints.forEach(endpoint => {
-        const apiItem = document.createElement('div');
-        apiItem.className = 'card mb-2';
-        
-        const apiCardBody = document.createElement('div');
-        apiCardBody.className = 'card-body p-2';
-        
-        const apiTitle = document.createElement('div');
-        apiTitle.className = 'd-flex justify-content-between align-items-center';
-        
-        const methodBadge = document.createElement('span');
-        methodBadge.className = `method-badge method-${endpoint.method.toLowerCase()}`;
-        methodBadge.textContent = endpoint.method;
-        
-        const apiPath = document.createElement('span');
-        apiPath.className = 'fw-bold';
-        apiPath.textContent = endpoint.path;
-        
-        apiTitle.appendChild(methodBadge);
-        apiTitle.appendChild(apiPath);
-        
-        const apiDescription = document.createElement('div');
-        apiDescription.className = 'small text-muted mt-1';
-        apiDescription.textContent = endpoint.summary || endpoint.description || '无描述';
-        
-        apiCardBody.appendChild(apiTitle);
-        apiCardBody.appendChild(apiDescription);
-        apiItem.appendChild(apiCardBody);
-        apiList.appendChild(apiItem);
-    });
-}
-
-// 显示场景列表
-function displayScenariosList(scenarios) {
-    const scenesList = document.getElementById('scenesList');
-    scenesList.innerHTML = '';
-    
-    scenarios.forEach(scene => {
-        const sceneCard = document.createElement('div');
-        sceneCard.className = 'card scene-card';
-        
-        const sceneCardBody = document.createElement('div');
-        sceneCardBody.className = 'card-body';
-        
-        const sceneTitle = document.createElement('h6');
-        sceneTitle.className = 'card-title';
-        sceneTitle.textContent = scene.name;
-        
-        const sceneDescription = document.createElement('p');
-        sceneDescription.className = 'card-text small';
-        sceneDescription.textContent = scene.description;
-        
-        const sceneApis = document.createElement('div');
-        sceneApis.className = 'mt-2';
-        
-        scene.apis.forEach(api => {
-            const apiBadge = document.createElement('span');
-            apiBadge.className = `api-badge method-${api.method.toLowerCase()}`;
-            apiBadge.textContent = `${api.method} ${api.path}`;
-            sceneApis.appendChild(apiBadge);
-        });
-        
-        sceneCardBody.appendChild(sceneTitle);
-        sceneCardBody.appendChild(sceneDescription);
-        sceneCardBody.appendChild(sceneApis);
-        sceneCard.appendChild(sceneCardBody);
-        scenesList.appendChild(sceneCard);
-    });
-}
-
-// 显示依赖关系列表
-function displayRelationsList(relations) {
-    const relationsList = document.getElementById('relationsList');
-    relationsList.innerHTML = '';
-    
-    relations.forEach(relation => {
-        const relationCard = document.createElement('div');
-        relationCard.className = 'card relation-card';
-        
-        const relationCardBody = document.createElement('div');
-        relationCardBody.className = 'card-body';
-        
-        const relationTitle = document.createElement('h6');
-        relationTitle.className = 'card-title';
-        
-        const sourceApi = `${relation.source.method} ${relation.source.path}`;
-        const targetApi = `${relation.target.method} ${relation.target.path}`;
-        
-        relationTitle.textContent = `${sourceApi} → ${targetApi}`;
-        
-        const relationDescription = document.createElement('p');
-        relationDescription.className = 'card-text small';
-        relationDescription.textContent = relation.description;
-        
-        const relationType = document.createElement('span');
-        relationType.className = 'badge bg-primary';
-        relationType.textContent = getRelationTypeLabel(relation.type);
-        
-        relationCardBody.appendChild(relationTitle);
-        relationCardBody.appendChild(relationDescription);
-        relationCardBody.appendChild(relationType);
-        relationCard.appendChild(relationCardBody);
-        relationsList.appendChild(relationCard);
-    });
-}
-
-// 生成测试用例
-function generateTestCases() {
-    showLoading('正在生成测试用例...');
-    
-    // 模拟生成测试用例
+    // 初始加载已上传文档列表
+    // 延迟500ms确保所有元素都已加载完成
     setTimeout(() => {
-        // 首先提取API端点
-        extractApiEndpoints(apiDocData)
-            .then(endpoints => {
-                testCases = generateMockTestCases(endpoints, scenarios, relations);
-                
-                // 显示测试用例
-                displayTestCases(testCases);
-                
-                hideLoading();
-                showNotification('测试用例生成完成', 'success');
-                
-                // 进入步骤3
-                goToStep(3);
-            })
-            .catch(error => {
-                hideLoading();
-                showNotification('测试用例生成失败: ' + error.message, 'error');
-            });
-    }, 2000);
+        console.log('延迟加载已上传文档列表');
+        loadUploadedDocs();
+    }, 500);
 }
 
-// 显示测试用例
-function displayTestCases(testCases) {
-    const testCasesList = document.getElementById('testCasesList');
-    testCasesList.innerHTML = '';
+// 加载已上传的文档列表
+async function loadUploadedDocs() {
+    try {
+        console.log('开始加载已上传的文档列表');
+        
+        // 显示加载状态
+        showLoading();
+        
+        // 检查API_CONFIG是否已定义
+        if (!window.API_CONFIG) {
+            console.warn('API_CONFIG未定义，使用默认值');
+            window.API_CONFIG = {
+                BASE_URL: 'http://127.0.0.1:5000'
+            };
+        }
+        
+        // 使用直接拼接URL的方式，避免undefined问题
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const apiUrl = baseUrl + '/api/docs/list';
+        
+        console.log('API请求URL:', apiUrl);
+        
+        // 设置10秒超时
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const response = await fetch(apiUrl, {
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`获取文档列表失败: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('文档列表响应:', data);
+        
+        // 获取表格体
+        const tableBody = document.getElementById('apiDocsTableBody');
+        if (!tableBody) {
+            console.error('找不到表格体元素: apiDocsTableBody');
+            hideLoading();
+            return;
+        }
+        
+        // 清空表格
+        tableBody.innerHTML = '';
+        
+        // 检查是否有文档
+        if (!data.docs || data.docs.length === 0) {
+            // 显示无文档提示
+            const noDocsMessage = document.getElementById('noApiDocsMessage');
+            if (noDocsMessage) {
+                noDocsMessage.style.display = 'block';
+            }
+            
+            // 添加空行
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `
+                <td colspan="5" class="text-center text-muted">
+                    暂无已上传的文档
+                </td>
+            `;
+            tableBody.appendChild(emptyRow);
+            
+            hideLoading();
+            return;
+        }
+        
+        // 隐藏无文档提示
+        const noDocsMessage = document.getElementById('noApiDocsMessage');
+        if (noDocsMessage) {
+            noDocsMessage.style.display = 'none';
+        }
+        
+        // 添加文档行
+        data.docs.forEach(doc => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${doc.task_id || ''}</td>
+                <td>${doc.filename || ''}</td>
+                <td>${formatDateTime(doc.created_at)}</td>
+                <td>${doc.api_count || 0}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${doc.task_id}')">
+                        <i class="fas fa-eye"></i> 查看
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteDocument('${doc.task_id}', '${doc.filename || ''}')">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+        
+        console.log('文档列表加载完成');
+        
+    } catch (error) {
+        console.error('加载文档列表失败:', error);
+        
+        // 显示错误信息
+        const tableBody = document.getElementById('apiDocsTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-danger">
+                        加载文档列表失败: ${error.message}
+                    </td>
+                </tr>
+            `;
+        }
+        
+        showNotification('加载文档列表失败: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 筛选测试用例
+function filterTestCases() {
+    const searchCasesInput = document.getElementById('searchCasesInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const apiFilter = document.getElementById('apiFilter');
+    const listView = document.getElementById('listView');
     
-    testCases.forEach(testCase => {
-        const testCaseCard = document.createElement('div');
-        testCaseCard.className = 'card test-case-card';
+    if (!searchCasesInput || !statusFilter || !typeFilter || !apiFilter || !listView) {
+        console.warn('One or more filter elements not found');
+        return;
+    }
+    
+    const searchTerm = searchCasesInput.value.toLowerCase();
+    const statusFilterValue = statusFilter.value;
+    const typeFilterValue = typeFilter.value;
+    const apiFilterValue = apiFilter.value;
+    
+    const filteredCases = testCases.filter(testCase => {
+        const matchesSearch = testCase.name.toLowerCase().includes(searchTerm) || 
+                             testCase.description.toLowerCase().includes(searchTerm);
         
-        const testCaseCardBody = document.createElement('div');
-        testCaseCardBody.className = 'card-body';
+        const matchesStatus = !statusFilterValue || testCase.status === statusFilterValue;
         
-        const testCaseTitle = document.createElement('h6');
-        testCaseTitle.className = 'card-title';
-        testCaseTitle.textContent = testCase.name;
+        const matchesType = !typeFilterValue || testCase.type === typeFilterValue;
         
-        const testCaseDescription = document.createElement('p');
-        testCaseDescription.className = 'card-text small';
-        testCaseDescription.textContent = testCase.description;
+        const matchesApi = !apiFilterValue || `${testCase.api.method} ${testCase.api.path}` === apiFilterValue;
         
-        const testCaseType = document.createElement('span');
-        testCaseType.className = 'badge bg-secondary';
-        testCaseType.textContent = getTestCaseTypeLabel(testCase.type);
-        
-        const testCaseApi = document.createElement('span');
-        testCaseApi.className = `api-badge method-${testCase.api.method.toLowerCase()} ms-2`;
-        testCaseApi.textContent = `${testCase.api.method} ${testCase.api.path}`;
-        
-        testCaseCardBody.appendChild(testCaseTitle);
-        testCaseCardBody.appendChild(testCaseDescription);
-        testCaseCardBody.appendChild(testCaseType);
-        testCaseCardBody.appendChild(testCaseApi);
-        testCaseCard.appendChild(testCaseCardBody);
-        testCasesList.appendChild(testCaseCard);
+        return matchesSearch && matchesStatus && matchesType && matchesApi;
     });
+    
+    // 临时替换testCases数组并重新渲染
+    const originalCases = testCases;
+    testCases = filteredCases;
+    
+    const viewMode = listView.checked ? 'list' : 'grid';
+    renderTestCasesList(viewMode);
+    
+    // 恢复原始数组
+    testCases = originalCases;
 }
 
-// 加载测试用例 (测试用例标签页)
+// 加载测试用例
 function loadTestCases() {
     // 模拟加载测试用例
     if (apiDocData) {
@@ -603,15 +354,45 @@ function updateTestCasesStats() {
     const failedCases = testCases.filter(tc => tc.status === 'failed').length;
     const passRate = totalCases > 0 ? ((passedCases / totalCases) * 100).toFixed(1) : 0;
     
-    document.getElementById('totalCases').textContent = totalCases;
-    document.getElementById('passedCases').textContent = passedCases;
-    document.getElementById('failedCases').textContent = failedCases;
-    document.getElementById('passRate').textContent = passRate + '%';
+    // 获取元素并检查存在性
+    const totalCasesEl = document.getElementById('totalCases');
+    const passedCasesEl = document.getElementById('passedCases');
+    const failedCasesEl = document.getElementById('failedCases');
+    const passRateEl = document.getElementById('passRate');
+    
+    if (totalCasesEl) {
+        totalCasesEl.textContent = totalCases;
+    } else {
+        console.warn('Element with ID "totalCases" not found');
+    }
+    
+    if (passedCasesEl) {
+        passedCasesEl.textContent = passedCases;
+    } else {
+        console.warn('Element with ID "passedCases" not found');
+    }
+    
+    if (failedCasesEl) {
+        failedCasesEl.textContent = failedCases;
+    } else {
+        console.warn('Element with ID "failedCases" not found');
+    }
+    
+    if (passRateEl) {
+        passRateEl.textContent = passRate + '%';
+    } else {
+        console.warn('Element with ID "passRate" not found');
+    }
 }
 
 // 渲染测试用例列表
 function renderTestCasesList(viewMode) {
     const container = document.getElementById('testCasesListContainer');
+    if (!container) {
+        console.warn('Element with ID "testCasesListContainer" not found');
+        return;
+    }
+    
     container.innerHTML = '';
     
     if (viewMode === 'list') {
@@ -778,6 +559,11 @@ function renderTestCasesAsGrid(container) {
 // 填充API筛选器
 function populateApiFilter() {
     const apiFilter = document.getElementById('apiFilter');
+    if (!apiFilter) {
+        console.warn('Element with ID "apiFilter" not found');
+        return;
+    }
+    
     apiFilter.innerHTML = '<option value="">所有API</option>';
     
     const uniqueApis = [...new Set(testCases.map(tc => `${tc.api.method} ${tc.api.path}`))];
@@ -790,36 +576,649 @@ function populateApiFilter() {
     });
 }
 
-// 筛选测试用例
-function filterTestCases() {
-    const searchTerm = document.getElementById('searchCasesInput').value.toLowerCase();
-    const statusFilter = document.getElementById('statusFilter').value;
-    const typeFilter = document.getElementById('typeFilter').value;
-    const apiFilter = document.getElementById('apiFilter').value;
+// 获取测试用例类型标签
+function getTestCaseTypeLabel(type) {
+    const typeLabels = {
+        'functional': '功能测试',
+        'integration': '集成测试',
+        'performance': '性能测试',
+        'security': '安全测试',
+        'regression': '回归测试',
+        'smoke': '冒烟测试',
+        'acceptance': '验收测试'
+    };
+    return typeLabels[type] || type;
+}
+
+// 生成模拟测试用例
+function generateMockTestCases(endpoints, scenarios, relations) {
+    const testCases = [];
     
-    const filteredCases = testCases.filter(testCase => {
-        const matchesSearch = testCase.name.toLowerCase().includes(searchTerm) || 
-                             testCase.description.toLowerCase().includes(searchTerm);
+    // 为每个API端点生成基本测试用例
+    endpoints.forEach((endpoint, index) => {
+        // 正向测试用例
+        testCases.push({
+            id: `tc-${endpoint.method}-${endpoint.path.replace(/[^a-zA-Z0-9]/g, '-')}-positive`,
+            name: `${endpoint.method.toUpperCase()} ${endpoint.path} - 正向测试`,
+            description: `验证${endpoint.method.toUpperCase()} ${endpoint.path}接口在正常参数下的响应`,
+            api: {
+                method: endpoint.method,
+                path: endpoint.path
+            },
+            type: 'functional',
+            status: 'pending',
+            tags: ['positive', 'functional'],
+            preconditions: [],
+            steps: [
+                `发送${endpoint.method.toUpperCase()}请求到${endpoint.path}`,
+                '验证响应状态码为200',
+                '验证响应数据格式正确'
+            ],
+            expectedResult: '接口返回正确的响应数据'
+        });
         
-        const matchesStatus = !statusFilter || testCase.status === statusFilter;
-        
-        const matchesType = !typeFilter || testCase.type === typeFilter;
-        
-        const matchesApi = !apiFilter || `${testCase.api.method} ${testCase.api.path}` === apiFilter;
-        
-        return matchesSearch && matchesStatus && matchesType && matchesApi;
+        // 负向测试用例
+        testCases.push({
+            id: `tc-${endpoint.method}-${endpoint.path.replace(/[^a-zA-Z0-9]/g, '-')}-negative`,
+            name: `${endpoint.method.toUpperCase()} ${endpoint.path} - 负向测试`,
+            description: `验证${endpoint.method.toUpperCase()} ${endpoint.path}接口在异常参数下的响应`,
+            api: {
+                method: endpoint.method,
+                path: endpoint.path
+            },
+            type: 'functional',
+            status: 'pending',
+            tags: ['negative', 'functional'],
+            preconditions: [],
+            steps: [
+                `发送${endpoint.method.toUpperCase()}请求到${endpoint.path}，使用无效参数`,
+                '验证响应状态码为400或500',
+                '验证错误消息格式正确'
+            ],
+            expectedResult: '接口返回适当的错误响应'
+        });
     });
     
-    // 临时替换testCases数组并重新渲染
-    const originalCases = testCases;
-    testCases = filteredCases;
-    
-    const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
-    renderTestCasesList(viewMode);
-    
-    // 恢复原始数组
-    testCases = originalCases;
+    return testCases;
 }
+
+// 查看文档详情
+async function viewDocument(taskId) {
+    try {
+        console.log('查看文档:', taskId);
+        
+        // 显示加载状态
+        showLoading();
+        
+        // 使用直接拼接URL的方式，避免undefined问题
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const apiUrl = baseUrl + '/api/docs/' + taskId;
+        
+        // 获取文档详情
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+            throw new Error(`获取文档详情失败: ${response.status}`);
+        }
+        
+        const documentData = await response.json();
+        console.log('文档详情:', documentData);
+        
+        // 填充文档信息
+        document.getElementById('docDetailId').textContent = documentData.task_id || taskId;
+        document.getElementById('docDetailName').textContent = documentData.filename || '未知文档';
+        document.getElementById('docDetailCreatedAt').textContent = formatDateTime(documentData.created_at);
+        document.getElementById('docDetailApiCount').textContent = documentData.api_count || 0;
+        
+        // 填充API端点列表
+        const endpointsList = document.getElementById('docEndpointsList');
+        endpointsList.innerHTML = '';
+        
+        if (documentData.api_data && documentData.api_data.paths) {
+            const paths = documentData.api_data.paths;
+            Object.keys(paths).forEach(path => {
+                Object.keys(paths[path]).forEach(method => {
+                    const endpoint = document.createElement('div');
+                    endpoint.className = 'list-group-item list-group-item-action';
+                    endpoint.innerHTML = `
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <span class="badge bg-${getMethodColor(method)}">${method.toUpperCase()}</span>
+                                ${path}
+                            </h6>
+                        </div>
+                        <small>${paths[path][method].summary || '无描述'}</small>
+                    `;
+                    endpointsList.appendChild(endpoint);
+                });
+            });
+        } else {
+            endpointsList.innerHTML = '<div class="list-group-item">暂无API端点</div>';
+        }
+        
+        // 显示OpenAPI规范
+        const openApiSpecEditor = document.getElementById('openApiSpecEditor');
+        
+        // 如果已经存在CodeMirror实例，先销毁它
+        if (openApiSpecEditor.CodeMirror) {
+            openApiSpecEditor.CodeMirror.toTextArea();
+        }
+        
+        // 创建CodeMirror实例
+        const editor = CodeMirror.fromTextArea(openApiSpecEditor, {
+            lineNumbers: true,
+            mode: 'application/json',
+            theme: 'default',
+            readOnly: true,
+            lineWrapping: true
+        });
+        
+        // 设置编辑器内容
+        editor.setValue(JSON.stringify(documentData.api_data || {}, null, 2));
+        
+        // 保存编辑器实例引用
+        openApiSpecEditor.CodeMirror = editor;
+        
+        // 显示关联关系数据
+        if (documentData.relation_data) {
+            displayRelationData(documentData.relation_data);
+        }
+        
+        // 显示业务场景数据
+        if (documentData.scene_data) {
+            displaySceneData(documentData.scene_data);
+        }
+        
+        // 设置生成测试用例按钮的事件
+        const generateTestCasesBtn = document.getElementById('generateTestCasesBtn');
+        generateTestCasesBtn.onclick = function() {
+            generateTestCasesFromDoc(taskId);
+            // 关闭当前模态框
+            const modal = bootstrap.Modal.getInstance(document.getElementById('documentDetailsModal'));
+            modal.hide();
+        };
+        
+        // 显示模态框
+        const modal = new bootstrap.Modal(document.getElementById('documentDetailsModal'));
+        modal.show();
+        
+    } catch (error) {
+        console.error('查看文档失败:', error);
+        showNotification('查看文档失败: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 显示关联关系数据
+function displayRelationData(relationData) {
+    const relationContent = document.getElementById('relationContent');
+    if (!relationContent) {
+        console.error('找不到关联关系容器元素');
+        return;
+    }
+    
+    // 清空容器
+    relationContent.innerHTML = '';
+    
+    // 创建关联关系总览卡片
+    const overviewCard = document.createElement('div');
+    overviewCard.className = 'card mb-3';
+    
+    const overviewCardBody = document.createElement('div');
+    overviewCardBody.className = 'card-body';
+    
+    const overviewTitle = document.createElement('h6');
+    overviewTitle.className = 'card-title';
+    overviewTitle.textContent = '关联关系总览';
+    
+    const overviewText = document.createElement('p');
+    overviewText.className = 'card-text';
+    overviewText.textContent = relationData.description || '暂无描述';
+    
+    const statsRow = document.createElement('div');
+    statsRow.className = 'row';
+    
+    const totalApisCol = document.createElement('div');
+    totalApisCol.className = 'col-md-4';
+    totalApisCol.innerHTML = `
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">${relationData.total_apis || 0}</h5>
+                <p class="card-text">总API数量</p>
+            </div>
+        </div>
+    `;
+    
+    statsRow.appendChild(totalApisCol);
+    overviewCardBody.appendChild(overviewTitle);
+    overviewCardBody.appendChild(overviewText);
+    overviewCardBody.appendChild(statsRow);
+    overviewCard.appendChild(overviewCardBody);
+    relationContent.appendChild(overviewCard);
+    
+    // 创建关联关系详情
+    if (relationData.relations && relationData.relations.length > 0) {
+        const relationsTitle = document.createElement('h6');
+        relationsTitle.className = 'mt-4 mb-3';
+        relationsTitle.textContent = 'API关联关系详情';
+        relationContent.appendChild(relationsTitle);
+        
+        const relationsAccordion = document.createElement('div');
+        relationsAccordion.className = 'accordion';
+        relationsAccordion.id = 'relationsAccordion';
+        
+        relationData.relations.forEach((relation, index) => {
+            const relationItem = document.createElement('div');
+            relationItem.className = 'accordion-item';
+            
+            const relationHeader = document.createElement('h2');
+            relationHeader.className = 'accordion-header';
+            relationHeader.id = `relationHeader${index}`;
+            
+            const relationButton = document.createElement('button');
+            relationButton.className = 'accordion-button collapsed';
+            relationButton.type = 'button';
+            relationButton.setAttribute('data-bs-toggle', 'collapse');
+            relationButton.setAttribute('data-bs-target', `#relationCollapse${index}`);
+            relationButton.setAttribute('aria-expanded', 'false');
+            relationButton.setAttribute('aria-controls', `relationCollapse${index}`);
+            relationButton.textContent = `${relation.api_name || relation.path || '未知API'}`;
+            
+            relationHeader.appendChild(relationButton);
+            relationItem.appendChild(relationHeader);
+            
+            const relationCollapse = document.createElement('div');
+            relationCollapse.className = 'accordion-collapse collapse';
+            relationCollapse.id = `relationCollapse${index}`;
+            relationCollapse.setAttribute('aria-labelledby', `relationHeader${index}`);
+            relationCollapse.setAttribute('data-bs-parent', '#relationsAccordion');
+            
+            const relationBody = document.createElement('div');
+            relationBody.className = 'accordion-body';
+            
+            // API路径
+            const apiPath = document.createElement('p');
+            apiPath.innerHTML = `<strong>API路径:</strong> ${relation.path || '未知'}`;
+            relationBody.appendChild(apiPath);
+            
+            // 依赖API
+            if (relation.dependent_apis && relation.dependent_apis.length > 0) {
+                const dependentApisTitle = document.createElement('h6');
+                dependentApisTitle.textContent = '依赖API:';
+                relationBody.appendChild(dependentApisTitle);
+                
+                const dependentApisList = document.createElement('ul');
+                relation.dependent_apis.forEach(api => {
+                    const apiItem = document.createElement('li');
+                    apiItem.textContent = api;
+                    dependentApisList.appendChild(apiItem);
+                });
+                relationBody.appendChild(dependentApisList);
+            }
+            
+            // 依赖原因
+            if (relation.dependency_reason) {
+                const dependencyReason = document.createElement('p');
+                dependencyReason.innerHTML = `<strong>依赖原因:</strong> ${relation.dependency_reason}`;
+                relationBody.appendChild(dependencyReason);
+            }
+            
+            // 数据流转
+            if (relation.data_flow) {
+                const dataFlow = document.createElement('p');
+                dataFlow.innerHTML = `<strong>数据流转:</strong> ${relation.data_flow}`;
+                relationBody.appendChild(dataFlow);
+            }
+            
+            // 权限关系
+            if (relation.permission_relation) {
+                const permissionRelation = document.createElement('p');
+                permissionRelation.innerHTML = `<strong>权限关系:</strong> ${relation.permission_relation}`;
+                relationBody.appendChild(permissionRelation);
+            }
+            
+            relationCollapse.appendChild(relationBody);
+            relationItem.appendChild(relationCollapse);
+            relationsAccordion.appendChild(relationItem);
+        });
+        
+        relationContent.appendChild(relationsAccordion);
+    }
+    
+    // 关键关联场景
+    if (relationData.key_relation_scenarios && relationData.key_relation_scenarios.length > 0) {
+        const scenariosTitle = document.createElement('h6');
+        scenariosTitle.className = 'mt-4 mb-3';
+        scenariosTitle.textContent = '关键关联场景';
+        relationContent.appendChild(scenariosTitle);
+        
+        relationData.key_relation_scenarios.forEach(scenario => {
+            const scenarioCard = document.createElement('div');
+            scenarioCard.className = 'card mb-2';
+            
+            const scenarioCardBody = document.createElement('div');
+            scenarioCardBody.className = 'card-body';
+            
+            const scenarioName = document.createElement('h6');
+            scenarioName.className = 'card-title';
+            scenarioName.textContent = scenario.scenario_name || '未知场景';
+            
+            const scenarioDescription = document.createElement('p');
+            scenarioDescription.className = 'card-text';
+            scenarioDescription.textContent = scenario.description || '暂无描述';
+            
+            // API调用序列
+            if (scenario.api_call_sequence && scenario.api_call_sequence.length > 0) {
+                const apiCallTitle = document.createElement('h6');
+                apiCallTitle.textContent = 'API调用序列:';
+                scenarioCardBody.appendChild(apiCallTitle);
+                
+                const apiCallList = document.createElement('ol');
+                scenario.api_call_sequence.forEach(api => {
+                    const apiItem = document.createElement('li');
+                    apiItem.textContent = api;
+                    apiCallList.appendChild(apiItem);
+                });
+                scenarioCardBody.appendChild(apiCallList);
+            }
+            
+            scenarioCardBody.appendChild(scenarioName);
+            scenarioCardBody.appendChild(scenarioDescription);
+            scenarioCard.appendChild(scenarioCardBody);
+            relationContent.appendChild(scenarioCard);
+        });
+    }
+}
+
+// 显示业务场景数据
+function displaySceneData(sceneData) {
+    const sceneContent = document.getElementById('sceneContent');
+    if (!sceneContent) {
+        console.error('找不到业务场景容器元素');
+        return;
+    }
+    
+    // 清空容器
+    sceneContent.innerHTML = '';
+    
+    // 创建业务场景总览卡片
+    const overviewCard = document.createElement('div');
+    overviewCard.className = 'card mb-3';
+    
+    const overviewCardBody = document.createElement('div');
+    overviewCardBody.className = 'card-body';
+    
+    const overviewTitle = document.createElement('h6');
+    overviewTitle.className = 'card-title';
+    overviewTitle.textContent = '业务场景总览';
+    
+    const overviewText = document.createElement('p');
+    overviewText.className = 'card-text';
+    overviewText.textContent = sceneData.description || '暂无描述';
+    
+    overviewCardBody.appendChild(overviewTitle);
+    overviewCardBody.appendChild(overviewText);
+    overviewCard.appendChild(overviewCardBody);
+    sceneContent.appendChild(overviewCard);
+    
+    // 创建业务场景详情
+    if (sceneData.scenes && sceneData.scenes.length > 0) {
+        const scenesTitle = document.createElement('h6');
+        scenesTitle.className = 'mt-4 mb-3';
+        scenesTitle.textContent = '业务场景详情';
+        sceneContent.appendChild(scenesTitle);
+        
+        const scenesAccordion = document.createElement('div');
+        scenesAccordion.className = 'accordion';
+        scenesAccordion.id = 'scenesAccordion';
+        
+        sceneData.scenes.forEach((scene, index) => {
+            const sceneItem = document.createElement('div');
+            sceneItem.className = 'accordion-item';
+            
+            const sceneHeader = document.createElement('h2');
+            sceneHeader.className = 'accordion-header';
+            sceneHeader.id = `sceneHeader${index}`;
+            
+            // 优先级标签
+            let priorityBadge = '';
+            if (scene.priority) {
+                let badgeColor = 'secondary';
+                if (scene.priority === 'P0') badgeColor = 'danger';
+                else if (scene.priority === 'P1') badgeColor = 'warning';
+                else if (scene.priority === 'P2') badgeColor = 'info';
+                
+                priorityBadge = `<span class="badge bg-${badgeColor} me-2">${scene.priority}</span>`;
+            }
+            
+            const sceneButton = document.createElement('button');
+            sceneButton.className = 'accordion-button collapsed';
+            sceneButton.type = 'button';
+            sceneButton.setAttribute('data-bs-toggle', 'collapse');
+            sceneButton.setAttribute('data-bs-target', `#sceneCollapse${index}`);
+            sceneButton.setAttribute('aria-expanded', 'false');
+            sceneButton.setAttribute('aria-controls', `sceneCollapse${index}`);
+            sceneButton.innerHTML = `${priorityBadge}${scene.scene_name || '未知场景'}`;
+            
+            sceneHeader.appendChild(sceneButton);
+            sceneItem.appendChild(sceneHeader);
+            
+            const sceneCollapse = document.createElement('div');
+            sceneCollapse.className = 'accordion-collapse collapse';
+            sceneCollapse.id = `sceneCollapse${index}`;
+            sceneCollapse.setAttribute('aria-labelledby', `sceneHeader${index}`);
+            sceneCollapse.setAttribute('data-bs-parent', '#scenesAccordion');
+            
+            const sceneBody = document.createElement('div');
+            sceneBody.className = 'accordion-body';
+            
+            // 场景描述
+            if (scene.scene_description) {
+                const sceneDescription = document.createElement('p');
+                sceneDescription.innerHTML = `<strong>场景描述:</strong> ${scene.scene_description}`;
+                sceneBody.appendChild(sceneDescription);
+            }
+            
+            // 相关API
+            if (scene.related_apis && scene.related_apis.length > 0) {
+                const relatedApisTitle = document.createElement('h6');
+                relatedApisTitle.textContent = '相关API:';
+                sceneBody.appendChild(relatedApisTitle);
+                
+                const relatedApisList = document.createElement('div');
+                scene.related_apis.forEach(api => {
+                    const apiBadge = document.createElement('span');
+                    apiBadge.className = `badge bg-${getMethodColor(api.method)} me-1 mb-1`;
+                    apiBadge.textContent = `${api.method} ${api.path}`;
+                    relatedApisList.appendChild(apiBadge);
+                });
+                sceneBody.appendChild(relatedApisList);
+            }
+            
+            // API调用组合
+            if (scene.api_call_combo && scene.api_call_combo.length > 0) {
+                const apiCallTitle = document.createElement('h6');
+                apiCallTitle.textContent = 'API调用组合:';
+                sceneBody.appendChild(apiCallTitle);
+                
+                const apiCallList = document.createElement('ol');
+                scene.api_call_combo.forEach(api => {
+                    const apiItem = document.createElement('li');
+                    apiItem.textContent = api;
+                    apiCallList.appendChild(apiItem);
+                });
+                sceneBody.appendChild(apiCallList);
+            }
+            
+            // 测试重点
+            if (scene.test_focus && scene.test_focus.length > 0) {
+                const testFocusTitle = document.createElement('h6');
+                testFocusTitle.textContent = '测试重点:';
+                sceneBody.appendChild(testFocusTitle);
+                
+                const testFocusList = document.createElement('ul');
+                scene.test_focus.forEach(focus => {
+                    const focusItem = document.createElement('li');
+                    focusItem.textContent = focus;
+                    testFocusList.appendChild(focusItem);
+                });
+                sceneBody.appendChild(testFocusList);
+            }
+            
+            // 异常场景
+            if (scene.exception_scenarios && scene.exception_scenarios.length > 0) {
+                const exceptionTitle = document.createElement('h6');
+                exceptionTitle.textContent = '异常场景:';
+                sceneBody.appendChild(exceptionTitle);
+                
+                const exceptionList = document.createElement('ul');
+                scene.exception_scenarios.forEach(exception => {
+                    const exceptionItem = document.createElement('li');
+                    exceptionItem.textContent = exception;
+                    exceptionList.appendChild(exceptionItem);
+                });
+                sceneBody.appendChild(exceptionList);
+            }
+            
+            sceneCollapse.appendChild(sceneBody);
+            sceneItem.appendChild(sceneCollapse);
+            scenesAccordion.appendChild(sceneItem);
+        });
+        
+        sceneContent.appendChild(scenesAccordion);
+    }
+}
+function getMethodColor(method) {
+    const colors = {
+        'get': 'success',
+        'post': 'primary',
+        'put': 'warning',
+        'delete': 'danger',
+        'patch': 'info',
+        'head': 'secondary',
+        'options': 'secondary'
+    };
+    return colors[method.toLowerCase()] || 'secondary';
+}
+
+// 从文档生成测试用例
+async function generateTestCasesFromDoc(taskId) {
+    try {
+        showLoading();
+        
+        // 使用直接拼接URL的方式，避免undefined问题
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const apiUrl = baseUrl + '/api/test-cases/generate';
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                task_id: taskId
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`生成测试用例失败: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('测试用例生成结果:', result);
+        
+        if (result.success) {
+            showNotification(`成功生成 ${result.data.test_cases_count || 0} 个测试用例`, 'success');
+            
+            // 刷新文档列表
+            loadUploadedDocs();
+        } else {
+            showNotification('生成测试用例失败: ' + (result.message || '未知错误'), 'error');
+        }
+        
+    } catch (error) {
+        console.error('生成测试用例失败:', error);
+        showNotification('生成测试用例失败: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 删除文档
+function deleteDocument(taskId, docName) {
+    if (!confirm(`确定要删除文档 "${docName}" 吗？`)) {
+        return;
+    }
+    
+    // 使用直接拼接URL的方式，避免undefined问题
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const apiUrl = baseUrl + '/api/docs/' + taskId;
+    
+    // 发送删除请求
+    fetch(apiUrl, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('删除文档失败');
+        }
+        return response.json();
+    })
+    .then(data => {
+        showNotification(`文档 "${docName}" 删除成功`, 'success');
+        
+        // 重新加载文档列表
+        loadUploadedDocs();
+    })
+    .catch(error => {
+        console.error('删除文档失败:', error);
+        showNotification('删除文档失败: ' + error.message, 'error');
+    });
+}
+
+// 设置拖拽上传
+function setupDragAndDrop(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.warn(`拖拽容器 ${containerId} 不存在`);
+        return;
+    }
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        container.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        container.addEventListener(eventName, function() {
+            container.classList.add('dragover');
+        }, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        container.addEventListener(eventName, function() {
+            container.classList.remove('dragover');
+        }, false);
+    });
+    
+    container.addEventListener('drop', function(e) {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleSmartFile(files[0]);
+        }
+    }, false);
+}
+
+
+
 
 // 运行所有测试用例
 function runAllCases() {
@@ -836,8 +1235,11 @@ function runAllCases() {
         updateTestCasesStats();
         
         // 重新渲染测试用例列表
-        const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
-        renderTestCasesList(viewMode);
+        const listViewEl = document.getElementById('listView');
+        if (listViewEl) {
+            const viewMode = listViewEl.checked ? 'list' : 'grid';
+            renderTestCasesList(viewMode);
+        }
         
         hideLoading();
         showNotification('所有测试用例运行完成', 'success');
@@ -860,8 +1262,11 @@ function runTestCase(testCaseId) {
         updateTestCasesStats();
         
         // 重新渲染测试用例列表
-        const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
-        renderTestCasesList(viewMode);
+        const listViewEl = document.getElementById('listView');
+        if (listViewEl) {
+            const viewMode = listViewEl.checked ? 'list' : 'grid';
+            renderTestCasesList(viewMode);
+        }
         
         hideLoading();
         showNotification(`测试用例 "${testCase.name}" 运行完成`, 'success');
@@ -889,8 +1294,11 @@ function deleteTestCase(testCaseId) {
         updateTestCasesStats();
         
         // 重新渲染测试用例列表
-        const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
-        renderTestCasesList(viewMode);
+        const listViewEl = document.getElementById('listView');
+        if (listViewEl) {
+            const viewMode = listViewEl.checked ? 'list' : 'grid';
+            renderTestCasesList(viewMode);
+        }
         
         showNotification(`测试用例 "${testCase.name}" 已删除`, 'success');
     }
@@ -989,10 +1397,15 @@ function finishProcess() {
         saveConfiguration();
         
         // 切换到测试用例标签页
-        document.getElementById('test-cases-tab').click();
-        
-        // 重新加载测试用例
-        loadTestCases();
+        const testCasesTab = document.getElementById('test-cases-tab');
+        if (testCasesTab) {
+            testCasesTab.click();
+            
+            // 重新加载测试用例
+            loadTestCases();
+        } else {
+            console.warn('测试用例标签页不存在');
+        }
         
         showNotification('测试生成流程已完成', 'success');
     }
@@ -1000,13 +1413,24 @@ function finishProcess() {
 
 // 显示添加场景模态框
 function showAddSceneModal() {
-    const modal = new bootstrap.Modal(document.getElementById('addSceneModal'));
+    const addSceneModal = document.getElementById('addSceneModal');
+    if (!addSceneModal) {
+        console.warn('添加场景模态框不存在');
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(addSceneModal);
     
     // 首先提取API端点
     extractApiEndpoints(apiDocData)
         .then(endpoints => {
             // 填充API复选框
             const sceneApis = document.getElementById('sceneApis');
+            if (!sceneApis) {
+                console.warn('场景API容器不存在');
+                return;
+            }
+            
             sceneApis.innerHTML = '';
             
             endpoints.forEach(endpoint => {
@@ -1038,8 +1462,16 @@ function showAddSceneModal() {
 
 // 保存场景
 function saveScene() {
-    const sceneName = document.getElementById('sceneName').value.trim();
-    const sceneDescription = document.getElementById('sceneDescription').value.trim();
+    const sceneNameEl = document.getElementById('sceneName');
+    const sceneDescriptionEl = document.getElementById('sceneDescription');
+    
+    if (!sceneNameEl || !sceneDescriptionEl) {
+        console.warn('场景表单元素不存在');
+        return;
+    }
+    
+    const sceneName = sceneNameEl.value.trim();
+    const sceneDescription = sceneDescriptionEl.value.trim();
     
     if (!sceneName) {
         showNotification('请输入场景名称', 'error');
@@ -1075,12 +1507,17 @@ function saveScene() {
             displayScenariosList(scenarios);
             
             // 关闭模态框
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addSceneModal'));
-            modal.hide();
+            const addSceneModal = document.getElementById('addSceneModal');
+            if (addSceneModal) {
+                const modal = bootstrap.Modal.getInstance(addSceneModal);
+                if (modal) {
+                    modal.hide();
+                }
+            }
             
             // 清空表单
-            document.getElementById('sceneName').value = '';
-            document.getElementById('sceneDescription').value = '';
+            sceneNameEl.value = '';
+            sceneDescriptionEl.value = '';
             
             showNotification('场景添加成功', 'success');
         })
@@ -1091,7 +1528,13 @@ function saveScene() {
 
 // 显示添加依赖关系模态框
 function showAddRelationModal() {
-    const modal = new bootstrap.Modal(document.getElementById('addRelationModal'));
+    const addRelationModal = document.getElementById('addRelationModal');
+    if (!addRelationModal) {
+        console.warn('添加依赖关系模态框不存在');
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(addRelationModal);
     
     // 首先提取API端点
     extractApiEndpoints(apiDocData)
@@ -1099,6 +1542,11 @@ function showAddRelationModal() {
             // 填充源API和目标API下拉框
             const relationSource = document.getElementById('relationSource');
             const relationTarget = document.getElementById('relationTarget');
+            
+            if (!relationSource || !relationTarget) {
+                console.warn('依赖关系表单元素不存在');
+                return;
+            }
             
             relationSource.innerHTML = '';
             relationTarget.innerHTML = '';
@@ -1122,252 +1570,128 @@ function showAddRelationModal() {
         });
 }
 
-// 保存依赖关系
-function saveRelation() {
-    const sourceValue = document.getElementById('relationSource').value;
-    const targetValue = document.getElementById('relationTarget').value;
-    const relationType = document.getElementById('relationType').value;
-    const relationDescription = document.getElementById('relationDescription').value.trim();
-    
-    if (!sourceValue || !targetValue) {
-        showNotification('请选择源API和目标API', 'error');
+// 渲染已上传文档列表
+function renderUploadedDocsList(docs) {
+    const docsListContainer = document.getElementById('uploadedDocsList');
+    if (!docsListContainer) {
+        console.warn('已上传文档列表容器不存在');
         return;
     }
     
-    if (sourceValue === targetValue) {
-        showNotification('源API和目标API不能相同', 'error');
+    docsListContainer.innerHTML = '';
+    
+    if (docs.length === 0) {
+        const emptyMessage = document.createElement('div');
+        emptyMessage.className = 'text-center text-muted py-4';
+        emptyMessage.innerHTML = '<i class="fas fa-file-upload fa-3x mb-3"></i><p>暂无已上传的文档</p>';
+        docsListContainer.appendChild(emptyMessage);
         return;
     }
     
-    const [sourceMethod, sourcePath] = sourceValue.split(':');
-    const [targetMethod, targetPath] = targetValue.split(':');
+    const table = document.createElement('table');
+    table.className = 'table table-hover';
     
-    // 首先提取API端点
-    extractApiEndpoints(apiDocData)
-        .then(endpoints => {
-            const sourceApi = endpoints.find(endpoint => endpoint.method === sourceMethod && endpoint.path === sourcePath);
-            const targetApi = endpoints.find(endpoint => endpoint.method === targetMethod && endpoint.path === targetPath);
-            
-            // 创建新依赖关系
-            const newRelation = {
-                id: `relation-${Date.now()}`,
-                source: sourceApi,
-                target: targetApi,
-                type: relationType,
-                description: relationDescription || `${sourceMethod} ${sourcePath} 依赖于 ${targetMethod} ${targetPath}`
-            };
-            
-            relations.push(newRelation);
-            
-            // 更新依赖关系列表显示
-            displayRelationsList(relations);
-            
-            // 关闭模态框
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addRelationModal'));
-            modal.hide();
-            
-            // 清空表单
-            document.getElementById('relationDescription').value = '';
-            
-            showNotification('依赖关系添加成功', 'success');
-        })
-        .catch(error => {
-            showNotification('获取API端点失败: ' + error.message, 'error');
-        });
-}
-
-// 切换到指定步骤
-function goToStep(step) {
-    // 隐藏所有步骤内容
-    document.querySelectorAll('.step-content').forEach(content => {
-        content.style.display = 'none';
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    
+    const headers = ['文件名', '上传时间', '文件大小', '操作'];
+    headers.forEach(headerText => {
+        const th = document.createElement('th');
+        th.textContent = headerText;
+        headerRow.appendChild(th);
     });
     
-    // 更新步骤指示器
-    document.querySelectorAll('.step').forEach((stepElement, index) => {
-        stepElement.classList.remove('active', 'completed');
-        if (index + 1 < step) {
-            stepElement.classList.add('completed');
-        } else if (index + 1 === step) {
-            stepElement.classList.add('active');
-        }
-    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
     
-    // 显示当前步骤内容
-    document.getElementById(`step${step}Content`).style.display = 'block';
+    const tbody = document.createElement('tbody');
     
-    currentStep = step;
-}
-
-// 加载已保存的数据
-function loadSavedData() {
-    const savedConfig = localStorage.getItem('testCenterConfig');
-    if (savedConfig) {
-        try {
-            const configuration = JSON.parse(savedConfig);
-            apiDocData = configuration.apiDocData;
-            testCases = configuration.testCases || [];
-            scenarios = configuration.scenarios || [];
-            relations = configuration.relations || [];
-            
-            // 如果有API文档数据，显示文件信息
-            if (apiDocData) {
-                showSmartFileInfo('已保存的API文档', 0, apiDocData);
-                document.getElementById('analyzeBtn').disabled = false;
-            }
-            
-            // 加载测试用例
-            if (testCases.length > 0) {
-                loadTestCases();
-            }
-        } catch (error) {
-            console.error('加载保存的配置失败:', error);
-        }
-    }
-}
-
-// 提取API端点
-async function extractApiEndpoints(apiDoc) {
-    const endpoints = [];
-    const paths = apiDoc.paths || {};
-    
-    for (const path in paths) {
-        const pathItem = paths[path];
+    docs.forEach(doc => {
+        const row = document.createElement('tr');
         
-        for (const method in pathItem) {
-            if (['get', 'post', 'put', 'delete', 'patch', 'head', 'options'].includes(method)) {
-                const operation = pathItem[method];
-                
-                endpoints.push({
-                    method: method.toUpperCase(),
-                    path,
-                    operationId: operation.operationId,
-                    summary: operation.summary,
-                    description: operation.description,
-                    parameters: operation.parameters || [],
-                    requestBody: operation.requestBody,
-                    responses: operation.responses || {}
-                });
+        // 文件名
+        const nameCell = document.createElement('td');
+        const nameLink = document.createElement('a');
+        nameLink.href = '#';
+        nameLink.textContent = doc.filename || doc.name || '未知文件';
+        nameLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            // 可以添加查看文档详情的逻辑
+            showNotification(`查看文档: ${doc.filename || doc.name}`, 'info');
+        });
+        nameCell.appendChild(nameLink);
+        row.appendChild(nameCell);
+        
+        // 上传时间
+        const timeCell = document.createElement('td');
+        timeCell.textContent = formatDateTime(doc.upload_time || doc.createdAt || new Date());
+        row.appendChild(timeCell);
+        
+        // 文件大小
+        const sizeCell = document.createElement('td');
+        sizeCell.textContent = formatFileSize(doc.file_size || doc.size || 0);
+        row.appendChild(sizeCell);
+        
+        // 操作
+        const actionsCell = document.createElement('td');
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-sm btn-outline-danger';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        deleteBtn.title = '删除文档';
+        deleteBtn.addEventListener('click', () => {
+            if (confirm(`确定要删除文档 "${doc.filename || doc.name}" 吗？`)) {
+                deleteUploadedDoc(doc.id || doc._id);
             }
-        }
+        });
+        
+        actionsCell.appendChild(deleteBtn);
+        row.appendChild(actionsCell);
+        
+        tbody.appendChild(row);
+    });
+    
+    table.appendChild(tbody);
+    docsListContainer.appendChild(table);
+}
+
+// 删除已上传文档
+function deleteUploadedDoc(docId) {
+    if (!docId) {
+        showNotification('文档ID无效', 'error');
+        return;
     }
     
-    return endpoints;
-}
-
-// 生成场景和依赖关系
-async function generateScenariosAndRelations(endpoints) {
-    // 模拟生成场景
-    const scenarios = [
-        {
-            id: 'scene-1',
-            name: '用户认证场景',
-            description: '包括用户登录、注册和获取用户信息的API',
-            apis: endpoints.filter(e => e.path.includes('/auth') || e.path.includes('/user'))
-        },
-        {
-            id: 'scene-2',
-            name: '数据管理场景',
-            description: '包括创建、读取、更新和删除数据的API',
-            apis: endpoints.filter(e => ['POST', 'GET', 'PUT', 'DELETE'].includes(e.method))
+    showLoading('正在删除文档...');
+    
+    // 使用直接拼接URL的方式，避免undefined问题
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const deleteUrl = baseUrl + '/api/docs/' + docId;
+    
+    fetch(deleteUrl, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
         }
-    ];
-    
-    // 模拟生成依赖关系
-    const relations = [];
-    
-    // 查找认证相关的API
-    const authApis = endpoints.filter(e => e.path.includes('/auth') || e.path.includes('/login'));
-    
-    // 为其他API创建对认证API的依赖
-    endpoints.forEach(endpoint => {
-        if (!endpoint.path.includes('/auth') && authApis.length > 0) {
-            relations.push({
-                id: `relation-${endpoint.method}-${endpoint.path}`,
-                source: endpoint,
-                target: authApis[0],
-                type: 'auth',
-                description: `${endpoint.method} ${endpoint.path} 需要先进行认证`
-            });
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-    });
-    
-    return { scenarios, relations };
-}
-
-// 生成模拟测试用例
-function generateMockTestCases(endpoints, scenarios, relations) {
-    const testCases = [];
-    
-    // 为每个API端点生成基础测试用例
-    endpoints.forEach(endpoint => {
-        // 基础测试
-        testCases.push({
-            id: `test-${endpoint.method}-${endpoint.path}-basic`,
-            name: `基础测试 - ${endpoint.method} ${endpoint.path}`,
-            description: `测试${endpoint.method} ${endpoint.path}的基本功能`,
-            type: 'basic',
-            api: endpoint,
-            status: 'passed'
-        });
+        return response.json();
+    })
+    .then(data => {
+        hideLoading();
+        showNotification('文档删除成功', 'success');
         
-        // 边界值测试
-        testCases.push({
-            id: `test-${endpoint.method}-${endpoint.path}-boundary`,
-            name: `边界值测试 - ${endpoint.method} ${endpoint.path}`,
-            description: `测试${endpoint.method} ${endpoint.path}的边界值情况`,
-            type: 'boundary',
-            api: endpoint,
-            status: Math.random() > 0.2 ? 'passed' : 'failed'
-        });
-        
-        // 异常测试
-        testCases.push({
-            id: `test-${endpoint.method}-${endpoint.path}-exception`,
-            name: `异常测试 - ${endpoint.method} ${endpoint.path}`,
-            description: `测试${endpoint.method} ${endpoint.path}的异常处理`,
-            type: 'exception',
-            api: endpoint,
-            status: Math.random() > 0.3 ? 'passed' : 'failed'
-        });
+        // 重新加载文档列表
+        loadUploadedDocs();
+    })
+    .catch(error => {
+        hideLoading();
+        showNotification('文档删除失败: ' + error.message, 'error');
+        console.error('文档删除失败:', error);
     });
-    
-    // 为每个场景生成场景测试用例
-    scenarios.forEach(scene => {
-        testCases.push({
-            id: `test-scene-${scene.id}`,
-            name: `场景测试 - ${scene.name}`,
-            description: `测试${scene.name}的完整流程`,
-            type: 'scenario',
-            api: scene.apis[0] || endpoints[0], // 使用场景的第一个API作为代表
-            status: Math.random() > 0.4 ? 'passed' : 'failed'
-        });
-    });
-    
-    return testCases;
-}
-
-// 获取关系类型标签
-function getRelationTypeLabel(type) {
-    const labels = {
-        'data': '数据依赖',
-        'sequence': '顺序依赖',
-        'auth': '认证依赖'
-    };
-    
-    return labels[type] || type;
-}
-
-// 获取测试用例类型标签
-function getTestCaseTypeLabel(type) {
-    const labels = {
-        'basic': '基础测试',
-        'scenario': '场景测试',
-        'boundary': '边界值测试',
-        'exception': '异常测试'
-    };
-    
-    return labels[type] || type;
 }
 
 // 显示上传进度
@@ -1388,13 +1712,48 @@ function hideUploadProgress() {
 
 // 显示加载遮罩
 function showLoading(message = '正在处理，请稍候...') {
-    document.getElementById('loadingMessage').textContent = message;
-    document.getElementById('loadingOverlay').style.display = 'flex';
+    try {
+        const loadingMessage = document.getElementById('loadingMessage');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        
+        if (loadingMessage) {
+            loadingMessage.textContent = message;
+        } else {
+            console.warn('加载消息元素不存在');
+        }
+        
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'flex';
+            console.log('加载遮罩层已显示，消息:', message);
+        } else {
+            console.warn('加载遮罩元素不存在');
+        }
+        
+        // 添加超时自动隐藏机制，防止卡住
+        setTimeout(() => {
+            if (loadingOverlay && loadingOverlay.style.display === 'flex') {
+                console.warn('加载遮罩层显示超过10秒，自动隐藏');
+                hideLoading();
+            }
+        }, 10000);
+    } catch (error) {
+        console.error('显示加载遮罩层时出错:', error);
+    }
 }
 
 // 隐藏加载遮罩
 function hideLoading() {
-    document.getElementById('loadingOverlay').style.display = 'none';
+    try {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+            console.log('加载遮罩层已隐藏');
+        } else {
+            console.warn('加载遮罩元素不存在');
+        }
+    } catch (error) {
+        console.error('隐藏加载遮罩层时出错:', error);
+    }
 }
 
 // 显示通知
@@ -1431,4 +1790,21 @@ function formatFileSize(bytes) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 格式化日期时间
+function formatDateTime(dateString) {
+    if (!dateString) return '未知';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '未知';
+    
+    return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
 }

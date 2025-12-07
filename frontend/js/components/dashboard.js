@@ -141,7 +141,7 @@ function refreshDashboardData() {
     refreshBtn.disabled = true;
     
     // 调用API获取数据
-    fetch('http://localhost:19028/api/dashboard/refresh', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DASHBOARD.REFRESH), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -185,7 +185,7 @@ function refreshDashboardData() {
 // 更新统计数据
 function updateStatistics() {
     // 调用API获取数据
-    fetch('http://localhost:19028/api/dashboard/statistics', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DASHBOARD.STATISTICS), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -221,7 +221,7 @@ function updateStatistics() {
 // 更新最新测试执行表格
 function updateRecentTestsTable() {
     // 调用API获取数据
-    fetch('http://localhost:19028/api/dashboard/recent-tests', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DASHBOARD.RECENT_TESTS), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -284,7 +284,7 @@ function updateRecentTestsTable() {
 // 更新高优先级建议
 function updateHighPrioritySuggestions() {
     // 调用API获取数据
-    fetch('http://localhost:19028/api/dashboard/suggestions', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DASHBOARD.SUGGESTIONS), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'

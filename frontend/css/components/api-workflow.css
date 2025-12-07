@@ -1,0 +1,474 @@
+/* API测试工作流程页面样式 */
+
+/* 步骤指示器样式 */
+.step-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.step {
+    text-align: center;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+
+.step::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    right: -50%;
+    height: 2px;
+    background-color: #e9ecef;
+    z-index: -1;
+}
+
+.step:last-child::before {
+    display: none;
+}
+
+.step.active::before {
+    background-color: #0d6efd;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-weight: bold;
+}
+
+.step.active .step-circle {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.step.completed .step-circle {
+    background-color: #198754;
+    color: white;
+}
+
+.step-title {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.step.active .step-title {
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+.step.completed .step-title {
+    color: #198754;
+}
+
+/* 文件上传区域样式 */
+.upload-container {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    margin: 20px 0;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.upload-container.dragover {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.upload-container.uploading {
+    border-color: #198754;
+    background-color: #d1e7dd;
+}
+
+.upload-container.error {
+    border-color: #dc3545;
+    background-color: #f8d7da;
+}
+
+/* API列表容器样式 */
+.api-list-container {
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.api-item {
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
+}
+
+.api-item:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.api-item.selected {
+    background-color: #e7f1ff;
+    border-color: #0d6efd;
+}
+
+.api-method {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-right: 5px;
+    color: white;
+}
+
+.method-get { background-color: #0d6efd; }
+.method-post { background-color: #198754; }
+.method-put { background-color: #ffc107; color: #000; }
+.method-delete { background-color: #dc3545; }
+.method-patch { background-color: #6c757d; }
+
+.api-path {
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.api-summary {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+/* 场景卡片样式 */
+.scene-card {
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    border-left: 4px solid #0d6efd;
+}
+
+.scene-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.scene-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.scene-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.scene-apis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.api-badge {
+    font-size: 0.8rem;
+    padding: 3px 6px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    border-radius: 3px;
+    background-color: #e9ecef;
+}
+
+/* 关联关系卡片样式 */
+.relation-card {
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    border-left: 4px solid #198754;
+}
+
+.relation-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.relation-type {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-right: 5px;
+    color: white;
+    background-color: #198754;
+}
+
+.relation-apis {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.relation-arrow {
+    margin: 0 10px;
+    color: #6c757d;
+}
+
+/* 测试用例列表样式 */
+.test-case-list-container {
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.test-case-card {
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    border-left: 4px solid #198754;
+}
+
+.test-case-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.test-case-card.failed {
+    border-left-color: #dc3545;
+}
+
+.test-case-card.passed {
+    border-left-color: #198754;
+}
+
+.test-case-card.pending {
+    border-left-color: #ffc107;
+}
+
+.test-case-card.skipped {
+    border-left-color: #6c757d;
+}
+
+.test-case-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.test-case-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.test-case-api {
+    font-family: monospace;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.test-case-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: white;
+}
+
+.status-passed { background-color: #198754; }
+.status-failed { background-color: #dc3545; }
+.status-pending { background-color: #ffc107; color: #000; }
+.status-skipped { background-color: #6c757d; }
+
+.test-case-actions {
+    margin-top: 10px;
+}
+
+/* 测试用例网格视图样式 */
+.test-case-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.test-case-grid .test-case-card {
+    height: 100%;
+}
+
+/* 加载遮罩样式 */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 400px;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* 代码容器样式 */
+.code-container {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 15px;
+    margin-top: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+/* 标签样式 */
+.tag {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    background-color: #e9ecef;
+}
+
+.tag.type-basic {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.tag.type-scenario {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.tag.type-boundary {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.tag.type-exception {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* 测试结果样式 */
+.test-result-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.test-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.test-result-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: white;
+}
+
+.test-result-status.passed {
+    background-color: #198754;
+}
+
+.test-result-status.failed {
+    background-color: #dc3545;
+}
+
+.test-result-details {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.test-result-request,
+.test-result-response {
+    margin-bottom: 15px;
+}
+
+.test-result-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.test-result-code {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .step-indicator {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .step {
+        margin-bottom: 20px;
+        width: 100%;
+    }
+    
+    .step::before {
+        display: none;
+    }
+    
+    .api-list-container,
+    .test-case-list-container {
+        max-height: 300px;
+    }
+    
+    .test-case-grid {
+        grid-template-columns: 1fr;
+    }
+}

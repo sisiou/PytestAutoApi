@@ -444,7 +444,7 @@ function showSuggestionDetail(suggestionId) {
     const suggestion = allSuggestions.find(s => s.id === suggestionId);
     
     if (!suggestion) {
-        showNotification('未找到建议详情', 'error');
+        showSmartTestNotification('未找到建议详情', 'error');
         return;
     }
     
@@ -507,7 +507,7 @@ function adoptSuggestion(suggestionId) {
         }
         
         // 显示成功提示
-        showNotification('建议已采纳', 'success');
+        showSmartTestNotification('建议已采纳', 'success');
     }, 500);
 }
 
@@ -530,7 +530,7 @@ function rejectSuggestion(suggestionId) {
         }
         
         // 显示成功提示
-        showNotification('建议已拒绝', 'info');
+        showSmartTestNotification('建议已拒绝', 'info');
     }, 500);
 }
 
@@ -553,7 +553,7 @@ function generateNewSuggestions() {
         loadSuggestionsData();
         
         // 显示成功提示
-        showNotification('新建议已生成', 'success');
+        showSmartTestNotification('新建议已生成', 'success');
     }, 2000);
 }
 
@@ -576,7 +576,7 @@ function refreshSuggestions() {
         loadSuggestionsData();
         
         // 显示成功提示
-        showNotification('建议已刷新', 'success');
+        showSmartTestNotification('建议已刷新', 'success');
     }, 1500);
 }
 

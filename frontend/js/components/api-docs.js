@@ -239,7 +239,7 @@ function loadApiData() {
     showLoading();
     
     // 尝试从后端加载API数据
-    fetch('http://localhost:19028/api/docs/list', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.LIST), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -953,7 +953,7 @@ function generateTestCases() {
         generateBtn.innerHTML = '<i class="fas fa-vial me-2"></i>生成测试用例';
         
         // 显示成功消息
-        showNotification('测试用例生成成功！', 'success');
+        showSmartTestNotification('测试用例生成成功！', 'success');
         
         // 跳转到测试用例页面
         window.location.href = 'test-cases.html';
@@ -1039,13 +1039,13 @@ function quickParseFeishuApi() {
             const url = urlInput.value.trim();
             
             if (!url) {
-                showNotification('请输入有效的飞书接口文档URL', 'warning');
+                showSmartTestNotification('请输入有效的飞书接口文档URL', 'warning');
                 return;
             }
             
             // 验证是否是飞书API文档URL
             if (!url.includes('open.feishu.cn/document/')) {
-                showNotification('请输入有效的飞书接口文档URL，应包含 open.feishu.cn/document/', 'warning');
+                showSmartTestNotification('请输入有效的飞书接口文档URL，应包含 open.feishu.cn/document/', 'warning');
                 return;
             }
             
@@ -1102,7 +1102,7 @@ function parseApiDocs() {
             const url = urlInput.value.trim();
             
             if (!url) {
-                showNotification('请输入有效的接口文档URL', 'warning');
+                showSmartTestNotification('请输入有效的接口文档URL', 'warning');
                 return;
             }
             
@@ -1132,10 +1132,10 @@ function parseApiDocument(url, docType) {
         quickParseBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 解析中...';
     }
     
-    showNotification(`正在解析${docType}...`, 'info');
+    showSmartTestNotification(`正在解析${docType}...`, 'info');
     
     // 调用后端API解析接口
-    fetch('http://localhost:19028/api/docs/parse-url', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.PARSE_URL), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1150,14 +1150,14 @@ function parseApiDocument(url, docType) {
     })
     .then(data => {
         console.log('接口文档解析成功:', data);
-        showNotification(`${docType}解析成功！`, 'success');
+        showSmartTestNotification(`${docType}解析成功！`, 'success');
         
         // 重新加载数据
         loadApiData();
     })
     .catch(error => {
         console.error('解析接口文档失败:', error);
-        showNotification(`解析${docType}失败: ` + error.message, 'error');
+        showSmartTestNotification(`解析${docType}失败: ` + error.message, 'error');
     })
     .finally(() => {
         // 重置按钮状态
@@ -1231,7 +1231,7 @@ function showNotification(message, type = 'info') {
 
 // 显示提示消息（兼容旧代码）
 function showToast(message, type = 'info') {
-    showNotification(message, type);
+    showSmartTestNotification(message, type);
 }
 
 // 初始化图表
@@ -1320,13 +1320,13 @@ function handleFileUpload(file) {
     
     // 验证文件类型
     if (!isValidFileType(file.name)) {
-        showNotification('不支持的文件类型，请上传 OpenAPI 3.0.0 JSON 或 YAML 格式的文件', 'error');
+        showSmartTestNotification('不支持的文件类型，请上传 OpenAPI 3.0.0 JSON 或 YAML 格式的文件', 'error');
         return;
     }
     
     // 验证文件大小 (10MB)
     if (file.size > 10 * 1024 * 1024) {
-        showNotification('文件大小不能超过 10MB', 'error');
+        showSmartTestNotification('文件大小不能超过 10MB', 'error');
         return;
     }
     
@@ -1341,7 +1341,7 @@ function handleFileUpload(file) {
     formData.append('file', file);
     
     // 上传文件
-    fetch('http://localhost:19028/api/docs/upload', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.UPLOAD), {
         method: 'POST',
         body: formData
     })
@@ -1437,7 +1437,7 @@ function showUploadError(message) {
         }, 3000);
     }
     
-    showNotification(message, 'error');
+    showSmartTestNotification(message, 'error');
 }
 
 // 显示处理状态
@@ -1462,7 +1462,7 @@ function hideProcessingStatus() {
 function parseDocument(fileId) {
     console.log('解析文档:', fileId);
     
-    fetch(`http://localhost:19028/api/docs/parse/${fileId}`, {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.PARSE) + `/${fileId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1494,12 +1494,12 @@ function parseDocument(fileId) {
         loadApiData();
         
         // 通知成功
-        showNotification('文档解析成功', 'success');
+        showSmartTestNotification('文档解析成功', 'success');
     })
     .catch(error => {
         console.error('解析失败:', error);
         hideProcessingStatus();
-        showNotification(error.message, 'error');
+        showSmartTestNotification(error.message, 'error');
     });
 }
 
@@ -1586,8 +1586,8 @@ function formatDate(dateString) {
 
 // 查看文件详情
 function viewFileDetails(fileId) {
-    // 跳转到智能测试生成页面（原API文档页面已迁移）并指定文件ID
-    window.location.href = `smart-test-generation.html?fileId=${fileId}`;
+    // 跳转到测试中心页面并指定文件ID
+    window.location.href = `test-center.html?fileId=${fileId}`;
 }
 
 // 删除文件
@@ -1596,7 +1596,7 @@ function deleteFile(fileId) {
         return;
     }
     
-    fetch(`http://localhost:19028/api/docs/delete/${fileId}`, {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.DELETE) + `/${fileId}`, {
         method: 'DELETE'
     })
     .then(response => {
@@ -1614,17 +1614,17 @@ function deleteFile(fileId) {
         // 更新显示
         updateFileListDisplay();
         
-        showNotification('文件删除成功', 'success');
+        showSmartTestNotification('文件删除成功', 'success');
     })
     .catch(error => {
         console.error('删除失败:', error);
-        showNotification(error.message, 'error');
+        showSmartTestNotification(error.message, 'error');
     });
 }
 
 // 加载已上传的文件列表
 function loadUploadedFiles() {
-    fetch(`http://localhost:19028/api/docs/uploaded-list`, {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.UPLOADED_LIST), {
         method: 'GET'
     })
     .then(response => {
@@ -1656,7 +1656,7 @@ function loadUploadedFiles() {
 // 加载场景和关联关系
 function loadScenesAndRelations() {
     // 加载场景
-    fetch('http://localhost:19028/api/scenes/list', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.SCENES.LIST), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -1681,7 +1681,7 @@ function loadScenesAndRelations() {
     });
     
     // 加载关联关系
-    fetch('http://localhost:19028/api/relations/list', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.RELATIONS.LIST), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -1824,7 +1824,7 @@ function populateApiCheckboxList() {
     if (!apiCheckboxList) return;
     
     // 获取当前API列表
-    fetch('http://localhost:19028/api/docs/list', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.LIST), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -1874,7 +1874,7 @@ function populateApiSelectOptions() {
     if (!sourceApiSelect || !targetApiSelect) return;
     
     // 获取当前API列表
-    fetch('http://localhost:19028/api/docs/list', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.LIST), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -1929,12 +1929,12 @@ function saveScene() {
     const sceneDescription = document.getElementById('sceneDescription').value.trim();
     
     if (!sceneName) {
-        showNotification('请输入场景名称', 'error');
+        showSmartTestNotification('请输入场景名称', 'error');
         return;
     }
     
     if (!sceneType) {
-        showNotification('请选择场景类型', 'error');
+        showSmartTestNotification('请选择场景类型', 'error');
         return;
     }
     
@@ -1954,7 +1954,7 @@ function saveScene() {
     };
     
     // 发送到后端
-    fetch('http://localhost:19028/api/scenes/create', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.SCENES.CREATE), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1987,11 +1987,11 @@ function saveScene() {
         document.getElementById('addSceneForm').reset();
         
         // 显示成功消息
-        showNotification('场景保存成功', 'success');
+        showSmartTestNotification('场景保存成功', 'success');
     })
     .catch(error => {
         console.error('保存场景失败:', error);
-        showNotification(error.message, 'error');
+        showSmartTestNotification(error.message, 'error');
     });
 }
 
@@ -2004,22 +2004,22 @@ function saveRelation() {
     const confidence = document.getElementById('confidence').value;
     
     if (!sourceApi) {
-        showNotification('请选择源API', 'error');
+        showSmartTestNotification('请选择源API', 'error');
         return;
     }
     
     if (!targetApi) {
-        showNotification('请选择目标API', 'error');
+        showSmartTestNotification('请选择目标API', 'error');
         return;
     }
     
     if (!relationType) {
-        showNotification('请选择关联类型', 'error');
+        showSmartTestNotification('请选择关联类型', 'error');
         return;
     }
     
     if (sourceApi === targetApi) {
-        showNotification('源API和目标API不能相同', 'error');
+        showSmartTestNotification('源API和目标API不能相同', 'error');
         return;
     }
     
@@ -2032,7 +2032,7 @@ function saveRelation() {
     };
     
     // 发送到后端
-    fetch('http://localhost:19028/api/relations/create', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.RELATIONS.CREATE), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -2066,11 +2066,11 @@ function saveRelation() {
         document.getElementById('confidenceValue').textContent = '50%';
         
         // 显示成功消息
-        showNotification('关联关系保存成功', 'success');
+        showSmartTestNotification('关联关系保存成功', 'success');
     })
     .catch(error => {
         console.error('保存关联关系失败:', error);
-        showNotification(error.message, 'error');
+        showSmartTestNotification(error.message, 'error');
     });
 }
 
@@ -2079,7 +2079,7 @@ function editScene(sceneId) {
     // 找到要编辑的场景
     const scene = scenes.find(s => s.id === sceneId);
     if (!scene) {
-        showNotification('找不到指定的场景', 'error');
+        showSmartTestNotification('找不到指定的场景', 'error');
         return;
     }
     
@@ -2105,7 +2105,7 @@ function deleteScene(sceneId) {
         return;
     }
     
-    fetch(`http://localhost:19028/api/scenes/delete/${sceneId}`, {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.SCENES.DELETE) + `/${sceneId}`, {
         method: 'DELETE'
     })
     .then(response => {
@@ -2124,11 +2124,11 @@ function deleteScene(sceneId) {
         displayScenes();
         
         // 显示成功消息
-        showNotification('场景删除成功', 'success');
+        showSmartTestNotification('场景删除成功', 'success');
     })
     .catch(error => {
         console.error('删除场景失败:', error);
-        showNotification(error.message, 'error');
+        showSmartTestNotification(error.message, 'error');
     });
 }
 
@@ -2137,7 +2137,7 @@ function editRelation(relationId) {
     // 找到要编辑的关联关系
     const relation = relations.find(r => r.id === relationId);
     if (!relation) {
-        showNotification('找不到指定的关联关系', 'error');
+        showSmartTestNotification('找不到指定的关联关系', 'error');
         return;
     }
     
@@ -2160,7 +2160,7 @@ function deleteRelation(relationId) {
         return;
     }
     
-    fetch(`http://localhost:19028/api/relations/delete/${relationId}`, {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.RELATIONS.DELETE) + `/${relationId}`, {
         method: 'DELETE'
     })
     .then(response => {
@@ -2179,10 +2179,10 @@ function deleteRelation(relationId) {
         displayRelations();
         
         // 显示成功消息
-        showNotification('关联关系删除成功', 'success');
+        showSmartTestNotification('关联关系删除成功', 'success');
     })
     .catch(error => {
         console.error('删除关联关系失败:', error);
-        showNotification(error.message, 'error');
+        showSmartTestNotification(error.message, 'error');
     });
 }

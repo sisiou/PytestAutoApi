@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试页面</title>
+</head>
+<body>
+    <h1>测试页面</h1>
+    <p>这是一个简单的测试页面，用于检查是否有vite客户端请求。</p>
+    
+    <script>
+        console.log('测试页面加载完成');
+        console.log('window.API_CONFIG:', window.API_CONFIG);
+    </script>
+    
+    <!-- API配置 -->
+    <script src="../js/config/api-config.js"></script>
+    <script>
+        console.log('API配置加载后，window.API_CONFIG:', window.API_CONFIG);
+    </script>
+</body>
+</html>

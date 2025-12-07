@@ -165,7 +165,7 @@ function handleFileUpload(file) {
     formData.append('file', file);
     
     // 上传文件
-    fetch('http://localhost:19028/api/docs/upload', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.UPLOAD), {
         method: 'POST',
         body: formData
     })
@@ -194,7 +194,7 @@ function refreshApiList() {
     console.log('刷新API列表');
     
     // 发送请求到后端获取最新的API列表
-    fetch('http://localhost:19028/api/docs/list', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.LIST), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -207,21 +207,20 @@ function refreshApiList() {
         return response.json();
     })
     .then(data => {
-        console.log('获取到的API列表:', data);
+        console.log('API列表刷新成功:', data);
         
-        // 如果用户在API文档页面，则更新页面上的API列表
-        // 这里可以通过localStorage或者自定义事件来通知其他页面
-        localStorage.setItem('apiListUpdated', Date.now().toString());
-        
-        // 触发自定义事件，通知其他组件API列表已更新
-        window.dispatchEvent(new CustomEvent('apiListUpdated', { detail: data }));
+        if (data.success) {
+            // 更新API列表显示
+            updateApiListDisplay(data.apis);
+        } else {
+            Notification.error('刷新API列表失败: ' + data.message);
+        }
     })
     .catch(error => {
         console.error('刷新API列表失败:', error);
+        Notification.error('刷新API列表时发生错误');
     });
 }
-
-// 解析文档
             parseDocument(data.file_id);
         }, 500);
     })
@@ -316,22 +315,23 @@ function hideProcessingStatus() {
 
 // 解析文档
 function parseDocument(fileId) {
-    console.log('解析文档:', fileId);
+    showProcessingStatus();
     
-    fetch(`http://localhost:19028/api/docs/parse/${fileId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.PARSE) + `/${fileId}`, {
+        method: 'POST'
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('解析失败');
+            throw new Error('解析文档失败');
         }
         return response.json();
     })
     .then(data => {
-        console.log('解析成功:', data);
+        console.log('文档解析结果:', data);
+        
+        if (!data.success) {
+            throw new Error(data.message || '文档解析失败');
+        }
         
         // 保存解析结果
         parsedApiData = data;
@@ -342,14 +342,10 @@ function parseDocument(fileId) {
         // 显示解析结果
         showParseResults(data);
         
-        // 通知成功
         Notification.success('文档解析成功');
-        
-        // 刷新API列表
-        refreshApiList();
     })
     .catch(error => {
-        console.error('解析失败:', error);
+        console.error('解析文档失败:', error);
         hideProcessingStatus();
         Notification.error(error.message);
     });
@@ -581,119 +577,197 @@ function showUploadSection() {
 // 生成测试用例
 async function generateTestCases(fileId) {
     try {
-        showLoading('正在生成测试用例...');
+        showProcessingStatus();
         
-        const response = await fetch(`http://localhost:19028/api/docs/generate-test-cases/${fileId}`, {
+        const response = await fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.GENERATE_TEST_CASES) + `/${fileId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             }
-        }).then(res => res.json());
+        });
         
-        if (response.success) {
-            Notification.success('测试用例生成成功');
-            return response;
-        } else {
-            Notification.error(`测试用例生成失败: ${response.error}`);
-            return null;
+        if (!response.ok) {
+            throw new Error('生成测试用例失败');
         }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || '生成测试用例失败');
+        }
+        
+        // 隐藏处理状态
+        hideProcessingStatus();
+        
+        // 显示成功消息
+        Notification.success('测试用例生成成功');
+        
+        // 跳转到测试用例页面
+        window.location.href = 'test-cases.html';
+        
     } catch (error) {
         console.error('生成测试用例失败:', error);
-        Notification.error('生成测试用例时发生错误');
-        return null;
-    } finally {
-        hideLoading();
+        hideProcessingStatus();
+        Notification.error(error.message);
     }
 }
 
-// 执行测试用例
+// 执行测试
 async function executeTests(fileId) {
     try {
-        showLoading('正在执行测试用例...');
+        showProcessingStatus();
         
-        const response = await fetch(`http://localhost:19028/api/docs/execute-tests/${fileId}`, {
+        const response = await fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.EXECUTE_TESTS) + `/${fileId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             }
-        }).then(res => res.json());
+        });
         
-        if (response.success) {
-            Notification.success('测试用例执行成功');
-            return response;
-        } else {
-            Notification.error(`测试用例执行失败: ${response.error}`);
-            return null;
+        if (!response.ok) {
+            throw new Error('执行测试失败');
         }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || '执行测试失败');
+        }
+        
+        // 隐藏处理状态
+        hideProcessingStatus();
+        
+        // 显示成功消息
+        Notification.success('测试执行成功');
+        
+        // 跳转到测试结果页面
+        window.location.href = 'test-results.html';
+        
     } catch (error) {
-        console.error('执行测试用例失败:', error);
-        Notification.error('执行测试用例时发生错误');
-        return null;
-    } finally {
-        hideLoading();
+        console.error('执行测试失败:', error);
+        hideProcessingStatus();
+        Notification.error(error.message);
     }
 }
 
-// 分析测试结果
-async function analyzeTestResults(fileId) {
+// 分析结果
+async function analyzeResults(fileId) {
     try {
-        showLoading('正在分析测试结果...');
+        showProcessingStatus();
         
-        const response = await fetch(`http://localhost:19028/api/docs/analyze-results/${fileId}`, {
+        const response = await fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.ANALYZE_RESULTS) + `/${fileId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             }
-        }).then(res => res.json());
+        });
         
-        if (response.success) {
-            Notification.success('测试结果分析成功');
-            return response;
-        } else {
-            Notification.error(`测试结果分析失败: ${response.error}`);
-            return null;
+        if (!response.ok) {
+            throw new Error('分析结果失败');
         }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || '分析结果失败');
+        }
+        
+        // 隐藏处理状态
+        hideProcessingStatus();
+        
+        // 显示成功消息
+        Notification.success('结果分析成功');
+        
+        // 跳转到分析结果页面
+        window.location.href = 'analysis-results.html';
+        
+    } catch (error) {
+        console.error('分析结果失败:', error);
+        hideProcessingStatus();
+        Notification.error(error.message);
+    }
+}
+
+// 执行测试结果
+async function analyzeTestResults(fileId) {
+    try {
+        showProcessingStatus();
+        
+        const response = await fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.ANALYZE_RESULTS) + `/${fileId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('分析测试结果失败');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || '分析测试结果失败');
+        }
+        
+        // 隐藏处理状态
+        hideProcessingStatus();
+        
+        // 显示成功消息
+        Notification.success('测试结果分析成功');
+        
+        // 跳转到分析结果页面
+        window.location.href = 'analysis-results.html';
+        
     } catch (error) {
         console.error('分析测试结果失败:', error);
-        Notification.error('分析测试结果时发生错误');
-        return null;
-    } finally {
-        hideLoading();
+        hideProcessingStatus();
+        Notification.error(error.message);
     }
 }
 
 // 执行完整工作流程
 async function executeFullWorkflow(fileId) {
     try {
-        showLoading('正在执行完整测试工作流程...');
+        showProcessingStatus();
         
-        const response = await fetch(`http://localhost:19028/api/docs/full-workflow/${fileId}`, {
+        const response = await fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.FULL_WORKFLOW) + `/${fileId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             }
-        }).then(res => res.json());
+        });
         
-        if (response.success) {
-            Notification.success('完整测试工作流程执行成功');
-            return response;
-        } else {
-            Notification.error(`完整测试工作流程执行失败: ${response.error}`);
-            return null;
+        if (!response.ok) {
+            throw new Error('执行完整工作流程失败');
         }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || '执行完整工作流程失败');
+        }
+        
+        // 隐藏处理状态
+        hideProcessingStatus();
+        
+        // 显示成功消息
+        Notification.success('完整工作流程执行成功');
+        
+        // 跳转到测试结果页面
+        window.location.href = 'test-results.html';
+        
     } catch (error) {
         console.error('执行完整工作流程失败:', error);
-        Notification.error('执行完整工作流程时发生错误');
-        return null;
-    } finally {
-        hideLoading();
+        hideProcessingStatus();
+        Notification.error(error.message);
     }
 }
 
 // 查看文件详情
 function viewFileDetails(fileId) {
-    // 跳转到智能测试生成页面（原API文档页面已迁移）
-    window.location.href = `smart-test-generation.html?fileId=${fileId}`;
+    // 跳转到测试中心页面
+    window.location.href = `test-center.html?fileId=${fileId}`;
 }
 
 // 添加测试按钮到文件列表
@@ -742,7 +816,7 @@ function deleteFile(fileId) {
         return;
     }
     
-    fetch(`http://localhost:19028/api/docs/delete/${fileId}`, {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.DELETE) + `/${fileId}`, {
         method: 'DELETE'
     })
     .then(response => {
@@ -770,7 +844,7 @@ function deleteFile(fileId) {
 
 // 加载已上传的文件列表
 function loadUploadedFiles() {
-    fetch(`http://localhost:19028/api/docs/uploaded-list`, {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.UPLOADED_LIST), {
         method: 'GET'
     })
     .then(response => {
@@ -915,6 +989,12 @@ function handleUrlInput(url) {
         return;
     }
     
+    // 检查是否是飞书开放平台文档URL
+    if (url.includes('open.feishu.cn/document/')) {
+        handleFeishuUrl(url);
+        return;
+    }
+    
     // 显示处理状态
     showProcessingStatus();
     
@@ -935,7 +1015,36 @@ function handleUrlInput(url) {
         if (!response.ok) {
             throw new Error(`获取文档失败: ${response.status} ${response.statusText}`);
         }
-        return response.text();
+        
+        // 检查Content-Type，如果是JSON或YAML，直接处理
+        const contentType = response.headers.get('Content-Type') || '';
+        if (contentType.includes('application/json') || 
+            contentType.includes('application/yaml') || 
+            contentType.includes('application/x-yaml') ||
+            contentType.includes('text/yaml') ||
+            contentType.includes('text/x-yaml')) {
+            // 如果是直接指向OpenAPI文档的URL，直接返回文本内容
+            return response.text();
+        } else {
+            // 如果是HTML页面，尝试从中提取OpenAPI文档
+            return response.text().then(html => {
+                // 尝试从HTML中提取JSON或YAML内容
+                const jsonMatch = html.match(/<script[^>]*type=["']application\/json["'][^>]*>([\s\S]*?)<\/script>/i);
+                if (jsonMatch) {
+                    return jsonMatch[1];
+                }
+                
+                const yamlMatch = html.match(/<pre[^>]*class=["']language-yaml["'][^>]*>([\s\S]*?)<\/pre>/i) ||
+                                 html.match(/<code[^>]*class=["']language-yaml["'][^>]*>([\s\S]*?)<\/code>/i);
+                if (yamlMatch) {
+                    return yamlMatch[1];
+                }
+                
+                // 如果没有找到嵌入的OpenAPI文档，返回整个HTML文本
+                // 让后续解析逻辑处理
+                return html;
+            });
+        }
     })
     .then(textContent => {
         // 尝试解析为JSON或YAML
@@ -1000,6 +1109,124 @@ function handleUrlInput(url) {
     })
     .catch(error => {
         console.error('从URL获取文档失败:', error);
+        hideProcessingStatus();
+        
+        // 显示错误信息
+        if (urlFetchResult) {
+            urlFetchResult.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ${error.message}
+                </div>
+            `;
+        }
+        
+        Notification.error(error.message);
+    });
+}
+
+// 新增：处理飞书开放平台文档URL
+function handleFeishuUrl(url) {
+    console.log('处理飞书开放平台文档URL:', url);
+    
+    // 显示处理状态
+    showProcessingStatus();
+    
+    // 显示URL获取结果
+    const urlFetchResult = document.getElementById('urlFetchResult');
+    if (urlFetchResult) {
+        urlFetchResult.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-spinner fa-spin me-2"></i>
+                正在获取飞书开放平台API文档...
+            </div>
+        `;
+    }
+    
+    // 调用后端API处理飞书URL
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.FETCH_FEISHU), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url: url })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`获取飞书文档失败: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('飞书文档获取成功:', data);
+        
+        if (!data.success) {
+            throw new Error(data.message || '获取飞书文档失败');
+        }
+        
+        // 直接使用后端返回的OpenAPI格式数据
+        const apiDoc = data.openapi_data || data.apiDoc;
+        
+        // 验证OpenAPI版本
+        if (!apiDoc.openapi || !apiDoc.openapi.startsWith('3.0.')) {
+            throw new Error('后端返回的不是有效的OpenAPI 3.0.x格式文档');
+        }
+        
+        // 保存解析结果
+        parsedApiData = apiDoc;
+        
+        // 隐藏处理状态
+        hideProcessingStatus();
+        
+        // 显示解析结果
+        showParseResults(apiDoc);
+        
+        // 处理关联关系数据
+        if (data.relation_data && data.relation_data.relation_info) {
+            console.log('接口关联关系生成成功:', data.relation_data);
+            // 可以在这里添加处理关联关系的UI逻辑
+            Notification.success('接口关联关系生成成功');
+        }
+        
+        // 处理业务场景数据
+        if (data.scene_data && data.scene_data.business_scenes) {
+            console.log('业务场景生成成功:', data.scene_data);
+            // 可以在这里添加处理业务场景的UI逻辑
+            Notification.success('业务场景生成成功');
+        }
+        
+        // 通知成功
+        Notification.success('成功获取并解析飞书开放平台API文档');
+        
+        // 显示URL获取结果
+        if (urlFetchResult) {
+            let resultMessage = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    成功获取并解析飞书开放平台API文档：${apiDoc.info?.title || '未知API'}
+            `;
+            
+            // 添加关联关系和业务场景的生成状态
+            if (data.relation_data && data.relation_data.relation_info) {
+                resultMessage += `<br><small class="text-success">✓ 接口关联关系已生成</small>`;
+            }
+            
+            if (data.scene_data && data.scene_data.business_scenes) {
+                resultMessage += `<br><small class="text-success">✓ 业务场景已生成</small>`;
+            }
+            
+            resultMessage += '</div>';
+            
+            urlFetchResult.innerHTML = resultMessage;
+            
+            // 5秒后清除提示
+            setTimeout(() => {
+                urlFetchResult.innerHTML = '';
+            }, 5000);
+        }
+    })
+    .catch(error => {
+        console.error('从飞书URL获取文档失败:', error);
         hideProcessingStatus();
         
         // 显示错误信息

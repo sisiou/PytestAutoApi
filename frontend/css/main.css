@@ -117,6 +117,52 @@ body {
     transition: width 1s ease;
 }
 
+/* 上传进度样式 */
+.upload-progress {
+    display: none;
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius);
+    border: 1px solid #e9ecef;
+}
+
+.upload-progress .d-flex {
+    margin-bottom: 0.5rem;
+}
+
+.upload-progress .progress {
+    height: 1rem;
+    background-color: #e9ecef;
+}
+
+.upload-progress .progress-bar {
+    background-color: var(--primary-color);
+}
+
+/* 飞书URL进度条样式 */
+#feishuUploadProgress {
+    display: none;
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius);
+    border: 1px solid #e9ecef;
+}
+
+#feishuUploadProgress .d-flex {
+    margin-bottom: 0.5rem;
+}
+
+#feishuUploadProgress .progress {
+    height: 1rem;
+    background-color: #e9ecef;
+}
+
+#feishuUploadProgress .progress-bar {
+    background-color: var(--primary-color);
+}
+
 /* 徽章样式 */
 .badge {
     font-weight: 500;

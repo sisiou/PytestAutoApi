@@ -1,0 +1,22 @@
+# 本地配置文件模板
+# 复制此文件为 config_local.yaml 并填入实际配置值
+
+# AI配置
+ai_config:
+  # 硅基流动API配置
+  model_name: "Qwen/Qwen2.5-7B-Instruct"
+  api_key: "your_siliconflow_api_key_here"  # 替换为您的实际API密钥
+  temperature: 0.7
+  max_tokens: 8192
+  base_url: "https://api.siliconflow.cn/v1"
+
+# 数据库配置
+database:
+  host: "localhost"
+  port: 3306
+  username: "your_db_username"
+  password: "your_db_password"
+  database_name: "your_db_name"
+
+# 其他配置...
+# 根据需要添加其他配置项

@@ -45,6 +45,28 @@ class APIEndpoint:
             self.response_codes = []
         if self.security is None:
             self.security = []
+    
+    def get(self, key, default=None):
+        """实现字典式访问，兼容现有代码"""
+        return getattr(self, key, default)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'path': self.path,
+            'method': self.method,
+            'summary': self.summary,
+            'description': self.description,
+            'operation_id': self.operation_id,
+            'tags': self.tags,
+            'host': self.host,
+            'base_path': self.base_path,
+            'parameters': self.parameters,
+            'request_body': self.request_body,
+            'response_codes': self.response_codes,
+            'success_response': self.success_response,
+            'security': self.security
+        }
 
 
 class APIParser:
@@ -460,7 +482,7 @@ class APIParserFactory:
             
             # 检查是否为飞书开放平台API文档
             if 'open.feishu.cn' in parsed_url.netloc and 'document' in parsed_url.path:
-                from .dynamic_feishu_parser import DynamicFeishuParser
+                from utils.smart_auto.dynamic_feishu_parser import DynamicFeishuParser
                 return DynamicFeishuParser(api_doc_path)
             else:
                 # 其他URL类型，默认使用OpenAPI解析器

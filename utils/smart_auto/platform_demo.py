@@ -49,7 +49,7 @@ def create_sample_api_docs() -> Dict[str, Any]:
             "description": "电商平台API文档"
         },
         "servers": [
-            {"url": "https://api.example.com/v1", "description": "生产环境"}
+            {"url": "https://open.feishu.cn/document/server-docs/im-v1/message/create", "description": "生产环境"}
         ],
         "paths": {
             "/api/auth/register": {

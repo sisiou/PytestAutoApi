@@ -3,9 +3,12 @@ import json
 import yaml
 import hashlib
 import re
+import time
 from openai import OpenAI
 from dotenv import load_dotenv
 from typing import List, Dict, Optional
+from feishu_parse import download_json, transform_feishu_url
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # 加载环境变量
 load_dotenv()
@@ -297,6 +300,141 @@ def generate_business_scene_file(json_paths, output_scene_path):
 
     print(f"业务场景文件已生成：{output_scene_path}")
     return scene_json
+
+
+def process_url_with_ai(url, output_dir=None):
+    """
+    处理URL并生成OpenAPI、关联关系和业务场景文件
+    返回JSON格式的结果，便于通过API调用
+    
+    Args:
+        url: 要处理的URL
+        output_dir: 输出目录，如果为None则使用默认目录
+        
+    Returns:
+        dict: 包含生成的文件内容和元数据的字典
+    """
+    try:
+        import hashlib
+        
+        # 设置默认输出目录
+        if output_dir is None:
+            output_dir = os.path.join(os.path.dirname(__file__), '../../openApi')
+        
+        # 创建临时目录存储下载的JSON文件
+        temp_dir = os.path.join(output_dir, 'temp')
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # 转换飞书URL为API格式
+        api_url, path = transform_feishu_url(url)
+        
+        # 生成URL的哈希值作为UUID
+        url_hash = hashlib.md5(url.encode()).hexdigest()
+        
+        # 创建三种类型文档的子目录
+        openapi_dir = os.path.join(output_dir, 'openapi')
+        relation_dir = os.path.join(output_dir, 'relation')
+        scene_dir = os.path.join(output_dir, 'scene')
+        
+        os.makedirs(openapi_dir, exist_ok=True)
+        os.makedirs(relation_dir, exist_ok=True)
+        os.makedirs(scene_dir, exist_ok=True)
+        
+        # 生成临时文件名
+        temp_filename = f"ai_parse_{int(time.time())}.json"
+        temp_filepath = os.path.join(temp_dir, temp_filename)
+        
+        # 下载JSON文件
+        download_json(api_url, temp_filepath)
+        
+        # 检查文件是否存在
+        if not os.path.exists(temp_filepath):
+            raise Exception(f"无法下载或解析URL内容: {url}")
+        
+        # 使用ai.py中的函数生成文件
+        json_paths = [temp_filepath]
+        
+        # 定义输出路径，使用URL哈希作为文件名的一部分
+        openapi_output_path = os.path.join(openapi_dir, f"openapi_{url_hash}.yaml")
+        relation_output_path = os.path.join(relation_dir, f"relation_{url_hash}.json")
+        scene_output_path = os.path.join(scene_dir, f"scene_{url_hash}.json")
+        
+        # 检查文件是否已存在，如果存在则直接读取
+        openapi_exists = os.path.exists(openapi_output_path)
+        relation_exists = os.path.exists(relation_output_path)
+        scene_exists = os.path.exists(scene_output_path)
+        
+        # 并行生成三个文件
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            # 提交三个任务
+            futures = {}
+            
+            # 生成OpenAPI YAML文件
+            if not openapi_exists:
+                futures['openapi'] = executor.submit(generate_openapi_yaml, json_paths, openapi_output_path)
+            else:
+                # 如果文件已存在，不需要执行任何操作
+                futures['openapi'] = None
+            
+            # 生成接口关联关系文件
+            if not relation_exists:
+                futures['relation'] = executor.submit(generate_api_relation_file, json_paths, relation_output_path)
+            else:
+                # 如果文件已存在，不需要执行任何操作
+                futures['relation'] = None
+            
+            # 生成业务场景文件
+            if not scene_exists:
+                futures['scene'] = executor.submit(generate_business_scene_file, json_paths, scene_output_path)
+            else:
+                # 如果文件已存在，不需要执行任何操作
+                futures['scene'] = None
+            
+            # 等待所有任务完成
+            for key, future in futures.items():
+                if future is not None:  # 只处理非None的Future对象
+                    try:
+                        future.result()
+                    except Exception as e:
+                        raise e
+        
+        # 读取生成的文件内容
+        # 读取YAML文件并转换为JSON
+        with open(openapi_output_path, 'r', encoding='utf-8') as f:
+            openapi_data = yaml.safe_load(f)
+        
+        # 读取关联关系文件
+        with open(relation_output_path, 'r', encoding='utf-8') as f:
+            relation_json = json.load(f)
+        
+        # 读取业务场景文件
+        with open(scene_output_path, 'r', encoding='utf-8') as f:
+            scene_json = json.load(f)
+        
+        # 返回生成的文件内容
+        result = {
+            'success': True,
+            'url': url,
+            'url_hash': url_hash,
+            'openapi_data': openapi_data,
+            'relation_data': relation_json,
+            'scene_data': scene_json,
+            'openapi_file': openapi_output_path,
+            'relation_file': relation_output_path,
+            'scene_file': scene_output_path,
+            'message': 'AI解析成功'
+        }
+        
+        return result
+        
+    except Exception as e:
+        error_result = {
+            'success': False,
+            'error': str(e),
+            'message': 'AI解析失败'
+        }
+        return error_result
+
 
 
 # ==================== 主执行逻辑 ====================

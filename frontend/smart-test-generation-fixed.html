@@ -233,7 +233,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="smart-test-generation.html">
+                        <a class="nav-link active" href="test-center.html">
                             <i class="fas fa-magic me-1"></i>智能测试生成
                         </a>
                     </li>
@@ -349,11 +349,11 @@
                             <div class="file-list" id="fileList"></div>
                         </div>
                         
-                        <!-- URL导入标签页 -->
+                        <!-- 飞书URL导入标签页 -->
                         <div class="tab-pane fade" id="url" role="tabpanel">
                             <div class="mb-3">
                                 <label for="apiUrl" class="form-label">API文档URL</label>
-                                <input type="url" class="form-control" id="apiUrl" placeholder="https://api.example.com/openapi.json">
+                                <input type="url" class="form-control" id="apiUrl" placeholder="https://open.feishu.cn/document/server-docs/im-v1/message/create">
                             </div>
                             <button class="btn btn-primary" id="fetchUrlBtn">获取文档</button>
                             <div class="mt-3" id="urlResult"></div>
@@ -431,7 +431,7 @@
             
             document.getElementById('fileInput').addEventListener('change', handleFileSelect);
             
-            // URL导入相关
+            // 飞书URL导入相关
             document.getElementById('fetchUrlBtn').addEventListener('click', fetchApiFromUrl);
             
             // 文本输入相关
@@ -737,8 +737,91 @@
         }
 
         // 从URL获取API文档
-        function fetchApiFromUrl() {
-            showAlert('URL导入功能开发中...', 'info');
+        async function fetchApiFromUrl() {
+            const urlInput = document.getElementById('apiUrl');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showAlert('请输入飞书文档URL', 'warning');
+                return;
+            }
+            
+            // 检查URL格式
+            if (!url.includes('open.feishu.cn/document/')) {
+                showAlert('请输入有效的飞书文档URL', 'warning');
+                return;
+            }
+            
+            // 显示进度
+            showUploadProgress();
+            
+            try {
+                // 创建AbortController用于超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    controller.abort();
+                    showAlert('请求超时，请稍后重试', 'danger');
+                    hideUploadProgress();
+                }, 60000); // 60秒超时
+                
+                // 发送请求到后端API
+                const response = await fetch('http://localhost:5000/api/docs/fetch-feishu', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP错误: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 设置API文档数据
+                    apiDocData = data.openapi_data;
+                    
+                    // 提取API端点
+                    extractApiEndpoints();
+                    
+                    // 显示文件信息
+                    displayFileInfo(`飞书文档: ${data.path}`, '未知大小');
+                    
+                    // 启用分析按钮
+                    document.getElementById('analyzeBtn').disabled = false;
+                    
+                    // 显示成功消息
+                    showAlert(`成功获取飞书文档，共${apiEndpoints.length}个API端点`, 'success');
+                    
+                    // 如果有关系数据和场景数据，也保存起来
+                    if (data.relation_data) {
+                        // 这里可以处理关系数据
+                        console.log('获取到关系数据:', data.relation_data);
+                    }
+                    
+                    if (data.scene_data) {
+                        // 这里可以处理场景数据
+                        console.log('获取到场景数据:', data.scene_data);
+                    }
+                } else {
+                    throw new Error(data.message || '获取文档失败');
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    showAlert('请求已取消', 'warning');
+                } else {
+                    showAlert(`获取文档失败: ${error.message}`, 'danger');
+                }
+                console.error('获取文档错误:', error);
+            } finally {
+                hideUploadProgress();
+            }
         }
 
         // 解析API文本

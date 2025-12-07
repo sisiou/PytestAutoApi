@@ -8,7 +8,10 @@ import json
 import logging
 from typing import Dict, List, Any, Optional
 import requests
-from utils.smart_auto.ai_client import AIClient
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'parse'))
+from ai_parser import AIClient
 
 # 设置日志
 logging.basicConfig(level=logging.INFO)

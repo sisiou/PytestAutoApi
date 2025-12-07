@@ -17,7 +17,7 @@ from langchain_core.prompts import MessagesPlaceholder
 from .openapi_parser_tool import create_openapi_tools
 from .test_case_generator_tool import create_test_generator_tools
 from .test_executor_tool import create_test_executor_tools
-from .feishu_to_openapi import create_feishu_to_openapi_tool
+from utils.parse.feishu_to_openapi import create_feishu_to_openapi_tool
 
 
 @dataclass

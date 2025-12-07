@@ -27,7 +27,7 @@ from utils.smart_auto.api_agent_integration import (
     create_openapi_agent,
     test_api_from_openapi
 )
-from utils.smart_auto.openapi_parser_tool import ParsedAPIInfo
+from utils.smart_auto.api_parser import ParsedAPIInfo
 from utils.smart_auto.test_case_generator_tool import GeneratedTestSuite
 from utils.smart_auto.test_executor_tool import TestSuiteExecutionResult, TestAnalysisResult
 

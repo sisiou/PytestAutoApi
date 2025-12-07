@@ -60,11 +60,11 @@ function bindEventListeners() {
     });
     
     // 视图模式切换
-    document.getElementById('listView').addEventListener('change', function() {
+    document.getElementById('listViewBtn').addEventListener('click', function() {
         switchViewMode('list');
     });
     
-    document.getElementById('gridView').addEventListener('change', function() {
+    document.getElementById('gridViewBtn').addEventListener('click', function() {
         switchViewMode('grid');
     });
     
@@ -86,22 +86,45 @@ function bindEventListeners() {
 
 // 初始化视图模式
 function initViewMode() {
-    const listView = document.getElementById('listView');
-    const gridView = document.getElementById('gridView');
+    const listViewBtn = document.getElementById('listViewBtn');
+    const gridViewBtn = document.getElementById('gridViewBtn');
     
     // 默认使用列表视图
-    listView.checked = true;
+    // 添加btn-primary类到列表视图按钮，移除btn-outline-primary类
+    listViewBtn.classList.remove('btn-outline-primary');
+    listViewBtn.classList.add('btn-primary');
+    
+    // 添加btn-outline-primary类到网格视图按钮，移除btn-primary类
+    gridViewBtn.classList.remove('btn-primary');
+    gridViewBtn.classList.add('btn-outline-primary');
+    
     switchViewMode('list');
 }
 
 // 切换视图模式
 function switchViewMode(mode) {
     const testCasesList = document.getElementById('testCasesList');
+    const listViewBtn = document.getElementById('listViewBtn');
+    const gridViewBtn = document.getElementById('gridViewBtn');
     
     if (mode === 'grid') {
+        // 更新按钮状态
+        listViewBtn.classList.remove('btn-primary');
+        listViewBtn.classList.add('btn-outline-primary');
+        gridViewBtn.classList.remove('btn-outline-primary');
+        gridViewBtn.classList.add('btn-primary');
+        
+        // 更新视图
         testCasesList.classList.add('test-case-grid');
         renderTestCasesGrid();
     } else {
+        // 更新按钮状态
+        gridViewBtn.classList.remove('btn-primary');
+        gridViewBtn.classList.add('btn-outline-primary');
+        listViewBtn.classList.remove('btn-outline-primary');
+        listViewBtn.classList.add('btn-primary');
+        
+        // 更新视图
         testCasesList.classList.remove('test-case-grid');
         renderTestCasesList();
     }
@@ -112,7 +135,7 @@ function loadTestCases() {
     showLoadingState();
     
     // 从后端API获取测试用例列表
-    fetch('http://localhost:19028/api/test-cases', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.TEST_CASES.LIST), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -134,8 +157,10 @@ function loadTestCases() {
         updateStatistics(window.currentTestCases);
         
         // 根据当前视图模式渲染测试用例
-        const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
-        if (viewMode === 'grid') {
+        const listViewBtn = document.getElementById('listViewBtn');
+        const isListView = listViewBtn.classList.contains('btn-primary');
+        
+        if (!isListView) {
             renderTestCasesGrid();
         } else {
             renderTestCasesList();
@@ -143,7 +168,7 @@ function loadTestCases() {
     })
     .catch(error => {
         console.error('加载测试用例失败:', error);
-        showNotification('加载测试用例失败: ' + error.message, 'error');
+        showSmartTestNotification('加载测试用例失败: ' + error.message, 'error');
         
         // 如果加载失败，显示空状态
         window.currentTestCases = [];
@@ -768,8 +793,10 @@ function getFilteredTestCases() {
 
 // 筛选测试用例
 function filterTestCases() {
-    const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
-    if (viewMode === 'grid') {
+    const listViewBtn = document.getElementById('listViewBtn');
+    const isListView = listViewBtn.classList.contains('btn-primary');
+    
+    if (!isListView) {
         renderTestCasesGrid();
     } else {
         renderTestCasesList();
@@ -779,7 +806,7 @@ function filterTestCases() {
 // 显示测试用例详情
 function showTestCaseDetail(testCaseId) {
     // 从后端API获取测试用例详情
-    fetch(`http://localhost:19028/api/test-cases/${testCaseId}`, {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.TEST_CASES.GET) + `/${testCaseId}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -858,7 +885,7 @@ def test_${testName}():
     ${testCase.description}
     """
     # API端点
-    url = "https://api.example.com/${testCase.apiId || testCase.api}"
+    url = "https://open.feishu.cn/open-apis/im/v1/messages"
     
     # 请求头
     headers = {
@@ -868,9 +895,9 @@ def test_${testName}():
     
     # 请求数据
     data = {
-        # 根据实际API需求设置测试数据
-        "param1": "value1",
-        "param2": "value2"
+        "receive_id": "ou_xxx",  # 接收者ID，根据实际情况替换
+        "msg_type": "text",      # 消息类型，如text、post、image等
+        "content": "{\"text\":\"测试消息\"}"  # 消息内容，需要JSON格式字符串
     }
     
     # 发送请求
@@ -881,9 +908,10 @@ def test_${testName}():
     
     # 验证响应数据
     response_data = response.json()
-    assert "result" in response_data
+    assert response_data.get("code") == 0  # 飞书API成功返回码为0
     
     # 更多断言...
+    assert "data" in response_data
     
     print("测试通过: ${testCase.name}")`;
         
@@ -951,7 +979,7 @@ def test_${testName}():
     })
     .catch(error => {
         console.error('获取测试用例详情失败:', error);
-        showNotification('获取测试用例详情失败: ' + error.message, 'error');
+        showSmartTestNotification('获取测试用例详情失败: ' + error.message, 'error');
     });
 }
 
@@ -964,7 +992,7 @@ function hideTestCaseDetailModal() {
 // 编辑测试用例
 function editTestCase(testCaseId) {
     // 这里可以实现编辑测试用例的逻辑
-    showNotification('编辑功能正在开发中', 'info');
+    showSmartTestNotification('编辑功能正在开发中', 'info');
 }
 
 // 删除测试用例
@@ -974,8 +1002,8 @@ function deleteTestCase(testCaseId) {
         window.currentTestCases = window.currentTestCases.filter(tc => tc.id != testCaseId);
         
         // 重新渲染列表
-        const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
-        if (viewMode === 'grid') {
+        const isListView = document.getElementById('listViewBtn').classList.contains('btn-primary');
+        if (!isListView) {
             renderTestCasesGrid();
         } else {
             renderTestCasesList();
@@ -984,7 +1012,7 @@ function deleteTestCase(testCaseId) {
         // 更新统计数据
         updateStatistics(window.currentTestCases);
         
-        showNotification('测试用例已删除', 'success');
+        showSmartTestNotification('测试用例已删除', 'success');
     }
 }
 
@@ -1018,7 +1046,7 @@ function showRunModal(testCaseId) {
     };
     
     // 发送运行请求
-    fetch('http://localhost:19028/api/test-cases/run', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.TEST_CASES.RUN), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1054,8 +1082,8 @@ function showRunModal(testCaseId) {
         
         // 刷新界面
         updateStatistics(window.currentTestCases);
-        const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
-        if (viewMode === 'grid') {
+        const isListView = document.getElementById('listViewBtn').classList.contains('btn-primary');
+        if (!isListView) {
             renderTestCasesGrid();
         } else {
             renderTestCasesList();
@@ -1064,7 +1092,7 @@ function showRunModal(testCaseId) {
     .catch(error => {
         console.error('运行测试失败:', error);
         runStatus.textContent = '运行测试失败: ' + error.message;
-        showNotification('运行测试失败: ' + error.message, 'error');
+        showSmartTestNotification('运行测试失败: ' + error.message, 'error');
     });
 }
 
@@ -1089,7 +1117,7 @@ function generateTestCases() {
     const exceptionCheck = document.getElementById('exceptionCheck');
     
     if (!apiDocSelect.value) {
-        showNotification('请选择接口文档', 'warning');
+        showSmartTestNotification('请选择接口文档', 'warning');
         return;
     }
     
@@ -1100,7 +1128,7 @@ function generateTestCases() {
     if (exceptionCheck.checked) selectedTypes.push('exception');
     
     if (selectedTypes.length === 0) {
-        showNotification('请至少选择一种测试用例类型', 'warning');
+        showSmartTestNotification('请至少选择一种测试用例类型', 'warning');
         return;
     }
     
@@ -1112,7 +1140,7 @@ function generateTestCases() {
     showLoadingState();
     
     // 调用后端API生成测试用例
-    fetch('http://localhost:19028/api/test-cases/generate', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.TEST_CASES.GENERATE), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1137,21 +1165,21 @@ function generateTestCases() {
             
             // 更新统计和渲染
             updateStatistics(window.currentTestCases);
-            const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
-            if (viewMode === 'grid') {
+            const isListView = document.getElementById('listViewBtn').classList.contains('btn-primary');
+            if (!isListView) {
                 renderTestCasesGrid();
             } else {
                 renderTestCasesList();
             }
             
-            showNotification(`成功生成 ${data.test_cases.length} 个测试用例`, 'success');
+            showSmartTestNotification(`成功生成 ${data.test_cases.length} 个测试用例`, 'success');
         } else {
-            showNotification('未生成任何测试用例', 'warning');
+            showSmartTestNotification('未生成任何测试用例', 'warning');
         }
     })
     .catch(error => {
         console.error('生成测试用例失败:', error);
-        showNotification('生成测试用例失败: ' + error.message, 'error');
+        showSmartTestNotification('生成测试用例失败: ' + error.message, 'error');
     })
     .finally(() => {
         hideLoadingState();
@@ -1239,7 +1267,7 @@ function loadAPIDocList() {
     apiDocSelect.innerHTML = '<option value="">请选择接口文档</option>';
     
     // 从后端API获取API文档列表
-    fetch('http://localhost:19028/api/docs/list', {
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.LIST), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -1282,7 +1310,7 @@ function loadAPIDocList() {
         option.disabled = true;
         apiDocSelect.appendChild(option);
         
-        showNotification('加载接口文档列表失败: ' + error.message, 'error');
+        showSmartTestNotification('加载接口文档列表失败: ' + error.message, 'error');
     });
 }
 
