@@ -1,0 +1,2035 @@
+{
+  "report_id": "report_1763701395",
+  "report_name": "智能自动化平台演示报告",
+  "generated_time": "2025-11-21T13:03:15.256315",
+  "environment_info": {
+    "platform": "智能自动化平台",
+    "version": "1.0.0",
+    "python_version": "3.8.10"
+  },
+  "summary": {
+    "total_suites": 19,
+    "total_tests": 33,
+    "passed_tests": 25,
+    "failed_tests": 8,
+    "skipped_tests": 0,
+    "error_tests": 0,
+    "pass_rate": 75.75757575757575,
+    "total_duration": 3.3026240000000002
+  },
+  "test_suites": [
+    {
+      "suite_name": "用户注册测试",
+      "total_tests": 1,
+      "passed_tests": 0,
+      "failed_tests": 1,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 0.0,
+      "total_duration": 0.100063,
+      "start_time": "2025-11-21T13:03:15.256324",
+      "end_time": "2025-11-21T13:03:15.356387",
+      "test_results": [
+        {
+          "test_id": "basic_POST__api_auth_register",
+          "test_name": "测试用户注册",
+          "test_case_id": "basic_POST__api_auth_register",
+          "status": "failed",
+          "duration": 0.100063,
+          "start_time": "2025-11-21T13:03:15.256324",
+          "end_time": "2025-11-21T13:03:15.356387",
+          "error_message": "模拟的断言失败",
+          "priority": "medium",
+          "tags": [],
+          "request_data": {},
+          "response_data": {
+            "status": "error"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "用户登录测试",
+      "total_tests": 1,
+      "passed_tests": 1,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.100073,
+      "start_time": "2025-11-21T13:03:15.356460",
+      "end_time": "2025-11-21T13:03:15.456533",
+      "test_results": [
+        {
+          "test_id": "basic_POST__api_auth_login",
+          "test_name": "测试用户登录",
+          "test_case_id": "basic_POST__api_auth_login",
+          "status": "passed",
+          "duration": 0.100073,
+          "start_time": "2025-11-21T13:03:15.356460",
+          "end_time": "2025-11-21T13:03:15.456533",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {},
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.token', type='is_not_null', value=None, AssertType='business', description='检查登录响应是否包含token')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.user_id', type='is_not_null', value=None, AssertType='business', description='检查登录响应是否包含用户ID')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "获取用户信息测试",
+      "total_tests": 1,
+      "passed_tests": 1,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.10007,
+      "start_time": "2025-11-21T13:03:15.456608",
+      "end_time": "2025-11-21T13:03:15.556678",
+      "test_results": [
+        {
+          "test_id": "basic_GET__api_user_profile",
+          "test_name": "测试获取用户信息",
+          "test_case_id": "basic_GET__api_user_profile",
+          "status": "passed",
+          "duration": 0.10007,
+          "start_time": "2025-11-21T13:03:15.456608",
+          "end_time": "2025-11-21T13:03:15.556678",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {},
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查用户信息是否包含ID')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.username', type='is_not_null', value=None, AssertType='business', description='检查用户信息是否包含用户名')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "获取商品列表测试",
+      "total_tests": 1,
+      "passed_tests": 1,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.100071,
+      "start_time": "2025-11-21T13:03:15.556724",
+      "end_time": "2025-11-21T13:03:15.656795",
+      "test_results": [
+        {
+          "test_id": "basic_GET__api_products",
+          "test_name": "测试获取商品列表",
+          "test_case_id": "basic_GET__api_products",
+          "status": "passed",
+          "duration": 0.100071,
+          "start_time": "2025-11-21T13:03:15.556724",
+          "end_time": "2025-11-21T13:03:15.656795",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "params": {
+              "page": "1TqB6ZsNWp",
+              "limit": "NzR0kAXrMB",
+              "category": "GEXXysnABE"
+            }
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "获取商品详情测试",
+      "total_tests": 1,
+      "passed_tests": 1,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.100071,
+      "start_time": "2025-11-21T13:03:15.656846",
+      "end_time": "2025-11-21T13:03:15.756917",
+      "test_results": [
+        {
+          "test_id": "basic_GET__api_products__product_id_",
+          "test_name": "测试获取商品详情",
+          "test_case_id": "basic_GET__api_products__product_id_",
+          "status": "passed",
+          "duration": 0.100071,
+          "start_time": "2025-11-21T13:03:15.656846",
+          "end_time": "2025-11-21T13:03:15.756917",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "path_params": {
+              "product_id": "Pu6GuYE4cM"
+            }
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "添加商品到购物车测试",
+      "total_tests": 1,
+      "passed_tests": 1,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.100069,
+      "start_time": "2025-11-21T13:03:15.756959",
+      "end_time": "2025-11-21T13:03:15.857028",
+      "test_results": [
+        {
+          "test_id": "basic_POST__api_cart",
+          "test_name": "测试添加商品到购物车",
+          "test_case_id": "basic_POST__api_cart",
+          "status": "passed",
+          "duration": 0.100069,
+          "start_time": "2025-11-21T13:03:15.756959",
+          "end_time": "2025-11-21T13:03:15.857028",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {},
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "创建订单测试",
+      "total_tests": 1,
+      "passed_tests": 1,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.100066,
+      "start_time": "2025-11-21T13:03:15.857086",
+      "end_time": "2025-11-21T13:03:15.957152",
+      "test_results": [
+        {
+          "test_id": "basic_POST__api_orders",
+          "test_name": "测试创建订单",
+          "test_case_id": "basic_POST__api_orders",
+          "status": "passed",
+          "duration": 0.100066,
+          "start_time": "2025-11-21T13:03:15.857086",
+          "end_time": "2025-11-21T13:03:15.957152",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {},
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "取消订单测试",
+      "total_tests": 1,
+      "passed_tests": 1,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.100072,
+      "start_time": "2025-11-21T13:03:15.957190",
+      "end_time": "2025-11-21T13:03:16.057262",
+      "test_results": [
+        {
+          "test_id": "basic_POST__api_orders__order_id__cancel",
+          "test_name": "测试取消订单",
+          "test_case_id": "basic_POST__api_orders__order_id__cancel",
+          "status": "passed",
+          "duration": 0.100072,
+          "start_time": "2025-11-21T13:03:15.957190",
+          "end_time": "2025-11-21T13:03:16.057262",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "path_params": {
+              "order_id": "Zel369TcvD"
+            }
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "标签流程_认证",
+      "total_tests": 2,
+      "passed_tests": 2,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.200139,
+      "start_time": "2025-11-21T13:03:16.057307",
+      "end_time": "2025-11-21T13:03:16.257483",
+      "test_results": [
+        {
+          "test_id": "scenario_flow_1_POST__api_auth_register",
+          "test_name": "测试用户注册",
+          "test_case_id": "scenario_flow_1_POST__api_auth_register",
+          "status": "passed",
+          "duration": 0.100066,
+          "start_time": "2025-11-21T13:03:16.057307",
+          "end_time": "2025-11-21T13:03:16.157373",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {},
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "test_id": "scenario_flow_1_POST__api_auth_login",
+          "test_name": "测试用户登录",
+          "test_case_id": "scenario_flow_1_POST__api_auth_login",
+          "status": "passed",
+          "duration": 0.100073,
+          "start_time": "2025-11-21T13:03:16.157410",
+          "end_time": "2025-11-21T13:03:16.257483",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {},
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.token', type='is_not_null', value=None, AssertType='business', description='检查登录响应是否包含token')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.user_id', type='is_not_null', value=None, AssertType='business', description='检查登录响应是否包含用户ID')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "标签流程_商品",
+      "total_tests": 2,
+      "passed_tests": 1,
+      "failed_tests": 1,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 50.0,
+      "total_duration": 0.200157,
+      "start_time": "2025-11-21T13:03:16.257591",
+      "end_time": "2025-11-21T13:03:16.457796",
+      "test_results": [
+        {
+          "test_id": "scenario_flow_2_GET__api_products",
+          "test_name": "测试获取商品列表",
+          "test_case_id": "scenario_flow_2_GET__api_products",
+          "status": "passed",
+          "duration": 0.100078,
+          "start_time": "2025-11-21T13:03:16.257591",
+          "end_time": "2025-11-21T13:03:16.357669",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "params": {
+              "page": "ROOshoI48C",
+              "limit": "2YCdAdEjPK",
+              "category": "j9jKjmS2Ap"
+            }
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "test_id": "scenario_flow_2_GET__api_products__product_id_",
+          "test_name": "测试获取商品详情",
+          "test_case_id": "scenario_flow_2_GET__api_products__product_id_",
+          "status": "failed",
+          "duration": 0.100079,
+          "start_time": "2025-11-21T13:03:16.357717",
+          "end_time": "2025-11-21T13:03:16.457796",
+          "error_message": "模拟的断言失败",
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "path_params": {
+              "product_id": "HBkR28djA2"
+            }
+          },
+          "response_data": {
+            "status": "error"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "标签流程_订单",
+      "total_tests": 2,
+      "passed_tests": 2,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.200157,
+      "start_time": "2025-11-21T13:03:16.457881",
+      "end_time": "2025-11-21T13:03:16.658116",
+      "test_results": [
+        {
+          "test_id": "scenario_flow_3_POST__api_orders",
+          "test_name": "测试创建订单",
+          "test_case_id": "scenario_flow_3_POST__api_orders",
+          "status": "passed",
+          "duration": 0.100083,
+          "start_time": "2025-11-21T13:03:16.457881",
+          "end_time": "2025-11-21T13:03:16.557964",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {},
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "test_id": "scenario_flow_3_POST__api_orders__order_id__cancel",
+          "test_name": "测试取消订单",
+          "test_case_id": "scenario_flow_3_POST__api_orders__order_id__cancel",
+          "status": "passed",
+          "duration": 0.100074,
+          "start_time": "2025-11-21T13:03:16.558042",
+          "end_time": "2025-11-21T13:03:16.658116",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "path_params": {
+              "order_id": "HgRAcpSlmV"
+            }
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "用户注册异常测试",
+      "total_tests": 2,
+      "passed_tests": 0,
+      "failed_tests": 2,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 0.0,
+      "total_duration": 0.200141,
+      "start_time": "2025-11-21T13:03:16.658183",
+      "end_time": "2025-11-21T13:03:16.858356",
+      "test_results": [
+        {
+          "test_id": "exception_POST__api_auth_register_1",
+          "test_name": "异常测试用户注册_1",
+          "test_case_id": "exception_POST__api_auth_register_1",
+          "status": "failed",
+          "duration": 0.10007,
+          "start_time": "2025-11-21T13:03:16.658183",
+          "end_time": "2025-11-21T13:03:16.758253",
+          "error_message": "模拟的断言失败",
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "method": "INVALID",
+            "path": "/api/auth/register",
+            "headers": {},
+            "data": {}
+          },
+          "response_data": {
+            "status": "error"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": false
+            }
+          ]
+        },
+        {
+          "test_id": "exception_POST__api_auth_register_2",
+          "test_name": "异常测试用户注册_2",
+          "test_case_id": "exception_POST__api_auth_register_2",
+          "status": "failed",
+          "duration": 0.100071,
+          "start_time": "2025-11-21T13:03:16.758285",
+          "end_time": "2025-11-21T13:03:16.858356",
+          "error_message": "模拟的断言失败",
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "path": "/api/auth/register/invalid"
+          },
+          "response_data": {
+            "status": "error"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "用户登录异常测试",
+      "total_tests": 2,
+      "passed_tests": 1,
+      "failed_tests": 1,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 50.0,
+      "total_duration": 0.20016,
+      "start_time": "2025-11-21T13:03:16.858419",
+      "end_time": "2025-11-21T13:03:17.058638",
+      "test_results": [
+        {
+          "test_id": "exception_POST__api_auth_login_1",
+          "test_name": "异常测试用户登录_1",
+          "test_case_id": "exception_POST__api_auth_login_1",
+          "status": "passed",
+          "duration": 0.10008,
+          "start_time": "2025-11-21T13:03:16.858419",
+          "end_time": "2025-11-21T13:03:16.958499",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "method": "INVALID",
+            "path": "/api/auth/login",
+            "headers": {},
+            "data": {}
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.token', type='is_not_null', value=None, AssertType='business', description='检查登录响应是否包含token')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.user_id', type='is_not_null', value=None, AssertType='business', description='检查登录响应是否包含用户ID')",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "test_id": "exception_POST__api_auth_login_2",
+          "test_name": "异常测试用户登录_2",
+          "test_case_id": "exception_POST__api_auth_login_2",
+          "status": "failed",
+          "duration": 0.10008,
+          "start_time": "2025-11-21T13:03:16.958558",
+          "end_time": "2025-11-21T13:03:17.058638",
+          "error_message": "模拟的断言失败",
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "path": "/api/auth/login/invalid"
+          },
+          "response_data": {
+            "status": "error"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.token', type='is_not_null', value=None, AssertType='business', description='检查登录响应是否包含token')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.user_id', type='is_not_null', value=None, AssertType='business', description='检查登录响应是否包含用户ID')",
+              "passed": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "获取用户信息异常测试",
+      "total_tests": 2,
+      "passed_tests": 2,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.200142,
+      "start_time": "2025-11-21T13:03:17.058705",
+      "end_time": "2025-11-21T13:03:17.258894",
+      "test_results": [
+        {
+          "test_id": "exception_GET__api_user_profile_1",
+          "test_name": "异常测试获取用户信息_1",
+          "test_case_id": "exception_GET__api_user_profile_1",
+          "status": "passed",
+          "duration": 0.100071,
+          "start_time": "2025-11-21T13:03:17.058705",
+          "end_time": "2025-11-21T13:03:17.158776",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "method": "INVALID",
+            "path": "/api/user/profile",
+            "headers": {},
+            "data": {}
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查用户信息是否包含ID')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.username', type='is_not_null', value=None, AssertType='business', description='检查用户信息是否包含用户名')",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "test_id": "exception_GET__api_user_profile_2",
+          "test_name": "异常测试获取用户信息_2",
+          "test_case_id": "exception_GET__api_user_profile_2",
+          "status": "passed",
+          "duration": 0.100071,
+          "start_time": "2025-11-21T13:03:17.158823",
+          "end_time": "2025-11-21T13:03:17.258894",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "path": "/api/user/profile/invalid"
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查用户信息是否包含ID')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.username', type='is_not_null', value=None, AssertType='business', description='检查用户信息是否包含用户名')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "获取商品列表异常测试",
+      "total_tests": 5,
+      "passed_tests": 5,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.500453,
+      "start_time": "2025-11-21T13:03:17.258942",
+      "end_time": "2025-11-21T13:03:17.759587",
+      "test_results": [
+        {
+          "test_id": "exception_GET__api_products_1",
+          "test_name": "异常测试获取商品列表_1",
+          "test_case_id": "exception_GET__api_products_1",
+          "status": "passed",
+          "duration": 0.100092,
+          "start_time": "2025-11-21T13:03:17.258942",
+          "end_time": "2025-11-21T13:03:17.359034",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "method": "INVALID",
+            "path": "/api/products",
+            "headers": {},
+            "data": {}
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "test_id": "exception_GET__api_products_2",
+          "test_name": "异常测试获取商品列表_2",
+          "test_case_id": "exception_GET__api_products_2",
+          "status": "passed",
+          "duration": 0.10009,
+          "start_time": "2025-11-21T13:03:17.359083",
+          "end_time": "2025-11-21T13:03:17.459173",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "params": {
+              "page": "GAPjDt6cDS",
+              "limit": "7F4VTptH34",
+              "category": "vgCoH5gc5p"
+            },
+            "path": "/api/products/invalid"
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "test_id": "exception_GET__api_products_3",
+          "test_name": "异常测试获取商品列表_3",
+          "test_case_id": "exception_GET__api_products_3",
+          "status": "passed",
+          "duration": 0.100092,
+          "start_time": "2025-11-21T13:03:17.459232",
+          "end_time": "2025-11-21T13:03:17.559324",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "params": {
+              "page": "invalid_type",
+              "limit": "5zU6hvl8nr",
+              "category": "55WlYwT5YU"
+            }
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "test_id": "exception_GET__api_products_4",
+          "test_name": "异常测试获取商品列表_4",
+          "test_case_id": "exception_GET__api_products_4",
+          "status": "passed",
+          "duration": 0.100089,
+          "start_time": "2025-11-21T13:03:17.559366",
+          "end_time": "2025-11-21T13:03:17.659455",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "params": {
+              "page": "XjP6NuPSDf",
+              "limit": "invalid_type",
+              "category": "rn4qnXpZfn"
+            }
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "test_id": "exception_GET__api_products_5",
+          "test_name": "异常测试获取商品列表_5",
+          "test_case_id": "exception_GET__api_products_5",
+          "status": "passed",
+          "duration": 0.10009,
+          "start_time": "2025-11-21T13:03:17.659497",
+          "end_time": "2025-11-21T13:03:17.759587",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "params": {
+              "page": "262cg0Xa34",
+              "limit": "PIMbqgYTKR",
+              "category": "invalid_type"
+            }
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "获取商品详情异常测试",
+      "total_tests": 2,
+      "passed_tests": 2,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.200185,
+      "start_time": "2025-11-21T13:03:17.759652",
+      "end_time": "2025-11-21T13:03:17.959886",
+      "test_results": [
+        {
+          "test_id": "exception_GET__api_products__product_id__1",
+          "test_name": "异常测试获取商品详情_1",
+          "test_case_id": "exception_GET__api_products__product_id__1",
+          "status": "passed",
+          "duration": 0.10009,
+          "start_time": "2025-11-21T13:03:17.759652",
+          "end_time": "2025-11-21T13:03:17.859742",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "method": "INVALID",
+            "path": "/api/products/{product_id}",
+            "headers": {},
+            "data": {}
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "test_id": "exception_GET__api_products__product_id__2",
+          "test_name": "异常测试获取商品详情_2",
+          "test_case_id": "exception_GET__api_products__product_id__2",
+          "status": "passed",
+          "duration": 0.100095,
+          "start_time": "2025-11-21T13:03:17.859791",
+          "end_time": "2025-11-21T13:03:17.959886",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "path_params": {
+              "product_id": "4xcGa1kLmP"
+            },
+            "path": "/api/products/{product_id}/invalid"
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "添加商品到购物车异常测试",
+      "total_tests": 2,
+      "passed_tests": 0,
+      "failed_tests": 2,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 0.0,
+      "total_duration": 0.200186,
+      "start_time": "2025-11-21T13:03:17.959970",
+      "end_time": "2025-11-21T13:03:18.160220",
+      "test_results": [
+        {
+          "test_id": "exception_POST__api_cart_1",
+          "test_name": "异常测试添加商品到购物车_1",
+          "test_case_id": "exception_POST__api_cart_1",
+          "status": "failed",
+          "duration": 0.100094,
+          "start_time": "2025-11-21T13:03:17.959970",
+          "end_time": "2025-11-21T13:03:18.060064",
+          "error_message": "模拟的断言失败",
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "method": "INVALID",
+            "path": "/api/cart",
+            "headers": {},
+            "data": {}
+          },
+          "response_data": {
+            "status": "error"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": false
+            }
+          ]
+        },
+        {
+          "test_id": "exception_POST__api_cart_2",
+          "test_name": "异常测试添加商品到购物车_2",
+          "test_case_id": "exception_POST__api_cart_2",
+          "status": "failed",
+          "duration": 0.100092,
+          "start_time": "2025-11-21T13:03:18.060128",
+          "end_time": "2025-11-21T13:03:18.160220",
+          "error_message": "模拟的断言失败",
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "path": "/api/cart/invalid"
+          },
+          "response_data": {
+            "status": "error"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "创建订单异常测试",
+      "total_tests": 2,
+      "passed_tests": 2,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 100.0,
+      "total_duration": 0.200181,
+      "start_time": "2025-11-21T13:03:18.160283",
+      "end_time": "2025-11-21T13:03:18.360520",
+      "test_results": [
+        {
+          "test_id": "exception_POST__api_orders_1",
+          "test_name": "异常测试创建订单_1",
+          "test_case_id": "exception_POST__api_orders_1",
+          "status": "passed",
+          "duration": 0.10009,
+          "start_time": "2025-11-21T13:03:18.160283",
+          "end_time": "2025-11-21T13:03:18.260373",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "method": "INVALID",
+            "path": "/api/orders",
+            "headers": {},
+            "data": {}
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "test_id": "exception_POST__api_orders_2",
+          "test_name": "异常测试创建订单_2",
+          "test_case_id": "exception_POST__api_orders_2",
+          "status": "passed",
+          "duration": 0.100091,
+          "start_time": "2025-11-21T13:03:18.260429",
+          "end_time": "2025-11-21T13:03:18.360520",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "path": "/api/orders/invalid"
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_name": "取消订单异常测试",
+      "total_tests": 2,
+      "passed_tests": 1,
+      "failed_tests": 1,
+      "skipped_tests": 0,
+      "error_tests": 0,
+      "pass_rate": 50.0,
+      "total_duration": 0.200168,
+      "start_time": "2025-11-21T13:03:18.360585",
+      "end_time": "2025-11-21T13:03:18.560806",
+      "test_results": [
+        {
+          "test_id": "exception_POST__api_orders__order_id__cancel_1",
+          "test_name": "异常测试取消订单_1",
+          "test_case_id": "exception_POST__api_orders__order_id__cancel_1",
+          "status": "failed",
+          "duration": 0.100077,
+          "start_time": "2025-11-21T13:03:18.360585",
+          "end_time": "2025-11-21T13:03:18.460662",
+          "error_message": "模拟的断言失败",
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "method": "INVALID",
+            "path": "/api/orders/{order_id}/cancel",
+            "headers": {},
+            "data": {}
+          },
+          "response_data": {
+            "status": "error"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": false
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": false
+            }
+          ]
+        },
+        {
+          "test_id": "exception_POST__api_orders__order_id__cancel_2",
+          "test_name": "异常测试取消订单_2",
+          "test_case_id": "exception_POST__api_orders__order_id__cancel_2",
+          "status": "passed",
+          "duration": 0.100091,
+          "start_time": "2025-11-21T13:03:18.460715",
+          "end_time": "2025-11-21T13:03:18.560806",
+          "error_message": null,
+          "priority": "medium",
+          "tags": [],
+          "request_data": {
+            "path_params": {
+              "order_id": "ZSLQbi6dwt"
+            },
+            "path": "/api/orders/{order_id}/cancel/invalid"
+          },
+          "response_data": {
+            "status": "success"
+          },
+          "assertion_results": [
+            {
+              "assertion": "Assertion(jsonpath='status_code', type='equals', value=200, AssertType='status_code', description='检查HTTP状态码是否为200')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.code', type='equals', value=0, AssertType='equals', description='检查响应状态码是否为0')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.status', type='equals', value='success', AssertType='equals', description='检查响应状态是否为success')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.success', type='equals', value=True, AssertType='equals', description='检查响应成功标志是否为True')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.message', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.msg', type='not_equals', value=None, AssertType='not_equals', description='检查响应消息不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data', type='is_not_null', value=None, AssertType='is_not_null', description='检查响应数据不为空')",
+              "passed": true
+            },
+            {
+              "assertion": "Assertion(jsonpath='$.data.id', type='is_not_null', value=None, AssertType='business', description='检查创建资源是否返回ID')",
+              "passed": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

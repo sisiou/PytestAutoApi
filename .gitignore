@@ -95,3 +95,4 @@ test_cases/*_test_analysis.md
 test_cases/test_*.py
 !test_cases/sendMessage.yaml
 test_cases/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
+uploads/

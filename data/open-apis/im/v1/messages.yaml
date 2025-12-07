@@ -1,0 +1,41 @@
+case_common:
+  allureEpic: 消息发送与管理API
+  allureFeature: 发送消息
+  allureStory: 发送消息
+01_open-apis_im_v1_messages:
+  host: https://open.feishu.cn/open-apis
+  url: /im/v1/messages
+  method: post
+  detail: 测试发送消息
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6iyMFZAWHRVR37XHJWWA3DEGZ4YS5VCHFQB
+  requestType: json
+  is_run:
+  data:
+    receive_id_type:
+  dependence_case: true
+  dependence_case_data:
+  - case_id: 01_open-apis_im_v1_images
+    dependent_data:
+    - dependent_type: response
+      jsonpath: $.data.image_key
+      set_cache: redis:image_key
+      replace_key:
+  - case_id: 01_open-apis_im_v1_files
+    dependent_data:
+    - dependent_type: response
+      jsonpath: $.data.file_key
+      set_cache: redis:file_key
+      replace_key:
+  - case_id: 01_open-apis_calendar_v4_calendars
+    dependent_data:
+    - dependent_type: response
+      jsonpath: $.data.calendar_id
+      set_cache: redis:calendar_id
+      replace_key:
+  current_request_set_cache:
+  assert:
+    status_code: 200
+  sql:
+

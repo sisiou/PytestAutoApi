@@ -9,7 +9,7 @@
 import os
 import json
 import time
-import uuid
+import hashlib
 import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional
@@ -18,9 +18,10 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 # 导入智能自动化平台模块
 from utils.smart_auto.api_parser import APIParser, APIParserFactory
-from utils.smart_auto.test_generator import TestCaseGenerator, generate_test_cases
+from utils.smart_auto.test_generator import generate_test_cases
 from utils.smart_auto.coverage_scorer import CoverageScorer
 from utils.smart_auto.api_case_generator import APICaseGenerator
+from utils.smart_auto.dependency_analyzer import DependencyAnalyzer
 # 导入文档上传处理器
 from utils.smart_auto.document_upload_handler import document_upload_handler
 # 导入飞书解析模块
@@ -34,8 +35,7 @@ from utils.parse.ai import (
             should_regenerate
         )
 import tempfile
-import uuid
-import os
+import traceback
 from ai import process_url_with_ai
 # 配置日志
 logging.basicConfig(
@@ -54,24 +54,16 @@ CORS(app)  # 启用跨域支持
 
 # 配置
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB最大文件大小
-app.config['UPLOAD_FOLDER'] = 'data/uploads'
-app.config['RESULTS_FOLDER'] = 'api'
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['RESULTS_FOLDER'] = 'results'
 app.config['TEST_CASES_FOLDER'] = 'test_cases'
-app.config['RELATION_FOLDER'] = 'data/uploads/relation'
-app.config['SCENE_FOLDER'] = 'data/uploads/scene'
 
 # 确保必要的目录存在
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-# 创建三种文件类型的子目录
-os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'openapi'), exist_ok=True)
-os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'api_relation'), exist_ok=True)
-os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'business_scene'), exist_ok=True)
-# 保留processed目录作为兼容性
-os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'processed'), exist_ok=True)
 os.makedirs(app.config['RESULTS_FOLDER'], exist_ok=True)
 os.makedirs(app.config['TEST_CASES_FOLDER'], exist_ok=True)
 
-# 全局变量
+# 全局变量存储解析结果
 api_docs = {}
 test_cases = {}
 coverage_reports = {}
@@ -161,7 +153,6 @@ def generate_task_id(url=None):
     """生成任务ID"""
     if url:
         # 从URL生成稳定的ID，使用URL的哈希值确保相同URL生成相同ID
-        import hashlib
         
         # 使用MD5哈希算法对URL进行哈希
         url_hash = hashlib.md5(url.encode('utf-8')).hexdigest()
@@ -169,7 +160,6 @@ def generate_task_id(url=None):
         return url_hash[:16]
     else:
         # 如果没有URL，使用时间戳
-        import time
         return str(int(time.time() * 1000))
 
 def save_result(task_id: str, result: Dict[str, Any]):
@@ -293,7 +283,6 @@ def parse_uploaded_document(file_id):
         os.makedirs(scene_dir, exist_ok=True)
         
         # 生成文件指纹
-        import json
         temp_json_path = os.path.join(os.path.join(os.getcwd(), app.config['UPLOAD_FOLDER'], 'processed'), f"temp_{file_id}.json")
         with open(temp_json_path, 'w', encoding='utf-8') as f:
             json.dump(raw_data, f, ensure_ascii=False, indent=2)
@@ -308,7 +297,6 @@ def parse_uploaded_document(file_id):
             logger.info(f"成功生成OpenAPI YAML文档: {openapi_output_path}")
             
             # 将YAML内容转换为Python对象
-            import yaml
             openapi_data = yaml.safe_load(yaml_content)
             
             # 2. 生成接口关联关系文件 - 保存到api_relation目录
@@ -692,22 +680,9 @@ def parse_api_docs():
             # 生成任务ID
             task_id = generate_task_id()
             
-            # 使用APIParserFactory创建合适的解析器
-            parser = APIParserFactory.create_parser(file_path)
-            apis = parser.parse()
-            
-            # 将API数据转换为前端期望的格式
-            api_data = {
-                'apis': [api.__dict__ for api in apis],
-                'info': {
-                    'title': parser.api_info.get('title', ''),
-                    'version': parser.api_info.get('version', ''),
-                    'description': parser.api_info.get('description', ''),
-                    'host': parser.host,
-                    'base_path': parser.base_path
-                },
-                'total_count': len(apis)
-            }
+            # 解析API文档
+            parser = APIParser(file_path)
+            api_data = parser.parse()
             
             # 存储解析结果
             api_docs[task_id] = {
@@ -721,13 +696,10 @@ def parse_api_docs():
             # 保存结果
             save_result(task_id, api_docs[task_id])
             
-            # 清除文档列表缓存
-            clear_docs_list_cache()
-            
             return jsonify({
                 'task_id': task_id,
                 'message': 'API文档解析成功',
-                'api_count': api_data['total_count']
+                'api_count': len(api_data.get('apis', []))
             })
     
     except Exception as e:
@@ -772,7 +744,6 @@ def parse_api_docs_multithread():
         
         # 临时使用简单解析器替代多线程解析器
         logger.warning("多线程解析器暂不可用，使用简单解析器替代")
-        from utils.smart_auto.api_parser import APIParserFactory
         results = {"success_count": 0, "total": 0, "failed_count": 0, "success_rate": 0}
         
         # 转换为API列表格式
@@ -851,7 +822,6 @@ def parse_all_feishu_apis():
         
         # 临时使用简单解析器替代多线程解析器
         logger.warning("多线程解析器暂不可用，使用简单解析器替代")
-        from utils.smart_auto.api_parser import APIParserFactory
         results = {"success": False, "success_count": 0, "total": 0, "failed_count": 0, "success_rate": 0, "results": []}
         
         # 从飞书API首页解析所有API
@@ -929,19 +899,6 @@ def fetch_feishu_document():
         if 'open.feishu.cn/document/' not in url:
             return jsonify({'error': '不是有效的飞书文档URL'}), 400
         
-        # 导入飞书解析模块
-        from utils.parse.feishu_parse import transform_feishu_url, download_json
-        from utils.parse.ai import (
-            generate_openapi_yaml, 
-            generate_api_relation_file, 
-            generate_business_scene_file,
-            generate_file_fingerprint, 
-            get_output_path,
-            should_regenerate
-        )
-        import tempfile
-        import uuid
-        import os
         
         logger.info(f"开始处理飞书URL: {url}")
         
@@ -1018,12 +975,10 @@ def fetch_feishu_document():
                 logger.info(f"成功生成OpenAPI YAML文档: {openapi_output_path}")
                 
                 # 将YAML内容转换为JSON格式返回给前端
-                import yaml
                 openapi_data = yaml.safe_load(yaml_content)
             except Exception as e:
                 logger.error(f"生成OpenAPI YAML文档失败: {str(e)}")
                 # 如果生成失败，创建一个基本的OpenAPI文档
-                import yaml
                 openapi_data = {
                     'openapi': '3.0.0',
                     'info': {
@@ -1120,7 +1075,6 @@ def fetch_feishu_document():
     
     except Exception as e:
         logger.error(f"获取飞书文档失败: {str(e)}")
-        import traceback
         logger.error(f"错误堆栈: {traceback.format_exc()}")
         return jsonify({'error': '获取飞书文档失败', 'message': str(e)}), 500
 
@@ -1145,7 +1099,6 @@ def parse_api_docs_from_url():
             # success = result['success']
             # message = "完整API文档解析成功"
             logger.warning("完整飞书API解析器暂不可用，使用基本解析器替代")
-            from utils.smart_auto.api_parser import APIParserFactory
             parser = APIParserFactory.create_parser(url)
             apis = parser.parse_apis()
             
@@ -1197,7 +1150,6 @@ def parse_api_docs_from_url():
             os.makedirs(scene_dir, exist_ok=True)
             
             # 生成文件指纹
-            import json
             temp_json_path = os.path.join(os.path.join(os.getcwd(), app.config['UPLOAD_FOLDER'], 'processed'), f"temp_{task_id}.json")
             with open(temp_json_path, 'w', encoding='utf-8') as f:
                 json.dump(result['data'], f, ensure_ascii=False, indent=2)
@@ -1212,7 +1164,6 @@ def parse_api_docs_from_url():
                 logger.info(f"成功生成OpenAPI YAML文档: {openapi_output_path}")
                 
                 # 将YAML内容转换为Python对象
-                import yaml
                 openapi_data = yaml.safe_load(yaml_content)
                 
                 # 2. 生成接口关联关系文件 - 保存到api_relation目录
@@ -1431,30 +1382,10 @@ def get_api_docs():
     """获取API文档列表"""
     docs_list = []
     for task_id, doc in api_docs.items():
-        # 处理不同类型的文档来源
-        source_info = {}
-        if 'filename' in doc:
-            source_info['type'] = 'file'
-            source_info['name'] = doc['filename']
-        elif 'url' in doc:
-            source_info['type'] = 'url'
-            source_info['name'] = doc['url']
-        else:
-            source_info['type'] = 'unknown'
-            source_info['name'] = 'Unknown'
-        
-        # 处理api_data可能是列表或字典的情况
-        api_count = 0
-        if 'api_data' in doc:
-            if isinstance(doc['api_data'], dict) and 'apis' in doc['api_data']:
-                api_count = len(doc['api_data']['apis'])
-            elif isinstance(doc['api_data'], list):
-                api_count = len(doc['api_data'])
-        
         docs_list.append({
             'task_id': task_id,
-            'source': source_info,
-            'api_count': api_count,
+            'filename': doc['filename'],
+            'api_count': len(doc['api_data'].get('apis', [])),
             'created_at': doc['created_at']
         })
     
@@ -1504,52 +1435,72 @@ def generate_test_cases():
     """生成测试用例接口"""
     try:
         data = request.json
-        if not data:
-            return jsonify({'error': '请求数据为空'}), 400
+        if not data or 'task_id' not in data:
+            return jsonify({'error': '缺少必要参数: task_id'}), 400
         
-        # 处理两种不同的请求格式
-        if 'task_id' in data:
-            # 格式1: 使用已存储的API文档
-            doc_task_id = data['task_id']
-            if doc_task_id not in api_docs:
-                return jsonify({'error': 'API文档不存在'}), 404
-            
-            # 获取API数据
-            api_data = api_docs[doc_task_id]['api_data']
-            openapi_spec = json.dumps(api_data)
-            
-            # 如果提供了scenes，使用它们，否则生成新的
-            if 'scenes' in data:
-                scenes = data['scenes']
-            else:
-                # 生成测试场景
-                generator = APICaseGenerator(openapi_spec)
-                scenes = generator.generate_test_scenes()
-        elif 'openapi_spec' in data and 'scenes' in data:
-            # 格式2: 直接提供OpenAPI规范和场景
-            openapi_spec = data['openapi_spec']
-            scenes = data['scenes']
-            
-            # 如果scenes是字符串，尝试解析为JSON
-            if isinstance(scenes, str):
-                try:
-                    scenes = json.loads(scenes)
-                except json.JSONDecodeError:
-                    return jsonify({'error': 'scenes参数格式错误，无法解析为JSON'}), 400
-        else:
-            return jsonify({'error': '缺少必要参数: 需要task_id或者openapi_spec和scenes'}), 400
+        doc_task_id = data['task_id']
+        if doc_task_id not in api_docs:
+            return jsonify({'error': 'API文档不存在'}), 404
         
         # 生成任务ID
-        task_id = generate_task_id(url)
+        task_id = generate_task_id()
         
-        # 使用APICaseGenerator生成测试用例
-        generator = APICaseGenerator(openapi_spec)
-        test_cases_data = generator.generate_test_cases(scenes)
+        # 获取API数据
+        api_data = api_docs[doc_task_id]['api_data']
+        
+        # 生成测试用例
+        # 使用generate_test_cases函数而不是TestGenerator类
+        test_suites = generate_test_cases(api_data)
+        
+        # 将测试套件转换为API服务器期望的格式
+        test_cases_data = {}
+        for suite in test_suites:
+            for case in suite.test_cases:
+                api_path = case.api_path
+                if api_path not in test_cases_data:
+                    test_cases_data[api_path] = []
+                
+                test_cases_data[api_path].append({
+                    'case_id': case.case_id,
+                    'case_name': case.case_name,
+                    'api_method': case.api_method,
+                    'api_path': case.api_path,
+                    'host': case.host,
+                    'headers': case.headers,
+                    'request_type': case.request_type,
+                    'data': case.data,
+                    'is_run': case.is_run,
+                    'detail': case.detail,
+                    'dependence_case': case.dependence_case,
+                    'dependence_case_data': case.dependence_case_data,
+                    'current_request_set_cache': case.current_request_set_cache,
+                    'sql': case.sql,
+                    'assert_data': case.assert_data,
+                    'setup_sql': case.setup_sql,
+                    'teardown': case.teardown,
+                    'teardown_sql': case.teardown_sql,
+                    'sleep': case.sleep,
+                    'code': f"""#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+class Test{case.api_method.title()}{case.api_path.replace('/', '_').replace('{', '_').replace('}', '_')}:
+    def test_{case.case_id}(self):
+        url = "{case.host}{case.api_path}"
+        headers = {json.dumps(case.headers)}
+        data = {json.dumps(case.data)}
+        
+        response = requests.{case.api_method.lower()}(url, headers=headers, json=data)
+        
+        # 断言
+        assert response.status_code == {case.assert_data.get('status_code', 200)}
+"""
+                })
         
         # 存储测试用例
         test_cases[task_id] = {
             'task_id': task_id,
-            'doc_task_id': data.get('task_id', ''),
+            'doc_task_id': doc_task_id,
             'test_cases': test_cases_data,
             'created_at': datetime.now().isoformat()
         }
@@ -1558,10 +1509,18 @@ def generate_test_cases():
         test_cases_dir = os.path.join(app.config['TEST_CASES_FOLDER'], task_id)
         os.makedirs(test_cases_dir, exist_ok=True)
         
+        for api_path, cases in test_cases_data.items():
+            for i, case in enumerate(cases):
+                case_filename = f"test_{api_path.replace('/', '_')}_{i+1}.py"
+                case_path = os.path.join(test_cases_dir, case_filename)
+                
+                with open(case_path, 'w', encoding='utf-8') as f:
+                    f.write(case['code'])
+        
         # 保存结果
         result = {
             **test_cases[task_id],
-            'test_cases_count': len(test_cases_data)
+            'test_cases_count': sum(len(cases) for cases in test_cases_data.values())
         }
         save_result(task_id, result)
         
@@ -1585,28 +1544,13 @@ def get_test_cases_list():
     cases_list = []
     for task_id, cases in test_cases.items():
         doc_task_id = cases['doc_task_id']
-        
-        # 处理不同类型的文档来源
-        doc_info = {'name': 'Unknown', 'type': 'unknown'}
-        if doc_task_id in api_docs:
-            doc = api_docs[doc_task_id]
-            if 'filename' in doc:
-                doc_info = {'name': doc['filename'], 'type': 'file'}
-            elif 'url' in doc:
-                doc_info = {'name': doc['url'], 'type': 'url'}
-        
-        # 处理test_cases可能是列表或字典的情况
-        test_cases_data = cases['test_cases']
-        if isinstance(test_cases_data, dict):
-            test_cases_count = sum(len(c) for c in test_cases_data.values())
-        else:  # 假设是列表
-            test_cases_count = len(test_cases_data)
+        doc_filename = api_docs.get(doc_task_id, {}).get('filename', 'Unknown')
         
         cases_list.append({
             'task_id': task_id,
             'doc_task_id': doc_task_id,
-            'doc_info': doc_info,
-            'test_cases_count': test_cases_count,
+            'doc_filename': doc_filename,
+            'test_cases_count': sum(len(c) for c in cases['test_cases'].values()),
             'created_at': cases['created_at']
         })
     
@@ -1984,7 +1928,6 @@ def generate_test_scenes():
         task_id = generate_task_id()
         
         # 使用AI分析API文档，生成测试场景
-        from utils.smart_auto.api_case_generator import APICaseGenerator
         
         generator = APICaseGenerator(openapi_spec)
         scenes = generator.generate_test_scenes()
@@ -2027,7 +1970,6 @@ def generate_test_relations():
         task_id = generate_task_id()
         
         # 使用AI分析API文档，生成测试关联关系
-        from utils.smart_auto.dependency_analyzer import DependencyAnalyzer
         
         # 解析OpenAPI规范获取API列表
         try:
@@ -2186,16 +2128,12 @@ def smart_test_generation():
         api_doc = api_docs[doc_task_id]
         api_doc_path = api_doc['file_path']
         
-        # 创建场景测试生成器
-        from utils.smart_auto.scenario_test_generator import ScenarioTestGenerator, create_scenario_from_dict, create_relationship_from_dict
-        
         generator = ScenarioTestGenerator(api_doc_path, os.path.join(OUTPUT_DIR, 'smart_test_cases'))
         
         # 使用已解析的API文档数据，而不是重新解析
         api_data = api_doc.get('api_data', {})
         if 'apis' in api_data:
             # 传统解析器格式
-            from utils.smart_auto.api_parser import APIEndpoint
             apis = []
             for api_dict in api_data['apis']:
                 api = APIEndpoint(
@@ -2217,7 +2155,6 @@ def smart_test_generation():
             generator.apis = apis
         elif 'endpoints' in api_data:
             # OpenAPI 3.0.0 Agent格式
-            from utils.smart_auto.api_parser import APIEndpoint
             apis = []
             for endpoint_dict in api_data['endpoints']:
                 api = APIEndpoint(
@@ -2349,10 +2286,6 @@ def get_smart_test_result(task_id):
 def ai_parse_url():
     """使用AI解析URL并生成JSON文件"""
     try:
-        import sys
-        import hashlib
-        import yaml
-        from utils.parse.ai import process_url_with_ai
         
         data = request.get_json()
         url = data.get('url')
@@ -2402,9 +2335,6 @@ def get_ai_files():
         if not url:
             return jsonify({'error': 'URL不能为空'}), 400
         
-        # 导入必要的模块
-        import hashlib
-        import yaml
         
         # 生成URL的哈希值
         url_hash = hashlib.md5(url.encode()).hexdigest()
@@ -2477,7 +2407,4 @@ def static_files(path):
 # 启动服务器
 if __name__ == '__main__':
     logger.info("启动智能自动化测试平台API服务器")
-    host = os.environ.get('FLASK_HOST', '0.0.0.0')
-    # 修改默认端口为5000，与Docker配置保持一致
-    port = int(os.environ.get('FLASK_PORT', 5000))
-    app.run(host=host, port=port, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

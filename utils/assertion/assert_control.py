@@ -15,6 +15,7 @@ from utils.read_files_tools.regular_control import cache_regular
 from utils.other_tools.models import load_module_functions
 from utils.assertion import assert_type
 from utils.other_tools.exceptions import JsonpathExtractionFailed, SqlNotFound, AssertTypeError
+from utils.other_tools.feishu_error_codes import check_feishu_error
 from utils import config
 
 
@@ -138,9 +139,47 @@ class Assert:
         """  assert 断言处理 """
         # 判断数据类型
         if self._check_params(response_data, sql_data) is not False:
+            # 先检查飞书接口是否返回错误码（在断言之前检查，以便给出友好的错误信息）
+            try:
+                response_dict = json.loads(response_data)
+                is_error, error_message = check_feishu_error(response_dict)
+                if is_error:
+                    # 判断是否为"预期错误场景"（例如 YAML 中仅断言 status_code 为 4xx）
+                    expected_status = self.assert_data.get("status_code")
+                    # 如果预期状态码与实际状态码匹配，且都是4xx或5xx，则认为是预期错误
+                    if expected_status is not None and expected_status == status_code and status_code >= 400:
+                        # 负向用例：如果断言中指定了预期飞书错误码，则进行一一对应校验
+                        expected_feishu_code = self.assert_data.get("feishu_code")
+                        if expected_feishu_code is not None:
+                            actual_code = response_dict.get("code")
+                            if actual_code != expected_feishu_code:
+                                ERROR.logger.error(
+                                    "飞书接口错误码与预期不符，预期: %s, 实际: %s",
+                                    expected_feishu_code,
+                                    actual_code,
+                                )
+                                raise AssertionError(
+                                    f"飞书接口错误码断言失败，预期 {expected_feishu_code}，实际 {actual_code}"
+                                )
+                        # 记录为预期错误，但不中断后续 status_code 及其它断言
+                        WARNING.logger.warning("飞书接口返回预期错误:\n%s", error_message)
+                    elif expected_status is not None and expected_status == status_code:
+                        # 即使状态码匹配但不是4xx/5xx，也允许继续（例如某些2xx错误场景）
+                        WARNING.logger.warning("飞书接口返回错误但状态码匹配预期:\n%s", error_message)
+                    else:
+                        # 非预期错误：仍按原逻辑视为失败
+                        ERROR.logger.error("飞书接口返回错误:\n%s", error_message)
+                        raise AssertionError(f"飞书接口调用失败:\n{error_message}")
+            except (json.JSONDecodeError, TypeError):
+                # 如果响应不是有效的 JSON，跳过错误码检查，继续正常断言流程
+                pass
+            
             for key, values in self.assert_data.items():
                 if key == "status_code":
                     assert status_code == values
+                elif key == "feishu_code":
+                    # feishu_code 已在上面的错误检查中断言过，这里直接跳过，避免走通用 JSONPath 逻辑
+                    continue
                 else:
                     assert_value = self.assert_data[key]['value']  # 获取 yaml 文件中的期望value值
                     assert_jsonpath = self.assert_data[key]['jsonpath']  # 获取到 yaml断言中的jsonpath的数据

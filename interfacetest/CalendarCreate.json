@@ -1,0 +1,163 @@
+{
+  "info": {
+    "title": "创建共享日历",
+    "description": "调用该接口为当前身份（应用或用户）创建一个共享日历。"
+  },
+  "servers": [
+    {
+      "url": "https://open.feishu.cn"
+    }
+  ],
+  "paths": {
+    "/open-apis/calendar/v4/calendars": {
+      "post": {
+        "summary": "创建共享日历",
+        "description": "根据当前身份创建共享日历。当前身份由 Authorization 中的 token 类型决定，tenant_access_token 代表应用身份，user_access_token 代表用户身份。",
+        "tags": [
+          "日历"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer t-xxxxxxxxxxxxxxxxxxxx"
+            },
+            "description": "tenant_access_token 或 user_access_token，格式：Bearer ${token}"
+          },
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "application/json; charset=utf-8"
+            },
+            "description": "固定值：application/json; charset=utf-8"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCalendarRequest"
+              },
+              "example": {
+                "summary": "测试日历",
+                "description": "使用开放接口创建日历",
+                "permissions": "private",
+                "color": -1,
+                "summary_alias": "日历备注名"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功创建共享日历",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCalendarResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateCalendarRequest": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string",
+            "description": "日历标题",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "description": "日历描述",
+            "maxLength": 255
+          },
+          "permissions": {
+            "type": "string",
+            "description": "日历公开范围",
+            "enum": [
+              "private",
+              "show_only_free_busy",
+              "public"
+            ],
+            "default": "show_only_free_busy"
+          },
+          "color": {
+            "type": "integer",
+            "description": "日历颜色 int32 值"
+          },
+          "summary_alias": {
+            "type": "string",
+            "description": "日历备注名",
+            "maxLength": 255
+          }
+        }
+      },
+      "CreateCalendarResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "msg": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "calendar": {
+                "type": "object",
+                "properties": {
+                  "calendar_id": {
+                    "type": "string"
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "permissions": {
+                    "type": "string"
+                  },
+                  "color": {
+                    "type": "integer"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "summary_alias": {
+                    "type": "string"
+                  },
+                  "is_deleted": {
+                    "type": "boolean"
+                  },
+                  "is_third_party": {
+                    "type": "boolean"
+                  },
+                  "role": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

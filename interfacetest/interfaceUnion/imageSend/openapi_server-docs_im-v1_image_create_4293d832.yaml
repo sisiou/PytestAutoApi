@@ -1,0 +1,169 @@
+openapi: 3.0.3
+info:
+  title: 即时通讯图片上传API
+  version: 1.0.0
+  description: 提供将图片上传至飞书开放平台的能力，支持用于发送消息或设置头像的场景。上传后返回image_key，可用于后续接口调用。
+servers:
+  - url: https://open.feishu.cn/open-apis
+    description: 飞书开放平台生产环境服务器
+paths:
+  /im/v1/images:
+    post:
+      summary: 上传图片
+      description: |-
+        调用本接口将图片上传至飞书开放平台，支持上传 JPG、JPEG、PNG、WEBP、GIF、BMP、ICO、TIFF、HEIC 格式的图片。
+        注意：TIFF、HEIC 上传后会被转为 JPG 格式。
+
+        使用场景：
+        - 发送图片消息前需先上传，使用返回的 `image_key`
+        - 创建用户时设置头像需先上传图片并获取 `image_key`
+
+        前提条件：应用需开启机器人能力
+
+        限制：
+        - 图片大小不能超过 10 MB，且不支持大小为 0 的文件
+        - 分辨率限制：
+          - GIF 图片不能超过 2000 x 2000
+          - 其他图片不能超过 12000 x 12000
+          - 用于头像的图片不能超过 4096 x 4096
+      operationId: createImage
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImageUploadRequest'
+            example: |
+              ---7MA4YWxkTrZu0gW
+              Content-Disposition: form-data; name="image_type";
+
+              message
+              ---7MA4YWxkTrZu0gW
+              Content-Disposition: form-data; name="image";
+              Content-Type: application/octet-stream
+
+              (binary data)
+              ---7MA4YWxkTrZu0gW
+        required: true
+      responses:
+        '200':
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseImageUpload'
+              examples:
+                success:
+                  value:
+                    code: 0
+                    msg: success
+                    data:
+                      image_key: img_v2_xxx
+        '400':
+          description: 请求错误（参数无效、文件过大、格式不支持等）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                fileSizeExceeded:
+                  value:
+                    code: 234006
+                    msg: The file size exceed the max value.
+                invalidFormat:
+                  value:
+                    code: 234011
+                    msg: Can't regonnize the image format.
+                resolutionExceeded:
+                  value:
+                    code: 234039
+                    msg: Image resolution exceeds limit.
+        '401':
+          description: 鉴权失败
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unauthorized:
+                  value:
+                    code: 234002
+                    msg: Unauthorized.
+        '500':
+          description: 服务端内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - tenant_access_token: []
+      parameters: []
+components:
+  schemas:
+    ImageUploadRequest:
+      type: object
+      properties:
+        image_type:
+          type: string
+          enum: [message, avatar]
+          description: 图片类型
+          example: message
+          required: true
+        image:
+          type: string
+          format: binary
+          description: |-
+            图片内容。注意：
+            - 大小不能超过 10 MB，不能为 0 字节
+            - 支持格式：JPG、JPEG、PNG、WEBP、GIF、BMP、ICO、TIFF、HEIC
+            - 分辨率限制：
+              - GIF ≤ 2000×2000
+              - 其他 ≤ 12000×12000
+              - 头像用途 ≤ 4096×4096
+          required: true
+      required:
+        - image_type
+        - image
+      description: 上传图片请求体（multipart/form-data）
+
+    ApiResponseImageUpload:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码，0 表示成功
+          example: 0
+        msg:
+          type: string
+          description: 错误描述
+          example: success
+        data:
+          $ref: '#/components/schemas/ImageUploadData'
+      description: 通用响应结构
+
+    ImageUploadData:
+      type: object
+      properties:
+        image_key:
+          type: string
+          description: 图片的唯一标识 key，用于后续接口调用
+          example: img_v2_xxx
+      description: 图片上传成功后的数据体
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码
+        msg:
+          type: string
+          description: 错误信息
+      description: 错误响应结构
+  securitySchemes:
+    tenant_access_token:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 使用 `tenant_access_token` 进行认证，格式为 `Bearer <token>`

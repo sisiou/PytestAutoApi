@@ -1,0 +1,365 @@
+{
+  "title": "获取用户信息",
+  "description": "通过 user_access_token 获取相关用户信息。",
+  "notes": "手机号和邮箱信息为管理员导入的用户联系方式，未经过用户本人实时验证，不建议直接作为业务系统登录凭证，如使用需自行认证。",
+  "request": {
+    "url": "https://open.feishu.cn/open-apis/authen/v1/user_info",
+    "method": "GET",
+    "rate_limit": {
+      "type": "special",
+      "doc": "https://open.feishu.cn/document/ukTMukTMukTM/uUzN04SN3QjL1cDN"
+    },
+    "app_types": [
+      "Custom App",
+      "Store App"
+    ],
+    "permissions": {
+      "required": [],
+      "field_level": [
+        "contact:user.employee:readonly",
+        "contact:user.employee_id:readonly",
+        "contact:user.phone:readonly",
+        "contact:user.email:readonly",
+        "contact:contact:access_as_app",
+        "contact:contact:readonly",
+        "contact:contact:readonly_as_app"
+      ]
+    },
+    "headers": [
+      {
+        "name": "Authorization",
+        "in": "header",
+        "required": true,
+        "type": "string",
+        "description": "user_access_token，格式为 \"Bearer access_token\"。",
+        "example": "Bearer u-7f1bcd13fc57d46bac21793a18e560",
+        "doc": "https://open.feishu.cn/document/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-choose-which-type-of-token-to-use"
+      }
+    ]
+  },
+  "response": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "int",
+          "description": "错误码，非 0 表示失败"
+        },
+        "msg": {
+          "type": "string",
+          "description": "错误描述"
+        },
+        "data": {
+          "type": "object",
+          "description": "user_info",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "用户姓名"
+            },
+            "en_name": {
+              "type": "string",
+              "description": "用户英文名称"
+            },
+            "avatar_url": {
+              "type": "string",
+              "description": "用户头像"
+            },
+            "avatar_thumb": {
+              "type": "string",
+              "description": "用户头像 72x72"
+            },
+            "avatar_middle": {
+              "type": "string",
+              "description": "用户头像 240x240"
+            },
+            "avatar_big": {
+              "type": "string",
+              "description": "用户头像 640x640"
+            },
+            "open_id": {
+              "type": "string",
+              "description": "用户在应用内的唯一标识"
+            },
+            "union_id": {
+              "type": "string",
+              "description": "用户对 ISV 的唯一标识，对于同一个 ISV，用户在其名下所有应用的 union_id 相同"
+            },
+            "email": {
+              "type": "string",
+              "description": "用户邮箱（管理员导入，未实时验证，不建议直接作为登录凭证）。字段权限：contact:user.email:readonly"
+            },
+            "enterprise_email": {
+              "type": "string",
+              "description": "企业邮箱（需启用飞书邮箱服务）。字段权限：contact:user.employee:readonly"
+            },
+            "user_id": {
+              "type": "string",
+              "description": "用户 user_id。字段权限：contact:user.employee_id:readonly"
+            },
+            "mobile": {
+              "type": "string",
+              "description": "用户手机号（管理员导入，未实时验证，不建议直接作为登录凭证）。字段权限：contact:user.phone:readonly"
+            },
+            "tenant_key": {
+              "type": "string",
+              "description": "当前企业标识"
+            },
+            "employee_no": {
+              "type": "string",
+              "description": "用户工号。字段权限（满足任一）：contact:user.employee:readonly / contact:contact:access_as_app / contact:contact:readonly / contact:contact:readonly_as_app"
+            }
+          }
+        }
+      }
+    },
+    "example": {
+      "code": 0,
+      "msg": "success",
+      "data": {
+        "name": "zhangsan",
+        "en_name": "zhangsan",
+        "avatar_url": "www.feishu.cn/avatar/icon",
+        "avatar_thumb": "www.feishu.cn/avatar/icon_thumb",
+        "avatar_middle": "www.feishu.cn/avatar/icon_middle",
+        "avatar_big": "www.feishu.cn/avatar/icon_big",
+        "open_id": "ou-caecc734c2e3328a62489fe0648c4b98779515d3",
+        "union_id": "on-d89jhsdhjsajkda7828enjdj328ydhhw3u43yjhdj",
+        "email": "zhangsan@feishu.cn",
+        "enterprise_email": "demo@mail.com",
+        "user_id": "5d9bdxxx",
+        "mobile": "+86130002883xx",
+        "tenant_key": "736588c92lxf175d",
+        "employee_no": "111222333"
+      }
+    },
+    "errors": [
+      {
+        "http_status": 200,
+        "code": 20001,
+        "message": "Invalid request. Please check request param",
+        "description": "参数错误，请检查请求参数。"
+      },
+      {
+        "http_status": 200,
+        "code": 20005,
+        "message": "The user access token passed is invalid. Please check the value",
+        "description": "提供的 user_access_token 无效，请使用有效的 user_access_token。",
+        "doc": "https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/authentication-management/access-token/get-user-access-token"
+      },
+      {
+        "http_status": 200,
+        "code": 20008,
+        "message": "User not exist",
+        "description": "用户不存在，无法获取信息。"
+      },
+      {
+        "http_status": 200,
+        "code": 20021,
+        "message": "User resigned",
+        "description": "用户离职，无法获取信息。"
+      },
+      {
+        "http_status": 200,
+        "code": 20022,
+        "message": "User frozen",
+        "description": "用户被冻结，无法获取信息。"
+      },
+      {
+        "http_status": 200,
+        "code": 20023,
+        "message": "User not registered",
+        "description": "用户没有完成注册，无法获取信息。"
+      },
+      {
+        "http_status": 500,
+        "code": 20050,
+        "message": "System error",
+        "description": "系统错误，请重试。"
+      }
+    ]
+  },
+  "openapi": "3.0.1",
+  "info": {
+    "title": "飞书获取用户信息接口",
+    "version": "1.0.0",
+    "description": "通过 user_access_token 获取相关用户信息。"
+  },
+  "servers": [
+    {
+      "url": "https://open.feishu.cn"
+    }
+  ],
+  "paths": {
+    "/open-apis/authen/v1/user_info": {
+      "get": {
+        "summary": "获取用户信息",
+        "description": "通过 user_access_token 获取相关用户信息。\n\n注意：手机号和邮箱信息为管理员导入的用户联系方式，未经过用户本人实时验证，\n不建议开发者直接将其作为业务系统的登录凭证，如使用，务必自行认证。",
+        "tags": [
+          "用户"
+        ],
+        "operationId": "getUserInfo",
+        "security": [
+          {
+            "userAccessToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "description": "user_access_token。格式为 `Bearer access_token`。",
+            "schema": {
+              "type": "string",
+              "example": "Bearer u-7f1bcd13fc57d46bac21793a18e560"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功响应或业务错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "错误码，非 0 表示失败",
+                      "example": 0
+                    },
+                    "msg": {
+                      "type": "string",
+                      "description": "错误描述",
+                      "example": "success"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserInfo"
+                    }
+                  }
+                },
+                "examples": {
+                  "success": {
+                    "summary": "成功示例",
+                    "value": {
+                      "code": 0,
+                      "msg": "success",
+                      "data": {
+                        "name": "zhangsan",
+                        "en_name": "zhangsan",
+                        "avatar_url": "https://feishu.cn/avatar/icon",
+                        "avatar_thumb": "https://feishu.cn/avatar/icon_thumb",
+                        "avatar_middle": "https://feishu.cn/avatar/icon_middle",
+                        "avatar_big": "https://feishu.cn/avatar/icon_big",
+                        "open_id": "ou-caecc734c2e3328a62489fe0648c4b98779515d3",
+                        "union_id": "on-d89jhsdhjsajkda7828enjdj328ydhhw3u43yjhdj",
+                        "email": "zhangsan@feishu.cn",
+                        "enterprise_email": "demo@mail.com",
+                        "user_id": "5d9bdxxx",
+                        "mobile": "+86130002883xx",
+                        "tenant_key": "736588c92lxf175d",
+                        "employee_no": "111222333"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "user_access_token 无效",
+                    "value": {
+                      "code": 20005,
+                      "msg": "The user access token passed is invalid. Please check the value",
+                      "data": null
+                    }
+                  },
+                  "user_not_exist": {
+                    "summary": "用户不存在",
+                    "value": {
+                      "code": 20008,
+                      "msg": "User not exist",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "userAccessToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "user_access_token",
+        "description": "在请求头 Authorization 中传入 user_access_token，\n格式为：`Bearer access_token`。"
+      }
+    },
+    "schemas": {
+      "UserInfo": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "用户姓名"
+          },
+          "en_name": {
+            "type": "string",
+            "description": "用户英文名称"
+          },
+          "avatar_url": {
+            "type": "string",
+            "description": "用户头像"
+          },
+          "avatar_thumb": {
+            "type": "string",
+            "description": "用户头像 72x72"
+          },
+          "avatar_middle": {
+            "type": "string",
+            "description": "用户头像 240x240"
+          },
+          "avatar_big": {
+            "type": "string",
+            "description": "用户头像 640x640"
+          },
+          "open_id": {
+            "type": "string",
+            "description": "用户在应用内的唯一标识"
+          },
+          "union_id": {
+            "type": "string",
+            "description": "用户对 ISV 的唯一标识，对于同一个 ISV，用户在其名下所有应用的 union_id 相同"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "用户邮箱，管理员导入，未经过用户本人实时验证。"
+          },
+          "enterprise_email": {
+            "type": "string",
+            "format": "email",
+            "description": "企业邮箱（需启用飞书邮箱服务）"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "用户 user_id"
+          },
+          "mobile": {
+            "type": "string",
+            "description": "用户手机号，管理员导入，未经过用户本人实时验证。"
+          },
+          "tenant_key": {
+            "type": "string",
+            "description": "当前企业标识"
+          },
+          "employee_no": {
+            "type": "string",
+            "description": "用户工号"
+          }
+        }
+      }
+    }
+  }
+}

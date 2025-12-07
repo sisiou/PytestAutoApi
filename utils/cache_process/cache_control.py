@@ -12,6 +12,12 @@ from typing import Any, Text, Union
 from common.setting import ensure_path_sep
 from utils.other_tools.exceptions import ValueNotFoundError
 
+# 可选依赖：Redis 缓存
+try:
+    from utils.cache_process.redis_control import RedisHandler
+except Exception:  # noqa: BLE001
+    RedisHandler = None
+
 
 class Cache:
     """ 设置、读取缓存 """
@@ -79,6 +85,25 @@ _cache_config = {}
 class CacheHandler:
     @staticmethod
     def get_cache(cache_data):
+        """
+        读取缓存：
+        - 普通缓存：从内存字典 _cache_config 读取
+        - Redis 缓存：cache_data 以 'redis:' 前缀时，从 Redis 读取（依赖 redis_control.py 配置）
+        """
+        # 检查是否是 Redis 缓存
+        if cache_data.startswith("redis:"):
+            if RedisHandler is None:
+                raise ValueError("未安装或未配置 redis 依赖，无法读取 Redis 缓存")
+            key = cache_data.replace("redis:", "", 1)
+            try:
+                value = RedisHandler().get_key(key)
+                if value is None:
+                    raise ValueNotFoundError(f"Redis 缓存中未找到 key: {key}，请检查是否将该数据存入缓存中")
+                return value
+            except Exception as e:  # noqa: BLE001
+                raise ValueNotFoundError(f"读取 Redis 缓存失败: {key}，错误: {e}")
+        
+        # 普通内存缓存
         try:
             return _cache_config[cache_data]
         except KeyError:
@@ -86,4 +111,35 @@ class CacheHandler:
 
     @staticmethod
     def update_cache(*, cache_name, value):
-        _cache_config[cache_name] = value
+        """
+        写入缓存：
+        - 普通缓存：存入内存字典 _cache_config
+        - Redis 缓存：cache_name 以 'redis:' 前缀时，写入 Redis（依赖 redis_control.py 配置）
+        """
+        if cache_name.startswith("redis:"):
+            if RedisHandler is None:
+                raise ValueError("未安装或未配置 redis 依赖，无法写入 Redis 缓存")
+            key = cache_name.replace("redis:", "", 1)
+            try:
+                RedisHandler().set_string(key, value)
+                # 添加日志确认 Redis 写入成功
+                try:
+                    from utils.logging_tool.log_control import INFO
+                    INFO.logger.info(f"✓ 成功写入 Redis 缓存: {key} = {value}")
+                except Exception:  # noqa: BLE001
+                    # 如果日志模块不可用，使用 print
+                    print(f"✓ 成功写入 Redis 缓存: {key} = {value}")
+            except Exception as e:  # noqa: BLE001
+                try:
+                    from utils.logging_tool.log_control import ERROR
+                    ERROR.logger.error(f"✗ Redis 缓存写入失败: {key} = {value}, 错误: {e}")
+                except Exception:  # noqa: BLE001
+                    print(f"✗ Redis 缓存写入失败: {key} = {value}, 错误: {e}")
+                raise
+        else:
+            _cache_config[cache_name] = value
+            try:
+                from utils.logging_tool.log_control import INFO
+                INFO.logger.info(f"✓ 成功写入内存缓存: {cache_name} = {value}")
+            except Exception:  # noqa: BLE001
+                pass

@@ -52,14 +52,27 @@ class SetCurrentRequestCache:
             cache_name
     ):
         """将响应结果存入缓存"""
-        _response_data = jsonpath(json.loads(self.response_data), jsonpath_value)
-        if _response_data is not False:
-            CacheHandler.update_cache(cache_name=cache_name, value=_response_data[0])
-            # Cache(cache_name).set_caches(_response_data[0])
-        else:
-            raise ValueNotFoundError("缓存设置失败，程序中未检测到需要缓存的数据。"
-                                     f"请求参数: {self.response_data}"
-                                     f"提取的 jsonpath 内容: {jsonpath_value}")
+        try:
+            response_dict = json.loads(self.response_data)
+            # 对于飞书 API，只有在 code == 0 时才缓存（成功响应）
+            if isinstance(response_dict, dict) and response_dict.get("code") != 0:
+                from utils.logging_tool.log_control import WARNING
+                WARNING.logger.warning(f"响应 code != 0，跳过缓存设置。响应: {self.response_data[:200]}")
+                return
+            
+            _response_data = jsonpath(response_dict, jsonpath_value)
+            if _response_data is not False and len(_response_data) > 0:
+                cache_value = _response_data[0]
+                CacheHandler.update_cache(cache_name=cache_name, value=cache_value)
+                from utils.logging_tool.log_control import INFO
+                INFO.logger.info(f"✓ 成功将响应数据存入缓存: {cache_name} = {cache_value}")
+            else:
+                raise ValueNotFoundError("缓存设置失败，程序中未检测到需要缓存的数据。"
+                                         f"响应数据: {self.response_data[:200]}"
+                                         f"提取的 jsonpath 内容: {jsonpath_value}")
+        except json.JSONDecodeError as e:
+            raise ValueNotFoundError(f"响应数据不是有效的 JSON 格式: {e}"
+                                     f"响应内容: {self.response_data[:200]}")
 
     def set_caches_main(self):
         """设置缓存"""

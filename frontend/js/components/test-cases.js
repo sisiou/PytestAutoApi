@@ -597,12 +597,34 @@ function updateStatistics(testCases) {
 }
 
 // 渲染测试用例列表
+// 渲染空状态
+function renderEmptyStateWithButton(container) {
+    container.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-vial"></i>
+            </div>
+            <div class="empty-title">没有找到测试用例</div>
+            <div class="empty-description">请尝试调整搜索条件或筛选器</div>
+            <button class="btn btn-primary" id="generateFromEmptyBtn">
+                <i class="fas fa-plus me-2"></i>生成测试用例
+            </button>
+        </div>
+    `;
+    
+    // 绑定空状态下的生成按钮事件
+    document.getElementById('generateFromEmptyBtn').addEventListener('click', function() {
+        showGenerateModal();
+    });
+}
+
 function renderTestCasesList() {
     const testCasesList = document.getElementById('testCasesList');
     const testCases = getFilteredTestCases();
     
     if (testCases.length === 0) {
         renderEmptyState();
+        renderEmptyStateWithButton(testCasesList);
         return;
     }
     
@@ -663,7 +685,7 @@ function renderTestCasesGrid() {
     const testCases = getFilteredTestCases();
     
     if (testCases.length === 0) {
-        renderEmptyState();
+        renderEmptyStateWithButton(testCasesList);
         return;
     }
     
@@ -793,10 +815,8 @@ function getFilteredTestCases() {
 
 // 筛选测试用例
 function filterTestCases() {
-    const listViewBtn = document.getElementById('listViewBtn');
-    const isListView = listViewBtn.classList.contains('btn-primary');
-    
-    if (!isListView) {
+    const viewMode = document.getElementById('listView').checked ? 'list' : 'grid';
+    if (viewMode === 'grid') {
         renderTestCasesGrid();
     } else {
         renderTestCasesList();
@@ -880,12 +900,12 @@ import pytest
 import requests
 import json
 
-def test_${testName}():
+def test_${testCase.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}():
     """
     ${testCase.description}
     """
     # API端点
-    url = "https://open.feishu.cn/open-apis/im/v1/messages"
+    url = "https://api.example.com/${testCase.apiId}"
     
     # 请求头
     headers = {
@@ -1032,7 +1052,8 @@ function showRunModal(testCaseId) {
     // 显示模态框
     modal.show();
     
-    // 调用后端API运行测试
+    // 模拟运行测试
+    let progress = 0;
     const testCases = testCaseId === 'all' 
         ? getFilteredTestCases() 
         : window.currentTestCases.filter(tc => tc.id == testCaseId);
@@ -1117,7 +1138,7 @@ function generateTestCases() {
     const exceptionCheck = document.getElementById('exceptionCheck');
     
     if (!apiDocSelect.value) {
-        showSmartTestNotification('请选择接口文档', 'warning');
+        showSmartTestNotification('请选择API文档', 'warning');
         return;
     }
     
@@ -1383,21 +1404,5 @@ function showNotification(message, type = 'info') {
 // 渲染空状态
 function renderEmptyState() {
     const testCasesList = document.getElementById('testCasesList');
-    testCasesList.innerHTML = `
-        <div class="empty-state">
-            <div class="empty-icon">
-                <i class="fas fa-vial"></i>
-            </div>
-            <div class="empty-title">没有找到测试用例</div>
-            <div class="empty-description">请尝试调整搜索条件或筛选器</div>
-            <button class="btn btn-primary" id="generateFromEmptyBtn">
-                <i class="fas fa-plus me-2"></i>生成测试用例
-            </button>
-        </div>
-    `;
-    
-    // 绑定空状态下的生成按钮事件
-    document.getElementById('generateFromEmptyBtn').addEventListener('click', function() {
-        showGenerateModal();
-    });
+    renderEmptyStateWithButton(testCasesList);
 }

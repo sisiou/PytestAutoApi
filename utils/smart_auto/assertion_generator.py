@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+<<<<<<< HEAD
 # @Time   : 2025/12/03 10:00
+=======
+# @Time   : 2023/07/01 10:00
+>>>>>>> origin/feature/zht1206
 # @Author : Smart Auto Platform
 # @File   : assertion_generator.py
 # @describe: 结果校验逻辑生成模块，根据API响应和业务规则自动生成断言

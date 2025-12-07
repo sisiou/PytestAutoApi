@@ -1,47 +1,5 @@
 // 主要JavaScript功能
 
-// 数据格式化
-const Format = {
-    // 格式化日期
-    date: function(dateString, format = 'YYYY-MM-DD HH:mm:ss') {
-        const date = new Date(dateString);
-        
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        
-        return format
-            .replace('YYYY', year)
-            .replace('MM', month)
-            .replace('DD', day)
-            .replace('HH', hours)
-            .replace('mm', minutes)
-            .replace('ss', seconds);
-    },
-    
-    // 格式化文件大小
-    fileSize: function(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    },
-    
-    // 格式化百分比
-    percentage: function(value, total, decimals = 1) {
-        if (total === 0) return '0%';
-        
-        const percentage = (value / total) * 100;
-        return percentage.toFixed(decimals) + '%';
-    }
-};
-
 // DOM加载完成后执行
 document.addEventListener('DOMContentLoaded', function() {
     // 初始化工具提示
@@ -96,10 +54,29 @@ function initPageSpecificFeatures() {
     
     // 根据不同页面初始化特定功能
     if (currentPath.includes('api-docs.html')) {
-        console.log('检测到API文档页面，但该页面已迁移，重定向到测试中心页面');
-        // 重定向到测试中心页面
-        window.location.href = 'test-center.html';
-        return;
+        console.log('检测到API文档页面，将延迟初始化页面功能');
+        // 延迟初始化API文档页面功能，确保组件JS已加载
+        setTimeout(() => {
+            console.log('开始初始化API文档页面功能');
+            if (typeof initApiDocsPage === 'function') {
+                initApiDocsPage();
+                console.log('initApiDocsPage 执行完成');
+            } else {
+                console.error('initApiDocsPage 函数未定义');
+            }
+            if (typeof bindEventListeners === 'function') {
+                bindEventListeners();
+                console.log('bindEventListeners 执行完成');
+            } else {
+                console.error('bindEventListeners 函数未定义');
+            }
+            if (typeof loadApiData === 'function') {
+                loadApiData();
+                console.log('loadApiData 执行完成');
+            } else {
+                console.error('loadApiData 函数未定义');
+            }
+        }, 100); // 减少延迟时间
     } else if (currentPath.includes('test-cases.html')) {
         // 测试用例页面特定初始化
         setTimeout(() => {
@@ -440,11 +417,54 @@ const FormValidation = {
     }
 };
 
+// 数据格式化
+const Format = {
+    // 格式化日期
+    date: function(dateString, format = 'YYYY-MM-DD HH:mm:ss') {
+        const date = new Date(dateString);
+        
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        
+        return format
+            .replace('YYYY', year)
+            .replace('MM', month)
+            .replace('DD', day)
+            .replace('HH', hours)
+            .replace('mm', minutes)
+            .replace('ss', seconds);
+    },
+    
+    // 格式化文件大小
+    fileSize: function(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    },
+    
+    // 格式化百分比
+    percentage: function(value, total, decimals = 1) {
+        if (total === 0) return '0%';
+        
+        const percentage = (value / total) * 100;
+        return percentage.toFixed(decimals) + '%';
+    }
+};
+
 // 导出全局函数
 window.API = API;
 window.Notification = Notification;
 window.Loading = Loading;
 window.FormValidation = FormValidation;
+window.Format = Format;
 
 // 导航栏滚动效果
 function initNavbarScroll() {

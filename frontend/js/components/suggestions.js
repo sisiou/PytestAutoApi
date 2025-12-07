@@ -444,7 +444,11 @@ function showSuggestionDetail(suggestionId) {
     const suggestion = allSuggestions.find(s => s.id === suggestionId);
     
     if (!suggestion) {
+<<<<<<< HEAD
         showSmartTestNotification('未找到建议详情', 'error');
+=======
+        showNotification('未找到建议详情', 'error');
+>>>>>>> origin/feature/zht1206
         return;
     }
     
@@ -507,7 +511,11 @@ function adoptSuggestion(suggestionId) {
         }
         
         // 显示成功提示
+<<<<<<< HEAD
         showSmartTestNotification('建议已采纳', 'success');
+=======
+        showNotification('建议已采纳', 'success');
+>>>>>>> origin/feature/zht1206
     }, 500);
 }
 
@@ -530,7 +538,11 @@ function rejectSuggestion(suggestionId) {
         }
         
         // 显示成功提示
+<<<<<<< HEAD
         showSmartTestNotification('建议已拒绝', 'info');
+=======
+        showNotification('建议已拒绝', 'info');
+>>>>>>> origin/feature/zht1206
     }, 500);
 }
 
@@ -553,7 +565,11 @@ function generateNewSuggestions() {
         loadSuggestionsData();
         
         // 显示成功提示
+<<<<<<< HEAD
         showSmartTestNotification('新建议已生成', 'success');
+=======
+        showNotification('新建议已生成', 'success');
+>>>>>>> origin/feature/zht1206
     }, 2000);
 }
 
@@ -576,7 +592,11 @@ function refreshSuggestions() {
         loadSuggestionsData();
         
         // 显示成功提示
+<<<<<<< HEAD
         showSmartTestNotification('建议已刷新', 'success');
+=======
+        showNotification('建议已刷新', 'success');
+>>>>>>> origin/feature/zht1206
     }, 1500);
 }
 

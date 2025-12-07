@@ -14,6 +14,7 @@ from utils.notify.ding_talk import DingTalkSendMsg
 from utils.notify.send_mail import SendEmail
 from utils.notify.lark import FeiShuTalkChatBot
 from utils.other_tools.allure_data.error_case_excel import ErrorCaseExcel
+from utils.other_tools.allure_config_helper import ensure_allure_properties_file
 from utils import config
 
 
@@ -31,6 +32,9 @@ def run():
                   开始执行{}项目...
                 """.format(config.project_name)
         )
+
+        # 确保 Allure 配置文件存在（支持中文显示）
+        ensure_allure_properties_file("./report/tmp")
 
         # 判断现有的测试用例，如果未生成测试代码，则自动生成
         # TestCaseAutomaticGeneration().get_case_automatic()

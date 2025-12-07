@@ -1,0 +1,64 @@
+case_common:
+  allureEpic: 飞书IM
+  allureFeature: 上传图片
+  allureStory: 获取 image_key 后续发送图片
+01_open-apis_im_v1_images:
+  host: https://open.feishu.cn
+  url: /open-apis/im/v1/images
+  method: post
+  detail: 上传图片 - 成功
+  headers:
+    Authorization: Bearer t-g104c6kjZDRAC2QFDRELEHAIL3PTG4SK6ZXP5Z3T
+  requestType: FILE
+  is_run:
+  data:
+    file:
+      image: sendImage.png
+    data:
+      image_type: message
+  dependence_case: false
+  current_request_set_cache:
+  - type: response
+    jsonpath: $.data.image_key
+    name: redis:image_key
+  assert:
+    status_code: 200
+  sql:
+02_open-apis_im_v1_images:
+  host: https://open.feishu.cn
+  url: /open-apis/im/v1/images
+  method: post
+  detail: 上传图片 - 非法 image_type
+  headers:
+    Authorization: Bearer t-g104c6kjZDRAC2QFDRELEHAIL3PTG4SK6ZXP5Z3T
+  requestType: FILE
+  is_run:
+  data:
+    file:
+      image: sendImage.png
+    data:
+      image_type: invalid_type
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 234001
+  sql:
+03_open-apis_im_v1_images:
+  host: https://open.feishu.cn
+  url: /open-apis/im/v1/images
+  method: post
+  detail: 上传图片 - 文件大小为0
+  headers:
+    Authorization: Bearer t-g104c6kjZDRAC2QFDRELEHAIL3PTG4SK6ZXP5Z3T
+  requestType: FILE
+  is_run:
+  data:
+    file:
+      image: empty.png
+    data:
+      image_type: message
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 234010
+  sql:

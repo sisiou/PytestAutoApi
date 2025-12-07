@@ -119,24 +119,15 @@ function bindEventListeners() {
         console.error('找不到刷新按钮元素');
     }
     
-    // 解析接口文档按钮
+    // 解析API文档按钮
     const parseBtn = document.getElementById('parseApiBtn');
     if (parseBtn) {
         parseBtn.addEventListener('click', function() {
-            console.log('解析接口文档按钮被点击');
+            console.log('解析API文档按钮被点击');
             parseApiDocs();
         });
     } else {
-        console.error('找不到解析接口文档按钮元素');
-    }
-    
-    // 快速解析飞书API按钮（如果存在）
-    const quickParseFeishuBtn = document.getElementById('quickParseFeishuBtn');
-    if (quickParseFeishuBtn) {
-        quickParseFeishuBtn.addEventListener('click', function() {
-            console.log('快速解析飞书API按钮被点击');
-            quickParseFeishuApi();
-        });
+        console.error('找不到解析API文档按钮元素');
     }
     
     // 搜索输入

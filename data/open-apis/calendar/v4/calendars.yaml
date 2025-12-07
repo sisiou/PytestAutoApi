@@ -1,0 +1,304 @@
+case_common:
+  allureEpic: 日历服务API
+  allureFeature: Calendar
+  allureStory: 创建共享日历
+01_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_AUTH_001 - 应用身份创建日历
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+02_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_AUTH_003 - Token格式错误
+  headers:
+    Content-Type: application/json
+    Authorization: InvalidTokenFormat
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 99991661
+  sql:
+03_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_PARAM_001 - summary参数-正常长度
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    description: 使用开放接口创建日历
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+04_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_PARAM_002 - summary参数-超过最大长度
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    description: 使用开放接口创建日历
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 99992402
+  sql:
+05_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_PARAM_003 - description参数-正常长度
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+06_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_PARAM_004 - description参数-超过最大长度
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 99992402
+  sql:
+07_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_PARAM_005 - permissions参数-有效枚举值-private
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+08_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_PARAM_005 - permissions参数-有效枚举值-show_only_free_busy
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: show_only_free_busy
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+09_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_PARAM_005 - permissions参数-有效枚举值-public
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: public
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+10_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_PARAM_006 - permissions参数-无效枚举值
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: invalid_value
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 400
+    feishu_code: 99992402
+  sql:
+11_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_PARAM_007 - color参数-有效范围值
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+12_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_BUS_001 - 创建日历使用默认值
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data: {}
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+13_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_COMB_001 - 组合1：应用身份+完整参数
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: 测试
+    description: 描述
+    permissions: private
+    color: -1
+    summary_alias: 别名
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+14_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_COMB_003 - 组合3：应用身份+边界值组合
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    description: DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+    permissions: public
+    color: 0
+    summary_alias: SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+15_calendars:
+  host: https://open.feishu.cn
+  url: /open-apis/calendar/v4/calendars
+  method: post
+  detail: TC_CAL_LIMIT_001 - Content-Type错误（实际接口接受）
+  headers:
+    Content-Type: text/plain
+    Authorization: Bearer t-g104c6dT2RTLAQPWXFYIILR7PDPHA6H7AQWWFOEB
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  assert:
+    status_code: 200
+  sql:
+

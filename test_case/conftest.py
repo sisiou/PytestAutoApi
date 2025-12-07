@@ -37,6 +37,7 @@ def work_login_init():
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     # 请求登录接口
 
+<<<<<<< HEAD
     res = requests.post(url=url, data=data, verify=True, headers=headers)
     response_cookie = res.cookies
 
@@ -47,6 +48,21 @@ def work_login_init():
         cookies += _cookie
         # 将登录接口中的cookie写入缓存中，其中login_cookie是缓存名称
     CacheHandler.update_cache(cache_name='login_cookie', value=cookies)
+=======
+    try:
+        res = requests.post(url=url, data=data, verify=True, headers=headers, timeout=5)
+        res.raise_for_status()
+        response_cookie = res.cookies
+
+        cookies = ''
+        for k, v in response_cookie.items():
+            _cookie = k + "=" + v + ";"
+            cookies += _cookie
+        CacheHandler.update_cache(cache_name='login_cookie', value=cookies)
+    except requests.RequestException as exc:
+        WARNING.logger.warning(f"获取登录 cookie 失败，已跳过该步骤: {exc}")
+        CacheHandler.update_cache(cache_name='login_cookie', value='')
+>>>>>>> origin/feature/zht1206
 
 
 def pytest_collection_modifyitems(items):
