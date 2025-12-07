@@ -135,9 +135,62 @@ def call_bailian_api(prompt, system_prompt=None):
         return None
 
 
+# def generate_openapi_yaml(json_paths, output_yaml_path):
+#     """生成OpenAPI 3.0 YAML文件"""
+#     api_json_data = read_json_files(json_paths)
+
+#     prompt = f"""请将以下所有接口JSON数据转换为一个标准的OpenAPI 3.0 YAML文件，聚合所有接口到paths节点：
+# {json.dumps(api_json_data, ensure_ascii=False, indent=2)}
+
+# 额外要求：
+# 1. info.title需基于接口内容命名（如“即时通讯+联系人+日历+认证服务API”），version设为1.0.0，description简要说明接口用途；
+# 2. servers需包含至少一个示例（如http://api.example.com/v1，描述为“测试环境服务器”）；
+# 3. 若多个接口复用同一数据结构（如用户信息、分页参数），必须提取到components/schemas中，通过$ref引用；
+# 4. 路径参数（如/user/{{id}}）需在parameters中明确required: true，响应需包含200/400/500等常见状态码。"""
+
+#     system_prompt = """你是精通OpenAPI 3.0规范（https://spec.openapis.org/oas/v3.0.3）的工程师，需将输入的接口JSON数据转换为标准OpenAPI 3.0 YAML文件。
+# 严格遵循以下要求：
+# 1. 必须包含info（title、version、description）、servers、paths、components（schemas）核心字段；
+# 2. paths需完整映射所有接口的路径、HTTP方法、参数、请求体、响应结构；
+# 3. components/schemas提取所有复用的JSON Schema，避免重复；
+# 4. YAML语法必须合法（缩进一致、无语法错误），可直接被Swagger UI/Postman解析；
+# 5. 仅返回YAML内容，不包含任何额外解释、说明文字或代码块标记。"""
+
+#     yaml_content = call_bailian_api(prompt, system_prompt)
+#     if not yaml_content:
+#         raise Exception("未能从百炼API获取有效的YAML内容")
+
+#     # 验证YAML合法性
+#     try:
+#         yaml.safe_load(yaml_content)
+#     except yaml.YAMLError as e:
+#         raise Exception(f"生成的YAML格式非法：{str(e)}\nYAML内容：{yaml_content}")
+
+#     # 写入文件
+#     output_dir = os.path.dirname(output_yaml_path)
+#     os.makedirs(output_dir, exist_ok=True)
+#     with open(output_yaml_path, "w", encoding="utf-8") as f:
+#         f.write(yaml_content)
+
+#     print(f"OpenAPI 3.0 YAML文件已生成：{output_yaml_path}")
+#     return yaml_content
+
 def generate_openapi_yaml(json_paths, output_yaml_path):
-    """生成OpenAPI 3.0 YAML文件"""
+    """生成OpenAPI 3.0 YAML文件，重点优化发送消息接口的requestBody"""
     api_json_data = read_json_files(json_paths)
+
+    # 构建针对发送消息接口的提示
+    send_message_specific = """
+    特别注意发送消息接口（路径通常为/im/v1/messages的POST方法）的requestBody处理：
+    1. 必须完整保留所有msg_type类型（包括但不限于text、image、file、audio、media、sticker、interactive、share_chat、share_user等）
+    2. 每种msg_type需在schema中明确对应的content字段结构：
+       - text类型：{"text":"xxx"}
+       - image类型：{"image_key":"xxx"}（需说明图片需先上传获取key）
+       - file/audio/media类型：{"file_key":"xxx"}（需说明文件需先上传获取key）
+       - 其他类型需按JSON中描述补充对应content格式
+    3. 在examples中为每个msg_type添加至少一个示例，展示完整请求体（包含receive_id、msg_type、content等）
+    4. 确保msg_type的enum值包含所有支持的消息类型，不遗漏任何在JSON中出现的类型
+    """
 
     prompt = f"""请将以下所有接口JSON数据转换为一个标准的OpenAPI 3.0 YAML文件，聚合所有接口到paths节点：
 {json.dumps(api_json_data, ensure_ascii=False, indent=2)}
@@ -146,7 +199,8 @@ def generate_openapi_yaml(json_paths, output_yaml_path):
 1. info.title需基于接口内容命名（如“即时通讯+联系人+日历+认证服务API”），version设为1.0.0，description简要说明接口用途；
 2. servers需包含至少一个示例（如http://api.example.com/v1，描述为“测试环境服务器”）；
 3. 若多个接口复用同一数据结构（如用户信息、分页参数），必须提取到components/schemas中，通过$ref引用；
-4. 路径参数（如/user/{{id}}）需在parameters中明确required: true，响应需包含200/400/500等常见状态码。"""
+4. 路径参数（如/user/{{id}}）需在parameters中明确required: true，响应需包含200/400/500等常见状态码；
+{send_message_specific}"""
 
     system_prompt = """你是精通OpenAPI 3.0规范（https://spec.openapis.org/oas/v3.0.3）的工程师，需将输入的接口JSON数据转换为标准OpenAPI 3.0 YAML文件。
 严格遵循以下要求：
@@ -154,7 +208,8 @@ def generate_openapi_yaml(json_paths, output_yaml_path):
 2. paths需完整映射所有接口的路径、HTTP方法、参数、请求体、响应结构；
 3. components/schemas提取所有复用的JSON Schema，避免重复；
 4. YAML语法必须合法（缩进一致、无语法错误），可直接被Swagger UI/Postman解析；
-5. 仅返回YAML内容，不包含任何额外解释、说明文字或代码块标记。"""
+5. 对于发送消息接口，必须按照用户要求完整保留所有消息类型及其对应的content结构，不遗漏任何类型；
+6. 仅返回YAML内容，不包含任何额外解释、说明文字或代码块标记。"""
 
     yaml_content = call_bailian_api(prompt, system_prompt)
     if not yaml_content:
@@ -176,10 +231,76 @@ def generate_openapi_yaml(json_paths, output_yaml_path):
     return yaml_content
 
 
+# def generate_api_relation_file(json_paths, output_relation_path):
+#     """
+#     生成接口关联关系文件（JSON格式）
+#     包含：接口依赖关系、数据流转、权限关联、上下游接口
+#     """
+#     api_json_data = read_json_files(json_paths)
+
+#     prompt = f"""请分析以下接口JSON数据，生成接口关联关系文件（仅返回JSON内容，无其他解释）：
+# {json.dumps(api_json_data, ensure_ascii=False, indent=2)}
+
+# 输出JSON格式要求：
+# {{
+#   "relation_info": {{
+#     "title": "接口关联关系总览",
+#     "description": "所有接口的依赖、数据流转、权限关联关系",
+#     "total_apis": N,
+#     "relations": [
+#       {{
+#         "api_path": "接口路径",
+#         "api_name": "接口名称",
+#         "dependent_apis": ["依赖的接口路径1", "依赖的接口路径2"],
+#         "dependent_reason": "依赖原因（如：需要先登录获取token、需要先创建用户）",
+#         "data_flow": "该接口的数据来源和输出去向（如：从登录接口获取token，数据存储到用户表）",
+#         "permission_relation": "权限关联（如：需要管理员权限、需要用户已登录）",
+#         "upstream_apis": ["上游接口路径"],
+#         "downstream_apis": ["下游接口路径"]
+#       }}
+#     ],
+#     "key_relation_scenarios": [
+#       {{
+#         "scenario_name": "核心业务流程名称",
+#         "api_sequence": ["接口路径1", "接口路径2", "接口路径3"],
+#         "description": "该流程的业务意义和接口调用顺序说明"
+#       }}
+#     ]
+#   }}
+# }}"""
+
+#     system_prompt = """你是资深的API架构师，擅长分析接口之间的关联关系。
+# 要求：
+# 1. 准确识别接口之间的依赖关系（如认证接口是其他接口的前置）；
+# 2. 清晰描述数据流转方向和权限关联规则；
+# 3. 总结核心业务流程的接口调用顺序；
+# 4. 仅返回标准JSON格式，无任何额外文字、注释或标记；
+# 5. 确保JSON语法合法，可直接被JSON.parse解析。"""
+
+#     # 调用API生成关联关系
+#     relation_content = call_bailian_api(prompt, system_prompt)
+#     if not relation_content:
+#         raise Exception("未能生成接口关联关系内容")
+
+#     # 验证JSON合法性
+#     try:
+#         relation_json = json.loads(relation_content)
+#     except json.JSONDecodeError as e:
+#         raise Exception(f"生成的关联关系JSON格式非法：{str(e)}\n内容：{relation_content}")
+
+#     # 写入文件
+#     output_dir = os.path.dirname(output_relation_path)
+#     os.makedirs(output_dir, exist_ok=True)
+#     with open(output_relation_path, "w", encoding="utf-8") as f:
+#         json.dump(relation_json, f, ensure_ascii=False, indent=2)
+
+#     print(f"接口关联关系文件已生成：{output_relation_path}")
+#     return relation_json
+
 def generate_api_relation_file(json_paths, output_relation_path):
     """
     生成接口关联关系文件（JSON格式）
-    包含：接口依赖关系、数据流转、权限关联、上下游接口
+    增强：支持场景化条件依赖（如发送消息仅在图片场景下需要调用上传图片接口）
     """
     api_json_data = read_json_files(json_paths)
 
@@ -190,37 +311,121 @@ def generate_api_relation_file(json_paths, output_relation_path):
 {{
   "relation_info": {{
     "title": "接口关联关系总览",
-    "description": "所有接口的依赖、数据流转、权限关联关系",
+    "description": "所有接口的依赖、数据流转、权限关联关系，包含场景化条件依赖和参数级入参/出参传递",
     "total_apis": N,
     "relations": [
       {{
         "api_path": "接口路径",
         "api_name": "接口名称",
-        "dependent_apis": ["依赖的接口路径1", "依赖的接口路径2"],
-        "dependent_reason": "依赖原因（如：需要先登录获取token、需要先创建用户）",
-        "data_flow": "该接口的数据来源和输出去向（如：从登录接口获取token，数据存储到用户表）",
-        "permission_relation": "权限关联（如：需要管理员权限、需要用户已登录）",
+        "global_dependent_apis": ["全局必调的接口路径（如登录接口）"],
+        "conditional_dependent_apis": [
+          {{
+            "dependent_api_path": "条件依赖的接口路径（如上传图片接口）",
+            "trigger_scenarios": ["触发依赖的场景（如发送图片消息、发送富媒体消息）"],
+            "trigger_conditions": [
+              {{
+                "param_name": "触发条件的参数名称（如message_type）",
+                "param_location": "参数位置（body/query）",
+                "match_rule": "匹配规则（如等于image、in [image, video]）",
+                "description": "条件描述（如消息类型为图片时触发）"
+              }}
+            ],
+            "dependent_reason": "依赖原因（如：需要先上传图片获取image_id才能发送图片消息）",
+            "param_mapping": [
+              {{
+                "source_param": "依赖接口的出参名称（如image_id、token）",
+                "source_param_type": "参数类型（string/int/object）",
+                "target_param": "当前接口的入参名称",
+                "target_param_location": "参数位置（query/path/body/header）",
+                "mapping_rule": "参数传递规则（如：直接传递、base64编码后传递、拼接后传递）"
+              }}
+            ],
+            "call_timing": "调用时机（如：调用当前接口前、调用当前接口时）",
+            "optional": true/false // 即使满足条件，是否可选调用（如部分场景可使用已有image_id）
+          }}
+        ],
+        "data_flow": {{
+          "global_input": [
+            {{
+              "api_path": "全局数据来源接口路径",
+              "params": ["来源参数1", "来源参数2"]
+            }}
+          ],
+          "conditional_input": [
+            {{
+              "trigger_scenarios": ["触发场景"],
+              "api_path": "条件数据来源接口路径",
+              "params": ["来源参数1"]
+            }}
+          ],
+          "output_data_dest": [
+            {{
+              "api_path": "数据输出目标接口路径",
+              "params": ["输出参数1", "输出参数2"]
+            }}
+          ],
+          "storage_location": "数据存储位置（如：IM消息表、用户表、图片存储服务）"
+        }},
+        "permission_relation": {{
+          "required_permission": "需要的权限（如管理员权限、普通用户权限）",
+          "auth_param": "认证参数名称（如token）",
+          "auth_param_location": "参数位置（header/query）",
+          "auth_api_path": "获取认证参数的接口路径（如登录接口）"
+        }},
         "upstream_apis": ["上游接口路径"],
         "downstream_apis": ["下游接口路径"]
       }}
     ],
     "key_relation_scenarios": [
       {{
-        "scenario_name": "核心业务流程名称",
-        "api_sequence": ["接口路径1", "接口路径2", "接口路径3"],
-        "description": "该流程的业务意义和接口调用顺序说明"
+        "scenario_name": "核心业务流程名称（如发送图片消息/发送文本消息）",
+        "api_sequence": ["接口路径1（登录）", "接口路径2（上传图片）", "接口路径3（发送消息）"],
+        "sequence_detail": [
+          {{
+            "api_path": "接口路径",
+            "call_order": 1,
+            "is_necessary": true/false, // 该步骤在当前场景是否必须
+            "output_params": ["该接口输出的关键参数（如image_id）"],
+            "next_api_mapping": [
+              {{
+                "next_api_path": "下一个调用的接口路径",
+                "param_mapping": [
+                  {{
+                    "source_param": "当前接口输出参数",
+                    "target_param": "下一个接口入参",
+                    "target_param_location": "参数位置"
+                  }}
+                ]
+              }}
+            ]
+          }}
+        ],
+        "description": "该流程的业务意义和接口调用顺序说明，包含参数传递细节"
       }}
     ]
   }}
-}}"""
+}}
 
-    system_prompt = """你是资深的API架构师，擅长分析接口之间的关联关系。
+关键要求：
+1. 严格区分“全局必调依赖”和“场景化条件依赖”：
+   - 全局必调：如登录接口（所有发送消息场景都需要token）
+   - 条件依赖：如上传图片接口（仅发送图片消息时需要）
+2. 明确条件依赖的触发场景、触发条件（如message_type=image）；
+3. 详细描述参数级映射关系，例如：
+   - 上传图片接口（/im/v1/image/create）返回image_id（string类型）
+   - 发送图片消息时，将image_id作为body中的image_id参数传入
+   - 发送文本消息时，无需调用上传图片接口
+4. 若接口无依赖关系，对应字段为空数组，不要省略；
+5. 核心业务场景要区分不同子场景（如发送文本/图片消息）的接口调用差异。"""
+
+    system_prompt = """你是资深的API架构师和测试专家，擅长分析接口之间的关联关系，尤其是场景化条件依赖和参数级的入参/出参传递。
 要求：
-1. 准确识别接口之间的依赖关系（如认证接口是其他接口的前置）；
-2. 清晰描述数据流转方向和权限关联规则；
-3. 总结核心业务流程的接口调用顺序；
+1. 精准区分“全局必调依赖”（如登录接口）和“场景化条件依赖”（如上传图片仅在发送图片消息时需要）；
+2. 明确条件依赖的触发场景、触发条件（如message_type=image）、参数映射关系；
+3. 核心业务场景要拆分不同子场景（如发送文本消息/发送图片消息），体现接口调用差异；
 4. 仅返回标准JSON格式，无任何额外文字、注释或标记；
-5. 确保JSON语法合法，可直接被JSON.parse解析。"""
+5. 确保JSON语法合法，可直接被JSON.parse解析；
+6. 若接口无依赖关系，对应字段为空数组，不要省略。"""
 
     # 调用API生成关联关系
     relation_content = call_bailian_api(prompt, system_prompt)
@@ -813,4 +1018,5 @@ if __name__ == "__main__":
     print("\n=== 生成完成 ===")
     print(f"OpenAPI文件：{openapi_output_path}")
     print(f"接口关联关系文件：{relation_output_path}")
+
     print(f"业务场景文件：{scene_output_path}")
