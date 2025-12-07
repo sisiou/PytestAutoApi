@@ -5,21 +5,22 @@ import requests
 import tempfile
 import hashlib
 import threading
+from datetime import datetime
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 import urllib3
-from .feishu_parse import transform_feishu_url, is_file_exist, download_json
+from feishu_parse import transform_feishu_url, is_file_exist, download_json
 from openai import OpenAI
 from dotenv import load_dotenv
 from typing import List, Dict, Optional
-from .feishu_parse import download_json, transform_feishu_url
+from feishu_parse import download_json, transform_feishu_url
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from urllib.parse import urlparse
 import urllib3
-from .feishu_parse import transform_feishu_url, is_file_exist, download_json
+from feishu_parse import transform_feishu_url, is_file_exist, download_json
 
 # 加载环境变量
 load_dotenv()
@@ -313,237 +314,454 @@ def generate_business_scene_file(json_paths, output_scene_path):
     return scene_json
 
 
-def process_url_with_ai(url, output_dir):
+
+def process_url_with_ai(url, output_dir, force_regenerate=False):
     """
     使用AI处理URL并生成OpenAPI、关联关系和业务场景文件
     
     Args:
         url (str): 要处理的URL，可以是飞书文档URL或其他API文档URL
         output_dir (str): 输出目录
+        force_regenerate (bool): 是否强制重新生成所有文件，即使已存在
     
     Returns:
         dict: 包含生成文件内容和路径的字典
     """
     try:
-        # 生成URL的哈希值，用于唯一标识
-        url_hash = hashlib.md5(url.encode()).hexdigest()
+        # 标准化URL（去除查询参数和片段）
+        normalized_url = _normalize_url(url)
+        
+        # 创建安全的文件名
+        file_key = _create_file_key_from_url(normalized_url)
         
         # 定义输出目录
+        json_dir = os.path.join(output_dir, 'json')
         openapi_dir = os.path.join(output_dir, 'openapi')
         relation_dir = os.path.join(output_dir, 'relation')
         scene_dir = os.path.join(output_dir, 'scene')
         
         # 确保输出目录存在
-        os.makedirs(openapi_dir, exist_ok=True)
-        os.makedirs(relation_dir, exist_ok=True)
-        os.makedirs(scene_dir, exist_ok=True)
+        for directory in [json_dir, openapi_dir, relation_dir, scene_dir]:
+            os.makedirs(directory, exist_ok=True)
         
-        # 解析URL
-        parsed_url = urlparse(url)
+        # 定义输出文件路径
+        json_output_path = os.path.join(output_dir, 'json', f"json_{file_key}.json")
+        openapi_output_path = os.path.join(openapi_dir, f"openapi_{file_key}.yaml")
+        relation_output_path = os.path.join(relation_dir, f"relation_{file_key}.json")
+        scene_output_path = os.path.join(scene_dir, f"scene_{file_key}.json")
         
-        # 判断是否是飞书文档URL
-        if 'feishu.cn' in parsed_url.netloc:
-            # 处理飞书文档URL
-            try:
-                # 转换飞书URL为可下载的URL
-                download_url = transform_feishu_url(url)
+        # 检查文件是否已存在且不需要强制重新生成
+        files_exist = all([
+            os.path.exists(json_output_path),
+            os.path.exists(openapi_output_path),
+            os.path.exists(relation_output_path),
+            os.path.exists(scene_output_path)
+        ])
+        
+        # 如果有缓存且不需要强制重新生成，直接读取缓存
+        if files_exist and not force_regenerate:
+            print(f"使用缓存文件: {file_key}")
+            return _read_existing_files(openapi_output_path, relation_output_path, 
+                                       scene_output_path, url, file_key)
+        
+        print(f"开始处理: {url}")
+        
+        # 获取JSON数据
+        json_data = _fetch_json_data(normalized_url, json_output_path)
+        
+        # 创建临时目录和文件
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_filepath = os.path.join(temp_dir, "data.json")
+            with open(temp_filepath, 'w', encoding='utf-8') as f:
+                json.dump(json_data, f, ensure_ascii=False, indent=2)
+            
+            json_paths = [temp_filepath]
+            
+            # 并行生成文件
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                futures = {}
                 
-                # 下载JSON文件
-                temp_filepath = download_json(download_url, url_hash)
-            except Exception as e:
-                raise Exception(f"无法下载飞书文档: {url}, 错误: {str(e)}")
-        else:
-            # 处理非飞书URL（如Swagger/OpenAPI文档）
-            try:
-                # 禁用SSL警告
-                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                # 提交生成任务
+                futures['openapi'] = executor.submit(
+                    generate_openapi_yaml, json_paths, openapi_output_path
+                )
+                futures['relation'] = executor.submit(
+                    generate_api_relation_file, json_paths, relation_output_path
+                )
+                futures['scene'] = executor.submit(
+                    generate_business_scene_file, json_paths, scene_output_path
+                )
                 
-                # 检查是否是本地文件
-                if url.startswith('file://'):
-                    # 处理本地文件
-                    file_path = url[7:]  # 移除 'file://' 前缀
-                    if not os.path.exists(file_path):
-                        raise FileNotFoundError(f"本地文件不存在: {file_path}")
-                    
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                    
-                    # 尝试解析为JSON
+                # 等待所有任务完成并收集结果
+                results = {}
+                for name, future in futures.items():
                     try:
-                        json_data = json.loads(content)
-                        # 创建临时目录
-                        temp_dir = os.path.join(tempfile.gettempdir(), url_hash)
-                        os.makedirs(temp_dir, exist_ok=True)
-                        
-                        # 保存JSON文件
-                        temp_filepath = os.path.join(temp_dir, "data.json")
-                        with open(temp_filepath, 'w', encoding='utf-8') as f:
-                            json.dump(json_data, f, ensure_ascii=False, indent=2)
-                    except json.JSONDecodeError:
-                        raise ValueError("本地文件不是有效的JSON格式")
-                else:
-                    # 处理远程URL
-                    session = requests.Session()
-                    session.verify = False  # 禁用SSL验证
-                    headers = {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                    }
-                    
-                    # 添加更多的SSL选项
-                    from requests.adapters import HTTPAdapter
-                    from urllib3.util.retry import Retry
-                    
-                    # 设置重试策略
-                    retry_strategy = Retry(
-                        total=3,
-                        backoff_factor=1,
-                        status_forcelist=[429, 500, 502, 503, 504],
-                    )
-                    
-                    # 创建适配器并设置重试策略
-                    adapter = HTTPAdapter(max_retries=retry_strategy)
-                    session.mount("http://", adapter)
-                    session.mount("https://", adapter)
-                    
-                    try:
-                        response = session.get(url, headers=headers, timeout=30)
-                        response.raise_for_status()
+                        results[name] = future.result()
+                        print(f"生成 {name} 文件完成")
                     except Exception as e:
-                        # 如果第一次尝试失败，尝试使用更宽松的SSL设置
-                        import ssl
-                        session.verify = False
-                        session.mount('https://', HTTPAdapter(
-                            max_retries=Retry(total=3, backoff_factor=0.5)
-                        ))
-                        
-                        # 创建一个不检查SSL证书的上下文
-                        ctx = ssl.create_default_context()
-                        ctx.check_hostname = False
-                        ctx.verify_mode = ssl.CERT_NONE
-                        
-                        response = session.get(url, headers=headers, timeout=30, verify=False)
-                        response.raise_for_status()
-                    
-                    # 根据Content-Type处理内容
-                    content_type = response.headers.get('Content-Type', '')
-                    
-                    if 'application/json' in content_type:
-                        # 直接是JSON格式
-                        json_data = response.json()
-                    elif 'application/yaml' in content_type or 'text/yaml' in content_type:
-                        # YAML格式，转换为JSON
-                        yaml_data = yaml.safe_load(response.text)
-                        json_data = yaml_data
-                    else:
-                        # 尝试自动检测
-                        try:
-                            json_data = response.json()
-                        except:
-                            try:
-                                yaml_data = yaml.safe_load(response.text)
-                                json_data = yaml_data
-                            except:
-                                raise ValueError(f"无法解析URL内容，Content-Type: {content_type}")
-                    
-                    # 创建临时目录
-                    temp_dir = os.path.join(tempfile.gettempdir(), url_hash)
-                    os.makedirs(temp_dir, exist_ok=True)
-                    
-                    # 保存JSON文件
-                    temp_filepath = os.path.join(temp_dir, "data.json")
-                    with open(temp_filepath, 'w', encoding='utf-8') as f:
-                        json.dump(json_data, f, ensure_ascii=False, indent=2)
-            except Exception as e:
-                raise Exception(f"无法下载或解析URL内容: {url}, 错误: {str(e)}")
-        
-        # 检查文件是否存在
-        if not os.path.exists(temp_filepath):
-            raise Exception(f"无法下载或解析URL内容: {url}")
-        
-        # 使用ai.py中的函数生成文件
-        json_paths = [temp_filepath]
-        
-        # 定义输出路径，使用URL哈希作为文件名的一部分
-        openapi_output_path = os.path.join(openapi_dir, f"openapi_{url_hash}.yaml")
-        relation_output_path = os.path.join(relation_dir, f"relation_{url_hash}.json")
-        scene_output_path = os.path.join(scene_dir, f"scene_{url_hash}.json")
-        
-        # 检查文件是否已存在，如果存在则直接读取
-        openapi_exists = os.path.exists(openapi_output_path)
-        relation_exists = os.path.exists(relation_output_path)
-        scene_exists = os.path.exists(scene_output_path)
-        
-        # 并行生成三个文件
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            # 提交三个任务
-            futures = {}
-            
-            # 生成OpenAPI YAML文件
-            if not openapi_exists:
-                futures['openapi'] = executor.submit(generate_openapi_yaml, json_paths, openapi_output_path)
-            else:
-                # 如果文件已存在，不需要执行任何操作
-                futures['openapi'] = None
-            
-            # 生成接口关联关系文件
-            if not relation_exists:
-                futures['relation'] = executor.submit(generate_api_relation_file, json_paths, relation_output_path)
-            else:
-                # 如果文件已存在，不需要执行任何操作
-                futures['relation'] = None
-            
-            # 生成业务场景文件
-            if not scene_exists:
-                futures['scene'] = executor.submit(generate_business_scene_file, json_paths, scene_output_path)
-            else:
-                # 如果文件已存在，不需要执行任何操作
-                futures['scene'] = None
-            
-            # 等待所有任务完成
-            for key, future in futures.items():
-                if future is not None:  # 只处理非None的Future对象
-                    try:
-                        future.result()
-                    except Exception as e:
-                        raise e
+                        print(f"生成 {name} 文件失败: {str(e)}")
+                        # 如果一个文件生成失败，删除所有已生成的文件
+                        _cleanup_partial_files(
+                            openapi_output_path, 
+                            relation_output_path, 
+                            scene_output_path
+                        )
+                        raise Exception(f"生成 {name} 文件失败: {str(e)}")
         
         # 读取生成的文件内容
+        return _read_existing_files(openapi_output_path, relation_output_path, 
+                                   scene_output_path, url, file_key)
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e),
+            'message': 'AI解析失败',
+            'url': url,
+            'timestamp': datetime.datetime.now().isoformat()
+        }
+
+
+def _normalize_url(url):
+    """标准化URL，去除查询参数和片段，保留主要路径"""
+    parsed = urlparse(url)
+    
+    # 移除查询参数和片段
+    normalized = parsed._replace(query='', fragment='')
+    
+    # 对于飞书文档，特殊处理
+    if 'feishu.cn' in parsed.netloc:
+        # 飞书文档：保留文档ID部分
+        path_parts = parsed.path.split('/')
+        # 处理 /document/ 格式的飞书文档
+        if 'document' in path_parts:
+            # 格式类似：/document/server-docs/im-v1/message/create
+            # 保留整个document路径
+            document_path = '/'.join(path_parts[path_parts.index('document'):])
+            return urlunparse(normalized._replace(path=f'/{document_path}'))
+    
+    return urlunparse(normalized)
+
+
+def _create_file_key_from_url(normalized_url):
+    """从标准化URL创建文件标识键"""
+    parsed = urlparse(normalized_url)
+    
+    # 提取域名和路径
+    domain = parsed.netloc.replace('.', '_')
+    path = parsed.path.strip('/')
+    
+    # 如果路径为空，使用域名
+    if not path:
+        return domain
+    
+    # 分割路径，取最后一部分作为主要标识
+    path_parts = path.split('/')
+    
+    # 对于常见API文档路径，提取关键部分
+    if 'swagger' in path.lower() or 'openapi' in path.lower():
+        # 对于Swagger/OpenAPI文档，使用版本号或文档名
+        for i, part in enumerate(path_parts):
+            if 'v' in part.lower() and (part[1:].isdigit() or part.lower().startswith('v')):
+                return f"{domain}_{part}"
+    
+    # 对于飞书文档
+    if 'feishu.cn' in parsed.netloc:
+        # 处理 /document/ 格式的飞书文档
+        if 'document' in path:
+            # 提取document后的路径，使用所有部分作为标识
+            if 'document' in path_parts:
+                doc_index = path_parts.index('document')
+                if doc_index + 1 < len(path_parts):
+                    # 使用document后的所有路径部分，用下划线连接
+                    remaining_parts = path_parts[doc_index + 1:]
+                    return f"feishu_{'_'.join(remaining_parts)}"
+    
+    # 通用处理：使用路径的最后一部分，限制长度
+    last_part = path_parts[-1] if path_parts else 'api'
+    
+    # 清理文件名（移除特殊字符）
+    safe_name = ''.join(c for c in last_part if c.isalnum() or c in ('-', '_'))
+    
+    # 如果清理后为空，使用时间戳
+    if not safe_name:
+        safe_name = f"api_{int(time.time())}"
+    
+    # 限制长度
+    safe_name = safe_name[:50]
+    
+    return f"{domain}_{safe_name}"
+
+
+def _fetch_json_data(normalized_url, json_path):
+    """从标准化URL获取JSON数据"""
+    parsed_url = urlparse(normalized_url)
+    
+    # 处理飞书文档URL
+    if 'feishu.cn' in parsed_url.netloc:
+        return _fetch_feishu_data(normalized_url, json_path)
+    
+    # 处理本地文件
+    if normalized_url.startswith('file://'):
+        return _fetch_local_file_data(normalized_url, json_path)
+    
+    # 处理远程URL
+    return _fetch_remote_url_data(normalized_url, json_path)
+
+
+def _fetch_feishu_data(normalized_url, json_path):
+    """获取飞书文档数据"""
+    try:
+        # 转换飞书URL为可下载的URL
+        download_url, path = transform_feishu_url(normalized_url)
+        
+        # 下载JSON文件
+        data = download_json(download_url, json_path)
+        return data
+
+    except Exception as e:
+        raise Exception(f"无法下载飞书文档: {url}, 错误: {str(e)}")
+
+
+def _fetch_local_file_data(url, json_path):
+    """获取本地文件数据并写入JSON文件
+    
+    Args:
+        url: 本地文件URL，以'file://'开头
+        json_path: JSON文件输出路径
+    
+    Returns:
+        解析后的JSON数据
+    """
+    file_path = url[7:]  # 移除 'file://' 前缀
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"本地文件不存在: {file_path}")
+    
+    print(f"读取本地文件: {file_path}")
+    
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # 尝试解析为JSON或YAML
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError:
+        try:
+            data = yaml.safe_load(content)
+        except yaml.YAMLError:
+            raise ValueError("本地文件不是有效的JSON或YAML格式")
+    
+    # 确保输出目录存在
+    output_dir = os.path.dirname(json_path)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    # 写入JSON文件
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    
+    print(f"JSON数据已写入文件: {json_path}")
+    
+    return data
+
+
+def _fetch_remote_url_data(url, json_path):
+    """获取远程URL数据并写入JSON文件
+    
+    Args:
+        url: 远程URL
+        json_path: JSON文件输出路径
+    
+    Returns:
+        解析后的JSON数据
+    """
+    print(f"下载远程文件: {url}")
+    
+    # 禁用SSL警告
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    
+    session = requests.Session()
+    session.verify = False  # 禁用SSL验证
+    
+    # 设置重试策略
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/json, application/yaml, */*'
+    }
+    
+    try:
+        response = session.get(url, headers=headers, timeout=30)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        raise Exception(f"无法访问URL: {url}, 错误: {str(e)}")
+    
+    content_type = response.headers.get('Content-Type', '')
+    
+    # 根据Content-Type处理内容
+    if 'application/json' in content_type:
+        data = response.json()
+    elif 'application/yaml' in content_type or 'text/yaml' in content_type:
+        data = yaml.safe_load(response.text)
+    else:
+        # 尝试自动检测格式
+        try:
+            data = response.json()
+        except ValueError:
+            try:
+                data = yaml.safe_load(response.text)
+            except yaml.YAMLError:
+                # 尝试从响应头或内容中推断
+                content = response.text
+                if content.strip().startswith('{') or content.strip().startswith('['):
+                    # 可能是JSON但没有正确的Content-Type
+                    data = json.loads(content)
+                elif 'openapi' in content.lower() or 'swagger' in content.lower():
+                    # 尝试解析为YAML
+                    data = yaml.safe_load(content)
+                else:
+                    raise ValueError(f"无法解析URL内容，不支持格式。Content-Type: {content_type}")
+    
+    # 确保输出目录存在
+    output_dir = os.path.dirname(json_path)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    # 写入JSON文件
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    
+    print(f"远程数据已写入文件: {json_path}")
+    
+    return data
+
+
+def _read_existing_files(openapi_path, relation_path, scene_path, url, file_key):
+    """读取已存在的文件"""
+    try:
+        # 检查文件是否存在
+        if not all(os.path.exists(p) for p in [openapi_path, relation_path, scene_path]):
+            raise FileNotFoundError("部分输出文件不存在")
+        
         # 读取YAML文件并转换为JSON
-        with open(openapi_output_path, 'r', encoding='utf-8') as f:
+        with open(openapi_path, 'r', encoding='utf-8') as f:
             openapi_data = yaml.safe_load(f)
         
         # 读取关联关系文件
-        with open(relation_output_path, 'r', encoding='utf-8') as f:
+        with open(relation_path, 'r', encoding='utf-8') as f:
             relation_json = json.load(f)
         
         # 读取业务场景文件
-        with open(scene_output_path, 'r', encoding='utf-8') as f:
+        with open(scene_path, 'r', encoding='utf-8') as f:
             scene_json = json.load(f)
         
-        # 返回生成的文件内容
-        result = {
+        # 获取文件修改时间
+        openapi_mtime = datetime.fromtimestamp(os.path.getmtime(openapi_path))
+        
+        return {
             'success': True,
             'url': url,
-            'url_hash': url_hash,
+            'file_key': file_key,
             'openapi_data': openapi_data,
             'relation_data': relation_json,
             'scene_data': scene_json,
-            'openapi_file': openapi_output_path,
-            'relation_file': relation_output_path,
-            'scene_file': scene_output_path,
-            'message': 'AI解析成功'
+            'openapi_file': openapi_path,
+            'relation_file': relation_path,
+            'scene_file': scene_path,
+            'generated_at': openapi_mtime.isoformat(),
+            'message': '从缓存读取成功' if file_key else 'AI解析成功'
         }
-        
-        return result
-        
     except Exception as e:
-        error_result = {
-            'success': False,
-            'error': str(e),
-            'message': 'AI解析失败'
-        }
-        return error_result
+        raise Exception(f"读取生成文件失败: {str(e)}")
 
+
+def _cleanup_partial_files(*filepaths):
+    """清理部分生成的文件"""
+    for filepath in filepaths:
+        if os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+                print(f"清理文件: {filepath}")
+            except Exception as e:
+                print(f"清理文件失败 {filepath}: {str(e)}")
+
+
+# 缓存管理函数
+def get_cached_urls(output_dir):
+    """获取所有已缓存的URL"""
+    cache_info = []
+    
+    for dir_type in ['openapi', 'relation', 'scene']:
+        dir_path = os.path.join(output_dir, dir_type)
+        if os.path.exists(dir_path):
+            for filename in os.listdir(dir_path):
+                if filename.endswith('.yaml') or filename.endswith('.json'):
+                    # 提取file_key
+                    parts = filename.split('_', 1)
+                    if len(parts) > 1:
+                        file_key = parts[1].rsplit('.', 1)[0]
+                        filepath = os.path.join(dir_path, filename)
+                        mtime = datetime.fromtimestamp(os.path.getmtime(filepath))
+                        
+                        cache_info.append({
+                            'file_key': file_key,
+                            'type': dir_type,
+                            'filename': filename,
+                            'path': filepath,
+                            'modified': mtime.isoformat()
+                        })
+    
+    return cache_info
+
+
+def clear_cache_for_url(output_dir, file_key):
+    """清除特定URL的缓存"""
+    files_removed = []
+    
+    for dir_type in ['openapi', 'relation', 'scene']:
+        dir_path = os.path.join(output_dir, dir_type)
+        if os.path.exists(dir_path):
+            # 查找匹配的文件
+            pattern = f"*_{file_key}.*"
+            import glob
+            matching_files = glob.glob(os.path.join(dir_path, pattern))
+            
+            for filepath in matching_files:
+                try:
+                    os.remove(filepath)
+                    files_removed.append(filepath)
+                    print(f"已删除缓存文件: {filepath}")
+                except Exception as e:
+                    print(f"删除文件失败 {filepath}: {str(e)}")
+    
+    return files_removed
+
+
+def clear_all_cache(output_dir):
+    """清除所有缓存"""
+    files_removed = []
+    
+    for dir_type in ['openapi', 'relation', 'scene']:
+        dir_path = os.path.join(output_dir, dir_type)
+        if os.path.exists(dir_path):
+            for filename in os.listdir(dir_path):
+                filepath = os.path.join(dir_path, filename)
+                if os.path.isfile(filepath):
+                    try:
+                        os.remove(filepath)
+                        files_removed.append(filepath)
+                    except Exception as e:
+                        print(f"删除文件失败 {filepath}: {str(e)}")
+    
+    return files_removed
 
 
 # ==================== 主执行逻辑 ====================

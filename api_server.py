@@ -2345,6 +2345,7 @@ def get_ai_files():
         output_dir = app.config['UPLOAD_FOLDER']
         
         # 定义文件路径
+        json_file = os.path.join(output_dir, 'json', f"json_{url_hash}.json")
         openapi_file = os.path.join(output_dir, 'openapi', f"openapi_{url_hash}.yaml")
         relation_file = os.path.join(output_dir, 'relation', f"relation_{url_hash}.json")
         scene_file = os.path.join(output_dir, 'scene', f"scene_{url_hash}.json")
@@ -2408,5 +2409,14 @@ def static_files(path):
 
 # 启动服务器
 if __name__ == '__main__':
-    logger.info("启动智能自动化测试平台API服务器")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    import argparse
+    
+    # 解析命令行参数
+    parser = argparse.ArgumentParser(description='启动智能自动化测试平台API服务器')
+    parser.add_argument('--port', type=int, default=5001, help='服务器端口 (默认: 5001)')
+    parser.add_argument('--host', type=str, default='0.0.0.0', help='服务器主机 (默认: 0.0.0.0)')
+    parser.add_argument('--debug', type=bool, default=True, help='调试模式 (默认: True)')
+    args = parser.parse_args()
+    
+    logger.info(f"启动智能自动化测试平台API服务器，端口: {args.port}")
+    app.run(host=args.host, port=args.port, debug=args.debug)

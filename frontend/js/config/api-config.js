@@ -6,7 +6,7 @@
 // API基础配置
 const API_CONFIG = {
     // API服务器基础URL
-    BASE_URL: 'http://127.0.0.1:5000',
+    BASE_URL: 'http://127.0.0.1:5001',
     
     // API端点路径
     ENDPOINTS: {
