@@ -162,8 +162,6 @@ def cache_regular(value):
             # 使用sub方法，替换已经拿到的内容
             value = re.sub(pattern, str(cache_data), value)
 <<<<<<< HEAD
-        except Exception:
-=======
         except Exception as e:
             # 对于 redis: 前缀的缓存，如果读取失败，应该抛出异常而不是静默忽略
             if regular_data.startswith("redis:"):
@@ -171,7 +169,6 @@ def cache_regular(value):
                 ERROR.logger.error(f"读取 Redis 缓存失败: {regular_data}，错误: {e}")
                 raise
             # 对于普通缓存，保持原有行为（静默忽略）
->>>>>>> origin/feature/zht1206
             pass
     return value
 
