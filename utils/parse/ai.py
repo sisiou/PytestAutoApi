@@ -1,14 +1,25 @@
 import os
 import json
 import yaml
+import requests
+import tempfile
 import hashlib
-import re
+import threading
+import logging
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from urllib.parse import urlparse
+import urllib3
+from .feishu_parse import transform_feishu_url, is_file_exist, download_json
 from openai import OpenAI
 from dotenv import load_dotenv
 from typing import List, Dict, Optional
-from feishu_parse import download_json, transform_feishu_url
+from .feishu_parse import download_json, transform_feishu_url
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import requests
+from urllib.parse import urlparse
+import urllib3
+from .feishu_parse import transform_feishu_url, is_file_exist, download_json
 
 # 加载环境变量
 load_dotenv()
@@ -302,50 +313,148 @@ def generate_business_scene_file(json_paths, output_scene_path):
     return scene_json
 
 
-def process_url_with_ai(url, output_dir=None):
+def process_url_with_ai(url, output_dir):
     """
-    处理URL并生成OpenAPI、关联关系和业务场景文件
-    返回JSON格式的结果，便于通过API调用
+    使用AI处理URL并生成OpenAPI、关联关系和业务场景文件
     
     Args:
-        url: 要处理的URL
-        output_dir: 输出目录，如果为None则使用默认目录
-        
+        url (str): 要处理的URL，可以是飞书文档URL或其他API文档URL
+        output_dir (str): 输出目录
+    
     Returns:
-        dict: 包含生成的文件内容和元数据的字典
+        dict: 包含生成文件内容和路径的字典
     """
     try:
-        import hashlib
-        
-        # 设置默认输出目录
-        if output_dir is None:
-            output_dir = os.path.join(os.path.dirname(__file__), '../../openApi')
-        
-        # 创建临时目录存储下载的JSON文件
-        temp_dir = os.path.join(output_dir, 'temp')
-        os.makedirs(temp_dir, exist_ok=True)
-        
-        # 转换飞书URL为API格式
-        api_url, path = transform_feishu_url(url)
-        
-        # 生成URL的哈希值作为UUID
+        # 生成URL的哈希值，用于唯一标识
         url_hash = hashlib.md5(url.encode()).hexdigest()
         
-        # 创建三种类型文档的子目录
+        # 定义输出目录
         openapi_dir = os.path.join(output_dir, 'openapi')
         relation_dir = os.path.join(output_dir, 'relation')
         scene_dir = os.path.join(output_dir, 'scene')
         
+        # 确保输出目录存在
         os.makedirs(openapi_dir, exist_ok=True)
         os.makedirs(relation_dir, exist_ok=True)
         os.makedirs(scene_dir, exist_ok=True)
         
-        # 生成临时文件名
-        temp_filename = f"ai_parse_{int(time.time())}.json"
-        temp_filepath = os.path.join(temp_dir, temp_filename)
+        # 解析URL
+        parsed_url = urlparse(url)
         
-        # 下载JSON文件
-        download_json(api_url, temp_filepath)
+        # 判断是否是飞书文档URL
+        if 'feishu.cn' in parsed_url.netloc:
+            # 处理飞书文档URL
+            try:
+                # 转换飞书URL为可下载的URL
+                download_url = transform_feishu_url(url)
+                
+                # 下载JSON文件
+                temp_filepath = download_json(download_url, url_hash)
+            except Exception as e:
+                raise Exception(f"无法下载飞书文档: {url}, 错误: {str(e)}")
+        else:
+            # 处理非飞书URL（如Swagger/OpenAPI文档）
+            try:
+                # 禁用SSL警告
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                
+                # 检查是否是本地文件
+                if url.startswith('file://'):
+                    # 处理本地文件
+                    file_path = url[7:]  # 移除 'file://' 前缀
+                    if not os.path.exists(file_path):
+                        raise FileNotFoundError(f"本地文件不存在: {file_path}")
+                    
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    # 尝试解析为JSON
+                    try:
+                        json_data = json.loads(content)
+                        # 创建临时目录
+                        temp_dir = os.path.join(tempfile.gettempdir(), url_hash)
+                        os.makedirs(temp_dir, exist_ok=True)
+                        
+                        # 保存JSON文件
+                        temp_filepath = os.path.join(temp_dir, "data.json")
+                        with open(temp_filepath, 'w', encoding='utf-8') as f:
+                            json.dump(json_data, f, ensure_ascii=False, indent=2)
+                    except json.JSONDecodeError:
+                        raise ValueError("本地文件不是有效的JSON格式")
+                else:
+                    # 处理远程URL
+                    session = requests.Session()
+                    session.verify = False  # 禁用SSL验证
+                    headers = {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                    }
+                    
+                    # 添加更多的SSL选项
+                    from requests.adapters import HTTPAdapter
+                    from urllib3.util.retry import Retry
+                    
+                    # 设置重试策略
+                    retry_strategy = Retry(
+                        total=3,
+                        backoff_factor=1,
+                        status_forcelist=[429, 500, 502, 503, 504],
+                    )
+                    
+                    # 创建适配器并设置重试策略
+                    adapter = HTTPAdapter(max_retries=retry_strategy)
+                    session.mount("http://", adapter)
+                    session.mount("https://", adapter)
+                    
+                    try:
+                        response = session.get(url, headers=headers, timeout=30)
+                        response.raise_for_status()
+                    except Exception as e:
+                        # 如果第一次尝试失败，尝试使用更宽松的SSL设置
+                        import ssl
+                        session.verify = False
+                        session.mount('https://', HTTPAdapter(
+                            max_retries=Retry(total=3, backoff_factor=0.5)
+                        ))
+                        
+                        # 创建一个不检查SSL证书的上下文
+                        ctx = ssl.create_default_context()
+                        ctx.check_hostname = False
+                        ctx.verify_mode = ssl.CERT_NONE
+                        
+                        response = session.get(url, headers=headers, timeout=30, verify=False)
+                        response.raise_for_status()
+                    
+                    # 根据Content-Type处理内容
+                    content_type = response.headers.get('Content-Type', '')
+                    
+                    if 'application/json' in content_type:
+                        # 直接是JSON格式
+                        json_data = response.json()
+                    elif 'application/yaml' in content_type or 'text/yaml' in content_type:
+                        # YAML格式，转换为JSON
+                        yaml_data = yaml.safe_load(response.text)
+                        json_data = yaml_data
+                    else:
+                        # 尝试自动检测
+                        try:
+                            json_data = response.json()
+                        except:
+                            try:
+                                yaml_data = yaml.safe_load(response.text)
+                                json_data = yaml_data
+                            except:
+                                raise ValueError(f"无法解析URL内容，Content-Type: {content_type}")
+                    
+                    # 创建临时目录
+                    temp_dir = os.path.join(tempfile.gettempdir(), url_hash)
+                    os.makedirs(temp_dir, exist_ok=True)
+                    
+                    # 保存JSON文件
+                    temp_filepath = os.path.join(temp_dir, "data.json")
+                    with open(temp_filepath, 'w', encoding='utf-8') as f:
+                        json.dump(json_data, f, ensure_ascii=False, indent=2)
+            except Exception as e:
+                raise Exception(f"无法下载或解析URL内容: {url}, 错误: {str(e)}")
         
         # 检查文件是否存在
         if not os.path.exists(temp_filepath):

@@ -1,0 +1,70 @@
+openapi: 3.0.3
+info:
+  title: "API服务接口"
+  version: "1.0.0"
+  description: "提供文档查询及相关基础服务的API接口，用于获取系统资源与状态信息。"
+servers:
+  - url: http://api.example.com/v1
+    description: "测试环境服务器"
+paths:
+  /test_output/temp/ai_parse_1765097248.json:
+    get:
+      summary: "获取临时解析结果"
+      description: "根据生成的临时文件名获取AI解析结果数据"
+      responses:
+        '200':
+          description: "请求成功，返回解析结果"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: "文档不存在"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: "请求参数错误"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: "服务器内部错误"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+          description: "响应状态码"
+        msg:
+          type: string
+          example: "成功"
+          description: "响应消息"
+        data:
+          type: object
+          description: "返回的数据内容"
+          additionalProperties: true
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 41404
+          description: "错误状态码"
+        msg:
+          type: string
+          example: "文档不存在"
+          description: "错误描述信息"
+        data:
+          type: object
+          description: "附加数据（通常为空）"
+          additionalProperties: true

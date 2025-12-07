@@ -18,7 +18,7 @@ const API_CONFIG = {
             PARSE_URL: '/api/docs/parse-url',
             UPLOADED_LIST: '/api/docs/uploaded-list',
             DELETE: '/api/docs/delete',
-            GENERATE_TEST_CASES: '/api/docs/generate-test-cases',
+            GENERATE_TEST_CASES: '/api/docs/generate-test-cases/{doc_task_id}',
             EXECUTE_TESTS: '/api/docs/execute-tests',
             ANALYZE_RESULTS: '/api/docs/analyze-results',
             FULL_WORKFLOW: '/api/docs/full-workflow',
@@ -26,12 +26,13 @@ const API_CONFIG = {
         },
         
         // 测试用例相关
-        TEST_CASES: {
-            LIST: '/api/test-cases',
-            GET: '/api/test-cases',
-            RUN: '/api/test-cases/run',
-            GENERATE: '/api/test-cases/generate'
-        },
+    TEST_CASES: {
+        LIST: '/api/test-cases',
+        GENERATE: '/api/test-cases/generate',
+        DETAIL: '/api/test-cases/{task_id}',
+        RUN: '/api/test-cases/{task_id}/run',
+        DELETE: '/api/test-cases/{task_id}'
+    },
         
         // 覆盖率相关
         COVERAGE: {

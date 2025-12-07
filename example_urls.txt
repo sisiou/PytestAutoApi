@@ -1,0 +1,14 @@
+# 飞书API文档URL示例
+# 每行一个URL，以#开头的行为注释
+
+# 文档API
+https://open.feishu.cn/open-apis/docx/v1/documents
+
+# 日历API
+https://open.feishu.cn/open-apis/calendar/v4/calendars
+
+# 消息发送API
+https://open.feishu.cn/open-apis/im/v1/messages
+
+# 用户API
+https://open.feishu.cn/open-apis/contact/v3/users

@@ -140,9 +140,8 @@ function refreshDashboardData() {
     refreshBtn.classList.add('refreshing');
     refreshBtn.disabled = true;
     
-<<<<<<< HEAD
     // 调用API获取数据
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DASHBOARD.REFRESH), {
+    fetch(API_CONFIG.DASHBOARD.REFRESH, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -150,10 +149,6 @@ function refreshDashboardData() {
     })
     .then(response => response.json())
     .then(data => {
-=======
-    // 模拟API请求
-    setTimeout(() => {
->>>>>>> origin/feature/zht1206
         // 更新统计数据
         updateStatistics();
         
@@ -169,7 +164,6 @@ function refreshDashboardData() {
         
         // 显示成功通知
         Notification.success('仪表板数据已更新');
-<<<<<<< HEAD
     })
     .catch(error => {
         console.error('刷新仪表板数据失败:', error);
@@ -186,16 +180,12 @@ function refreshDashboardData() {
         // 显示错误通知
         Notification.error('刷新数据失败，显示缓存数据');
     });
-=======
-    }, 1500);
->>>>>>> origin/feature/zht1206
 }
 
 // 更新统计数据
 function updateStatistics() {
-<<<<<<< HEAD
     // 调用API获取数据
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DASHBOARD.STATISTICS), {
+    fetch(API_CONFIG.DASHBOARD.STATISTICS, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -203,51 +193,66 @@ function updateStatistics() {
     })
     .then(response => response.json())
     .then(data => {
-        // 更新DOM
-        document.getElementById('totalApis').textContent = data.totalApis || 0;
-        document.getElementById('totalTestCases').textContent = data.totalTestCases || 0;
-        document.getElementById('passRate').textContent = (data.passRate || 0) + '%';
-        document.getElementById('coverage').textContent = (data.coverage || 0) + '%';
+        if (data.success) {
+            // 更新API数量
+            document.getElementById('apiCount').textContent = data.data.api_count || 0;
+            
+            // 更新测试用例数量
+            document.getElementById('testCaseCount').textContent = data.data.test_case_count || 0;
+            
+            // 更新执行次数
+            document.getElementById('executionCount').textContent = data.data.execution_count || 0;
+            
+            // 更新成功率
+            const successRate = data.data.success_rate || 0;
+            document.getElementById('successRate').textContent = successRate.toFixed(1) + '%';
+            
+            // 更新成功率进度条
+            const successRateBar = document.getElementById('successRateBar');
+            if (successRateBar) {
+                successRateBar.style.width = successRate + '%';
+                
+                // 根据成功率设置颜色
+                if (successRate >= 90) {
+                    successRateBar.className = 'progress-bar bg-success';
+                } else if (successRate >= 70) {
+                    successRateBar.className = 'progress-bar bg-warning';
+                } else {
+                    successRateBar.className = 'progress-bar bg-danger';
+                }
+            }
+        }
     })
     .catch(error => {
         console.error('获取统计数据失败:', error);
         
-        // 如果API调用失败，使用模拟数据
-        const stats = {
-            totalApis: 9,
-            totalTestCases: 33,
-            passRate: 81.8,
-            coverage: 0.0
-        };
+        // 使用模拟数据
+        document.getElementById('apiCount').textContent = Math.floor(Math.random() * 50) + 10;
+        document.getElementById('testCaseCount').textContent = Math.floor(Math.random() * 200) + 50;
+        document.getElementById('executionCount').textContent = Math.floor(Math.random() * 1000) + 200;
         
-        // 更新DOM
-        document.getElementById('totalApis').textContent = stats.totalApis;
-        document.getElementById('totalTestCases').textContent = stats.totalTestCases;
-        document.getElementById('passRate').textContent = stats.passRate + '%';
-        document.getElementById('coverage').textContent = stats.coverage + '%';
+        const successRate = 70 + Math.random() * 25;
+        document.getElementById('successRate').textContent = successRate.toFixed(1) + '%';
+        
+        const successRateBar = document.getElementById('successRateBar');
+        if (successRateBar) {
+            successRateBar.style.width = successRate + '%';
+            
+            if (successRate >= 90) {
+                successRateBar.className = 'progress-bar bg-success';
+            } else if (successRate >= 70) {
+                successRateBar.className = 'progress-bar bg-warning';
+            } else {
+                successRateBar.className = 'progress-bar bg-danger';
+            }
+        }
     });
-=======
-    // 模拟从API获取数据
-    const stats = {
-        totalApis: 9,
-        totalTestCases: 33,
-        passRate: 81.8,
-        coverage: 0.0
-    };
-    
-    // 更新DOM
-    document.getElementById('totalApis').textContent = stats.totalApis;
-    document.getElementById('totalTestCases').textContent = stats.totalTestCases;
-    document.getElementById('passRate').textContent = stats.passRate + '%';
-    document.getElementById('coverage').textContent = stats.coverage + '%';
->>>>>>> origin/feature/zht1206
 }
 
 // 更新最新测试执行表格
 function updateRecentTestsTable() {
-<<<<<<< HEAD
     // 调用API获取数据
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DASHBOARD.RECENT_TESTS), {
+    fetch(API_CONFIG.DASHBOARD.RECENT_TESTS, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -255,92 +260,159 @@ function updateRecentTestsTable() {
     })
     .then(response => response.json())
     .then(data => {
-        // 构建表格HTML
-        let tableHTML = '';
-        data.forEach(test => {
-            const statusBadge = test.status === 'pass' 
-                ? '<span class="badge bg-success">通过</span>' 
-                : '<span class="badge bg-danger">失败</span>';
+        if (data.success) {
+            const tableBody = document.querySelector('#recentTestsTable tbody');
+            tableBody.innerHTML = '';
             
-            tableHTML += `
-                <tr>
-                    <td>${test.name}</td>
-                    <td>${statusBadge}</td>
-                    <td>${test.time}</td>
-                </tr>
-            `;
-        });
-        
-        // 更新DOM
-        document.getElementById('recentTestsTable').innerHTML = tableHTML;
+            data.data.tests.forEach(test => {
+                const row = document.createElement('tr');
+                
+                // 测试名称
+                const nameCell = document.createElement('td');
+                nameCell.textContent = test.name;
+                row.appendChild(nameCell);
+                
+                // API
+                const apiCell = document.createElement('td');
+                apiCell.textContent = test.api;
+                row.appendChild(apiCell);
+                
+                // 状态
+                const statusCell = document.createElement('td');
+                const statusBadge = document.createElement('span');
+                statusBadge.className = 'badge';
+                
+                if (test.status === '通过') {
+                    statusBadge.classList.add('bg-success');
+                } else if (test.status === '失败') {
+                    statusBadge.classList.add('bg-danger');
+                } else {
+                    statusBadge.classList.add('bg-secondary');
+                }
+                
+                statusBadge.textContent = test.status;
+                statusCell.appendChild(statusBadge);
+                row.appendChild(statusCell);
+                
+                // 执行时间
+                const timeCell = document.createElement('td');
+                timeCell.textContent = new Date(test.execution_time).toLocaleString();
+                row.appendChild(timeCell);
+                
+                // 耗时
+                const durationCell = document.createElement('td');
+                durationCell.textContent = test.duration + 'ms';
+                row.appendChild(durationCell);
+                
+                // 操作
+                const actionCell = document.createElement('td');
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'btn btn-sm btn-outline-primary';
+                viewBtn.textContent = '查看';
+                viewBtn.addEventListener('click', () => {
+                    viewTestResult(test.id);
+                });
+                actionCell.appendChild(viewBtn);
+                row.appendChild(actionCell);
+                
+                tableBody.appendChild(row);
+            });
+        }
     })
     .catch(error => {
         console.error('获取最新测试执行数据失败:', error);
         
-        // 如果API调用失败，使用模拟数据
-        const recentTests = [
-            { name: '用户注册测试', status: 'pass', time: '2分钟前' },
-            { name: '用户登录测试', status: 'pass', time: '5分钟前' },
-            { name: '商品浏览测试', status: 'fail', time: '8分钟前' },
-            { name: '添加商品到购物车测试', status: 'pass', time: '10分钟前' },
-            { name: '创建订单测试', status: 'pass', time: '12分钟前' }
+        // 使用模拟数据
+        const tableBody = document.querySelector('#recentTestsTable tbody');
+        tableBody.innerHTML = '';
+        
+        const mockTests = [
+            {
+                id: 'test_001',
+                name: '用户登录测试',
+                api: 'POST /api/auth/login',
+                status: '通过',
+                execution_time: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+                duration: 245
+            },
+            {
+                id: 'test_002',
+                name: '获取用户信息测试',
+                api: 'GET /api/users/{id}',
+                status: '失败',
+                execution_time: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+                duration: 523
+            },
+            {
+                id: 'test_003',
+                name: '创建订单测试',
+                api: 'POST /api/orders',
+                status: '通过',
+                execution_time: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+                duration: 892
+            }
         ];
         
-        // 构建表格HTML
-        let tableHTML = '';
-        recentTests.forEach(test => {
-            const statusBadge = test.status === 'pass' 
-                ? '<span class="badge bg-success">通过</span>' 
-                : '<span class="badge bg-danger">失败</span>';
+        mockTests.forEach(test => {
+            const row = document.createElement('tr');
             
-            tableHTML += `
-                <tr>
-                    <td>${test.name}</td>
-                    <td>${statusBadge}</td>
-                    <td>${test.time}</td>
-                </tr>
-            `;
+            // 测试名称
+            const nameCell = document.createElement('td');
+            nameCell.textContent = test.name;
+            row.appendChild(nameCell);
+            
+            // API
+            const apiCell = document.createElement('td');
+            apiCell.textContent = test.api;
+            row.appendChild(apiCell);
+            
+            // 状态
+            const statusCell = document.createElement('td');
+            const statusBadge = document.createElement('span');
+            statusBadge.className = 'badge';
+            
+            if (test.status === '通过') {
+                statusBadge.classList.add('bg-success');
+            } else if (test.status === '失败') {
+                statusBadge.classList.add('bg-danger');
+            } else {
+                statusBadge.classList.add('bg-secondary');
+            }
+            
+            statusBadge.textContent = test.status;
+            statusCell.appendChild(statusBadge);
+            row.appendChild(statusCell);
+            
+            // 执行时间
+            const timeCell = document.createElement('td');
+            timeCell.textContent = new Date(test.execution_time).toLocaleString();
+            row.appendChild(timeCell);
+            
+            // 耗时
+            const durationCell = document.createElement('td');
+            durationCell.textContent = test.duration + 'ms';
+            row.appendChild(durationCell);
+            
+            // 操作
+            const actionCell = document.createElement('td');
+            const viewBtn = document.createElement('button');
+            viewBtn.className = 'btn btn-sm btn-outline-primary';
+            viewBtn.textContent = '查看';
+            viewBtn.addEventListener('click', () => {
+                viewTestResult(test.id);
+            });
+            actionCell.appendChild(viewBtn);
+            row.appendChild(actionCell);
+            
+            tableBody.appendChild(row);
         });
-        
-        // 更新DOM
-        document.getElementById('recentTestsTable').innerHTML = tableHTML;
     });
-=======
-    // 模拟从API获取数据
-    const recentTests = [
-        { name: '用户注册测试', status: 'pass', time: '2分钟前' },
-        { name: '用户登录测试', status: 'pass', time: '5分钟前' },
-        { name: '商品浏览测试', status: 'fail', time: '8分钟前' },
-        { name: '添加商品到购物车测试', status: 'pass', time: '10分钟前' },
-        { name: '创建订单测试', status: 'pass', time: '12分钟前' }
-    ];
-    
-    // 构建表格HTML
-    let tableHTML = '';
-    recentTests.forEach(test => {
-        const statusBadge = test.status === 'pass' 
-            ? '<span class="badge bg-success">通过</span>' 
-            : '<span class="badge bg-danger">失败</span>';
-        
-        tableHTML += `
-            <tr>
-                <td>${test.name}</td>
-                <td>${statusBadge}</td>
-                <td>${test.time}</td>
-            </tr>
-        `;
-    });
-    
-    // 更新DOM
-    document.getElementById('recentTestsTable').innerHTML = tableHTML;
->>>>>>> origin/feature/zht1206
 }
 
 // 更新高优先级建议
 function updateHighPrioritySuggestions() {
-<<<<<<< HEAD
     // 调用API获取数据
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DASHBOARD.SUGGESTIONS), {
+    fetch(API_CONFIG.DASHBOARD.SUGGESTIONS, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -348,176 +420,228 @@ function updateHighPrioritySuggestions() {
     })
     .then(response => response.json())
     .then(data => {
-        // 构建建议列表HTML
-        let suggestionsHTML = '';
-        data.forEach((suggestion, index) => {
-            const isLast = index === data.length - 1;
-            const borderClass = isLast ? '' : 'border-bottom';
+        if (data.success) {
+            const suggestionsList = document.getElementById('highPrioritySuggestions');
+            suggestionsList.innerHTML = '';
             
-            const priorityBadge = getPriorityBadge(suggestion.priority);
+            if (data.data.suggestions.length === 0) {
+                const emptyMessage = document.createElement('li');
+                emptyMessage.className = 'list-group-item text-center text-muted';
+                emptyMessage.textContent = '暂无建议';
+                suggestionsList.appendChild(emptyMessage);
+                return;
+            }
             
-            suggestionsHTML += `
-                <div class="suggestion-item p-3 ${borderClass}">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="mb-1">${suggestion.title}</h6>
-                            <p class="text-muted small mb-2">${suggestion.description}</p>
-                            <div>
-                                ${priorityBadge}
-                                <span class="badge bg-secondary me-1">${suggestion.type}</span>
-                                <span class="badge bg-light text-dark">预计工作量: ${suggestion.effort}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        // 更新DOM
-        document.getElementById('highPrioritySuggestions').innerHTML = suggestionsHTML;
+            data.data.suggestions.forEach(suggestion => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item';
+                
+                const header = document.createElement('div');
+                header.className = 'd-flex w-100 justify-content-between';
+                
+                const title = document.createElement('h6');
+                title.className = 'mb-1';
+                title.textContent = suggestion.title;
+                header.appendChild(title);
+                
+                const priority = document.createElement('span');
+                priority.className = 'badge';
+                
+                if (suggestion.priority === '高') {
+                    priority.classList.add('bg-danger');
+                } else if (suggestion.priority === '中') {
+                    priority.classList.add('bg-warning');
+                } else {
+                    priority.classList.add('bg-info');
+                }
+                
+                priority.textContent = suggestion.priority;
+                header.appendChild(priority);
+                
+                listItem.appendChild(header);
+                
+                const description = document.createElement('p');
+                description.className = 'mb-1';
+                description.textContent = suggestion.description;
+                listItem.appendChild(description);
+                
+                const actions = document.createElement('div');
+                actions.className = 'd-flex justify-content-end';
+                
+                const applyBtn = document.createElement('button');
+                applyBtn.className = 'btn btn-sm btn-outline-primary me-2';
+                applyBtn.textContent = '应用';
+                applyBtn.addEventListener('click', () => {
+                    applySuggestion(suggestion.id);
+                });
+                actions.appendChild(applyBtn);
+                
+                const ignoreBtn = document.createElement('button');
+                ignoreBtn.className = 'btn btn-sm btn-outline-secondary';
+                ignoreBtn.textContent = '忽略';
+                ignoreBtn.addEventListener('click', () => {
+                    ignoreSuggestion(suggestion.id);
+                });
+                actions.appendChild(ignoreBtn);
+                
+                listItem.appendChild(actions);
+                suggestionsList.appendChild(listItem);
+            });
+        }
     })
     .catch(error => {
-        console.error('获取高优先级建议数据失败:', error);
+        console.error('获取建议数据失败:', error);
         
-        // 如果API调用失败，使用模拟数据
-        const suggestions = [
+        // 使用模拟数据
+        const suggestionsList = document.getElementById('highPrioritySuggestions');
+        suggestionsList.innerHTML = '';
+        
+        const mockSuggestions = [
             {
-                title: '加强认证相关API的安全测试',
-                description: '增加对认证相关API的安全测试，包括SQL注入、XSS攻击等常见安全漏洞的测试。',
-                priority: 'critical',
-                type: '安全测试',
-                effort: '4-8小时'
+                id: 'suggestion_001',
+                title: '增加异常场景测试',
+                description: '发现部分API缺少异常输入场景的测试用例，建议增加相关测试以提高代码健壮性。',
+                priority: '高'
             },
             {
-                title: '提高用户注册登录场景功能覆盖度',
-                description: '当前功能覆盖度为0.0%，建议增加测试用例以覆盖所有功能点。',
-                priority: 'high',
-                type: '覆盖度',
-                effort: '2-4小时'
+                id: 'suggestion_002',
+                title: '优化测试数据',
+                description: '部分测试用例使用重复数据，建议使用动态生成的测试数据以提高测试覆盖率。',
+                priority: '中'
             },
             {
-                title: '增加商品浏览购买场景的参数覆盖度',
-                description: '当前参数覆盖度为0.0%，建议增加不同参数组合的测试用例。',
-                priority: 'high',
-                type: '覆盖度',
-                effort: '3-6小时'
+                id: 'suggestion_003',
+                title: '添加业务流程测试',
+                description: '建议添加跨API的业务流程测试，以验证系统整体功能。',
+                priority: '中'
             }
         ];
         
-        // 构建建议列表HTML
-        let suggestionsHTML = '';
-        suggestions.forEach((suggestion, index) => {
-            const isLast = index === suggestions.length - 1;
-            const borderClass = isLast ? '' : 'border-bottom';
+        mockSuggestions.forEach(suggestion => {
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item';
             
-            const priorityBadge = getPriorityBadge(suggestion.priority);
+            const header = document.createElement('div');
+            header.className = 'd-flex w-100 justify-content-between';
             
-            suggestionsHTML += `
-                <div class="suggestion-item p-3 ${borderClass}">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="mb-1">${suggestion.title}</h6>
-                            <p class="text-muted small mb-2">${suggestion.description}</p>
-                            <div>
-                                ${priorityBadge}
-                                <span class="badge bg-secondary me-1">${suggestion.type}</span>
-                                <span class="badge bg-light text-dark">预计工作量: ${suggestion.effort}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            const title = document.createElement('h6');
+            title.className = 'mb-1';
+            title.textContent = suggestion.title;
+            header.appendChild(title);
+            
+            const priority = document.createElement('span');
+            priority.className = 'badge';
+            
+            if (suggestion.priority === '高') {
+                priority.classList.add('bg-danger');
+            } else if (suggestion.priority === '中') {
+                priority.classList.add('bg-warning');
+            } else {
+                priority.classList.add('bg-info');
+            }
+            
+            priority.textContent = suggestion.priority;
+            header.appendChild(priority);
+            
+            listItem.appendChild(header);
+            
+            const description = document.createElement('p');
+            description.className = 'mb-1';
+            description.textContent = suggestion.description;
+            listItem.appendChild(description);
+            
+            const actions = document.createElement('div');
+            actions.className = 'd-flex justify-content-end';
+            
+            const applyBtn = document.createElement('button');
+            applyBtn.className = 'btn btn-sm btn-outline-primary me-2';
+            applyBtn.textContent = '应用';
+            applyBtn.addEventListener('click', () => {
+                applySuggestion(suggestion.id);
+            });
+            actions.appendChild(applyBtn);
+            
+            const ignoreBtn = document.createElement('button');
+            ignoreBtn.className = 'btn btn-sm btn-outline-secondary';
+            ignoreBtn.textContent = '忽略';
+            ignoreBtn.addEventListener('click', () => {
+                ignoreSuggestion(suggestion.id);
+            });
+            actions.appendChild(ignoreBtn);
+            
+            listItem.appendChild(actions);
+            suggestionsList.appendChild(listItem);
         });
-        
-        // 更新DOM
-        document.getElementById('highPrioritySuggestions').innerHTML = suggestionsHTML;
     });
-=======
-    // 模拟从API获取数据
-    const suggestions = [
-        {
-            title: '加强认证相关API的安全测试',
-            description: '增加对认证相关API的安全测试，包括SQL注入、XSS攻击等常见安全漏洞的测试。',
-            priority: 'critical',
-            type: '安全测试',
-            effort: '4-8小时'
-        },
-        {
-            title: '提高用户注册登录场景功能覆盖度',
-            description: '当前功能覆盖度为0.0%，建议增加测试用例以覆盖所有功能点。',
-            priority: 'high',
-            type: '覆盖度',
-            effort: '2-4小时'
-        },
-        {
-            title: '增加商品浏览购买场景的参数覆盖度',
-            description: '当前参数覆盖度为0.0%，建议增加不同参数组合的测试用例。',
-            priority: 'high',
-            type: '覆盖度',
-            effort: '3-6小时'
-        }
-    ];
-    
-    // 构建建议列表HTML
-    let suggestionsHTML = '';
-    suggestions.forEach((suggestion, index) => {
-        const isLast = index === suggestions.length - 1;
-        const borderClass = isLast ? '' : 'border-bottom';
-        
-        const priorityBadge = getPriorityBadge(suggestion.priority);
-        
-        suggestionsHTML += `
-            <div class="suggestion-item p-3 ${borderClass}">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h6 class="mb-1">${suggestion.title}</h6>
-                        <p class="text-muted small mb-2">${suggestion.description}</p>
-                        <div>
-                            ${priorityBadge}
-                            <span class="badge bg-secondary me-1">${suggestion.type}</span>
-                            <span class="badge bg-light text-dark">预计工作量: ${suggestion.effort}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    // 更新DOM
-    document.getElementById('highPrioritySuggestions').innerHTML = suggestionsHTML;
->>>>>>> origin/feature/zht1206
 }
 
-// 获取优先级徽章HTML
-function getPriorityBadge(priority) {
-    switch (priority) {
-        case 'critical':
-            return '<span class="badge bg-danger me-1">关键</span>';
-        case 'high':
-            return '<span class="badge bg-warning me-1">高</span>';
-        case 'medium':
-            return '<span class="badge bg-info me-1">中</span>';
-        case 'low':
-            return '<span class="badge bg-secondary me-1">低</span>';
-        default:
-            return '<span class="badge bg-secondary me-1">未知</span>';
-    }
+// 查看测试结果
+function viewTestResult(testId) {
+    // 跳转到测试结果页面
+    window.location.href = `test-result.html?test_id=${testId}`;
+}
+
+// 应用建议
+function applySuggestion(suggestionId) {
+    // 调用API应用建议
+    fetch(API_CONFIG.DASHBOARD.APPLY_SUGGESTION, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            suggestion_id: suggestionId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Notification.success('建议已应用');
+            // 刷新建议列表
+            updateHighPrioritySuggestions();
+        } else {
+            Notification.error('应用建议失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('应用建议失败:', error);
+        Notification.error('应用建议失败');
+    });
+}
+
+// 忽略建议
+function ignoreSuggestion(suggestionId) {
+    // 调用API忽略建议
+    fetch(API_CONFIG.DASHBOARD.IGNORE_SUGGESTION, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            suggestion_id: suggestionId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Notification.success('建议已忽略');
+            // 刷新建议列表
+            updateHighPrioritySuggestions();
+        } else {
+            Notification.error('忽略建议失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('忽略建议失败:', error);
+        Notification.error('忽略建议失败');
+    });
 }
 
 // 更新实时数据
 function updateRealTimeData() {
-    // 模拟实时数据更新
-    // 在实际应用中，这里应该调用API获取最新数据
+    // 更新统计数据
+    updateStatistics();
     
-    // 随机更新通过率
-    const passRateElement = document.getElementById('passRate');
-    const currentPassRate = parseFloat(passRateElement.textContent);
-    const newPassRate = Math.max(70, Math.min(95, currentPassRate + (Math.random() - 0.5) * 5));
-    passRateElement.textContent = newPassRate.toFixed(1) + '%';
-    
-    // 随机更新覆盖度
-    const coverageElement = document.getElementById('coverage');
-    const currentCoverage = parseFloat(coverageElement.textContent);
-    const newCoverage = Math.max(0, Math.min(100, currentCoverage + (Math.random() - 0.5) * 2));
-    coverageElement.textContent = newCoverage.toFixed(1) + '%';
+    // 更新最新测试执行表格
+    updateRecentTestsTable();
 }

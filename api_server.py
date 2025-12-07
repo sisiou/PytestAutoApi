@@ -7,10 +7,12 @@
 """
 
 import os
+import sys
 import json
 import time
 import hashlib
 import logging
+import yaml
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from flask import Flask, request, jsonify, send_from_directory
@@ -32,11 +34,11 @@ from utils.parse.ai import (
             generate_business_scene_file,
             generate_file_fingerprint, 
             get_output_path,
-            should_regenerate
+            should_regenerate,
+            process_url_with_ai
         )
 import tempfile
 import traceback
-from ai import process_url_with_ai
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,

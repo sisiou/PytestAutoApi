@@ -14,8 +14,8 @@ from flask import Flask, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 
 # 导入自定义模块
-from api_input_processor import APIInputProcessor
-from test_case_generator import TestCaseGenerator
+from .api_input_processor import APIInputProcessor
+from .test_case_generator import TestCaseGenerator
 
 
 class APIFrontend:

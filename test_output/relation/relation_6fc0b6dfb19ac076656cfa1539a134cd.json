@@ -1,0 +1,28 @@
+{
+  "relation_info": {
+    "title": "接口关联关系总览",
+    "description": "所有接口的依赖、数据流转、权限关联关系",
+    "total_apis": 1,
+    "relations": [
+      {
+        "api_path": "test_output/temp/ai_parse_1765097338.json",
+        "api_name": "文档查询接口",
+        "dependent_apis": [],
+        "dependent_reason": "无明确前置依赖，但返回文档不存在错误，可能依赖于文档创建或上传接口",
+        "data_flow": "数据来源：客户端请求；输出去向：返回文档不存在错误信息，无有效数据输出",
+        "permission_relation": "需要用户具有访问该文档的权限，当前可能未通过身份验证或权限校验",
+        "upstream_apis": [],
+        "downstream_apis": []
+      }
+    ],
+    "key_relation_scenarios": [
+      {
+        "scenario_name": "文档访问流程",
+        "api_sequence": [
+          "test_output/temp/ai_parse_1765097338.json"
+        ],
+        "description": "用户尝试访问某个文档资源，但由于文档不存在或未完成上传导致失败。后续应关联文档上传或创建接口以确保资源存在"
+      }
+    ]
+  }
+}

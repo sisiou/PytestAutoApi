@@ -9,6 +9,12 @@ let parsedApiData = null;
 let scenes = [];
 let relations = [];
 
+// 从URL获取文档ID
+function getDocIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('doc_id') || urlParams.get('id');
+}
+
 // 初始化函数 - 确保在主JS加载后再执行
 function initApiDocsApp() {
     console.log('接口文档页面初始化开始 - v1.1');
@@ -929,26 +935,81 @@ function generateTestForApi(apiId) {
 }
 
 // 生成测试用例
-function generateTestCases() {
+async function generateTestCases() {
     const generateBtn = document.getElementById('generateTestBtn');
     if (!generateBtn) return;
+    
+    // 获取当前API ID
+    const apiId = window.currentApiId;
+    if (!apiId) {
+        showSmartTestNotification('请先选择一个API', 'warning');
+        return;
+    }
     
     // 显示加载状态
     generateBtn.disabled = true;
     generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 生成中...';
     
-    // 模拟生成过程
-    setTimeout(() => {
+    try {
+        // 从全局API数据中获取当前API信息
+        const api = window.apiData.find(item => item.id === apiId);
+        if (!api) {
+            throw new Error('找不到API信息');
+        }
+        
+        // 获取文档ID
+        const docTaskId = window.currentDocId || getDocIdFromUrl();
+        if (!docTaskId) {
+            throw new Error('文档ID缺失，请刷新页面重试');
+        }
+        
+        // 准备请求数据
+        const requestData = {
+            api_path: api.path,
+            api_method: api.method
+        };
+        
+        // 调用后端API生成测试用例
+        const response = await fetch(API_CONFIG.buildUrl(API_CONFIG.DOCS.GENERATE_TEST_CASES.replace('{doc_task_id}', docTaskId)), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || '生成测试用例失败');
+        }
+        
+        const result = await response.json();
+        
+        // 显示成功消息
+        showSmartTestNotification(`测试用例生成成功！共生成 ${result.data.test_cases_count || 0} 个测试用例`, 'success');
+        
+        // 关闭API详情模态框
+        const modalElement = document.getElementById('apiDetailModal');
+        if (modalElement) {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
+        }
+        
+        // 跳转到测试用例页面
+        setTimeout(() => {
+            window.location.href = 'test-cases.html';
+        }, 1000);
+        
+    } catch (error) {
+        console.error('生成测试用例失败:', error);
+        showSmartTestNotification('生成测试用例失败: ' + error.message, 'error');
+    } finally {
         // 重置按钮状态
         generateBtn.disabled = false;
         generateBtn.innerHTML = '<i class="fas fa-vial me-2"></i>生成测试用例';
-        
-        // 显示成功消息
-        showSmartTestNotification('测试用例生成成功！', 'success');
-        
-        // 跳转到测试用例页面
-        window.location.href = 'test-cases.html';
-    }, 2000);
+    }
 }
 
 // 快速解析飞书API

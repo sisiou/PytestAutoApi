@@ -12,8 +12,8 @@ from typing import Dict, List, Optional, Union, Tuple
 from pathlib import Path
 
 # 导入现有的feishu_parse和ai模块
-from feishu_parse import transform_feishu_url, download_json
-from ai import (
+from .feishu_parse import transform_feishu_url, download_json
+from .ai import (
     generate_openapi_yaml, 
     generate_api_relation_file, 
     generate_business_scene_file,

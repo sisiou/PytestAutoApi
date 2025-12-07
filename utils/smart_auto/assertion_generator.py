@@ -1,43 +1,37 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-<<<<<<< HEAD
-# @Time   : 2025/12/03 10:00
-=======
-# @Time   : 2023/07/01 10:00
->>>>>>> origin/feature/zht1206
-# @Author : Smart Auto Platform
-# @File   : assertion_generator.py
-# @describe: 结果校验逻辑生成模块，根据API响应和业务规则自动生成断言
+@Time   : 2023/10/15 10:00
+@Author : 智能测试助手
+@File   : assertion_generator.py
+@Desc   : 结果校验逻辑生成模块
 """
 
 import json
-import re
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
+from flask import Flask, request, jsonify
 
 from utils.logging_tool.log_control import INFO, ERROR, WARNING
-from utils.other_tools.exceptions import AssertionGenerationError
 
 
 class AssertionType(Enum):
     """断言类型枚举"""
-    EQUALS = "equals"  # 等于
-    NOT_EQUALS = "not_equals"  # 不等于
-    CONTAINS = "contains"  # 包含
-    NOT_CONTAINS = "not_contains"  # 不包含
-    GREATER_THAN = "greater_than"  # 大于
-    LESS_THAN = "less_than"  # 小于
-    GREATER_THAN_OR_EQUAL = "greater_than_or_equal"  # 大于等于
-    LESS_THAN_OR_EQUAL = "less_than_or_equal"  # 小于等于
-    IN = "in"  # 在列表中
-    NOT_IN = "not_in"  # 不在列表中
-    IS_NULL = "is_null"  # 为空
-    IS_NOT_NULL = "is_not_null"  # 不为空
-    REGEX = "regex"  # 正则匹配
-    TYPE_CHECK = "type_check"  # 类型检查
-    LENGTH_CHECK = "length_check"  # 长度检查
+    EQUALS = "equals"
+    NOT_EQUALS = "not_equals"
+    CONTAINS = "contains"
+    NOT_CONTAINS = "not_contains"
+    GREATER_THAN = "greater_than"
+    LESS_THAN = "less_than"
+    GREATER_EQUAL = "greater_equal"
+    LESS_EQUAL = "less_equal"
+    IS_NULL = "is_null"
+    IS_NOT_NULL = "is_not_null"
+    IS_EMPTY = "is_empty"
+    IS_NOT_EMPTY = "is_not_empty"
+    TYPE_CHECK = "type_check"
+    REGEX_MATCH = "regex_match"
 
 
 @dataclass
@@ -45,19 +39,18 @@ class AssertionRule:
     """断言规则"""
     path: str  # JSONPath表达式
     type: AssertionType  # 断言类型
-    expected_value: Any = None  # 期望值
-    description: str = ""  # 断言描述
-    priority: int = 1  # 优先级，1-5，1最高
+    expected_value: Any  # 期望值
+    description: str  # 断言描述
 
 
 @dataclass
 class Assertion:
-    """断言数据"""
+    """断言对象"""
     jsonpath: str  # JSONPath表达式
     type: str  # 断言类型
     value: Any  # 期望值
-    AssertType: Optional[str] = None  # 断言类型（兼容旧格式）
-    description: Optional[str] = None  # 断言描述
+    AssertType: str  # 断言分类
+    description: str  # 断言描述
 
 
 class AssertionGenerator:
@@ -68,34 +61,56 @@ class AssertionGenerator:
         self.common_assertions = self._init_common_assertions()
         self.type_assertions = self._init_type_assertions()
         
-    def _init_common_assertions(self) -> Dict[str, List[AssertionRule]]:
+    def _init_common_assertions(self) -> List[AssertionRule]:
         """初始化通用断言规则"""
-        return {
-            "status": [
-                AssertionRule("$.code", AssertionType.EQUALS, 0, "检查响应状态码是否为0"),
-                AssertionRule("$.status", AssertionType.EQUALS, "success", "检查响应状态是否为success"),
-                AssertionRule("$.success", AssertionType.EQUALS, True, "检查响应成功标志是否为True"),
-            ],
-            "message": [
-                AssertionRule("$.message", AssertionType.NOT_EQUALS, None, "检查响应消息不为空"),
-                AssertionRule("$.msg", AssertionType.NOT_EQUALS, None, "检查响应消息不为空"),
-            ],
-            "data": [
-                AssertionRule("$.data", AssertionType.IS_NOT_NULL, None, "检查响应数据不为空"),
-            ]
-        }
-        
-    def _init_type_assertions(self) -> Dict[str, AssertionType]:
+        return [
+            # 状态码断言
+            AssertionRule(
+                path="$.code",
+                type=AssertionType.EQUALS,
+                expected_value=0,
+                description="检查响应状态码是否为0(成功)"
+            ),
+            AssertionRule(
+                path="$.code",
+                type=AssertionType.EQUALS,
+                expected_value=200,
+                description="检查HTTP状态码是否为200"
+            ),
+            # 消息断言
+            AssertionRule(
+                path="$.message",
+                type=AssertionType.IS_NOT_NULL,
+                expected_value=None,
+                description="检查响应消息不为空"
+            ),
+            # 数据断言
+            AssertionRule(
+                path="$.data",
+                type=AssertionType.IS_NOT_NULL,
+                expected_value=None,
+                description="检查响应数据不为空"
+            )
+        ]
+    
+    def _init_type_assertions(self) -> List[AssertionRule]:
         """初始化类型断言规则"""
-        return {
-            "string": AssertionType.TYPE_CHECK,
-            "integer": AssertionType.TYPE_CHECK,
-            "number": AssertionType.TYPE_CHECK,
-            "boolean": AssertionType.TYPE_CHECK,
-            "array": AssertionType.TYPE_CHECK,
-            "object": AssertionType.TYPE_CHECK,
-        }
-        
+        return [
+            # 基础类型断言
+            AssertionRule(
+                path="$.code",
+                type=AssertionType.TYPE_CHECK,
+                expected_value="integer",
+                description="检查状态码为整数类型"
+            ),
+            AssertionRule(
+                path="$.message",
+                type=AssertionType.TYPE_CHECK,
+                expected_value="string",
+                description="检查消息为字符串类型"
+            )
+        ]
+    
     def generate_assertions(self, api_info: Dict, response_schema: Dict = None) -> List[Assertion]:
         """
         生成断言
@@ -110,20 +125,19 @@ class AssertionGenerator:
             status_assertions = self._generate_status_assertions(api_info)
             assertions.extend(status_assertions)
             
-            # 2. 生成通用业务断言
+            # 2. 生成业务断言
             business_assertions = self._generate_business_assertions(api_info)
             assertions.extend(business_assertions)
             
-            # 3. 生成响应结构断言
+            # 3. 如果有响应模式，生成结构断言
             if response_schema:
                 structure_assertions = self._generate_structure_assertions(response_schema)
                 assertions.extend(structure_assertions)
                 
-            # 4. 生成数据类型断言
-            if response_schema:
+                # 4. 生成类型断言
                 type_assertions = self._generate_type_assertions(response_schema)
                 assertions.extend(type_assertions)
-                
+            
             # 5. 生成业务规则断言
             business_rule_assertions = self._generate_business_rule_assertions(api_info)
             assertions.extend(business_rule_assertions)
@@ -133,56 +147,59 @@ class AssertionGenerator:
             
         except Exception as e:
             ERROR.logger.error(f"生成断言失败: {str(e)}")
-            raise AssertionGenerationError(f"生成断言失败: {str(e)}")
-            
+            return []
+    
     def _generate_status_assertions(self, api_info: Dict) -> List[Assertion]:
         """生成状态码断言"""
         assertions = []
         
-        # 从API文档中获取成功状态码
-        response_codes = api_info.get('response_codes', [])
-        success_code = 200  # 默认成功状态码
+        # 获取可能的响应码
+        response_codes = api_info.get('response_codes', ['200', '201', '204'])
         
-        if '200' in response_codes:
-            success_code = 200
-        elif '201' in response_codes:
-            success_code = 201
-        elif '204' in response_codes:
-            success_code = 204
-        elif response_codes:
-            # 取第一个状态码作为成功状态码
-            try:
-                success_code = int(response_codes[0])
-            except (ValueError, IndexError):
-                pass
-                
-        # 添加状态码断言
+        # 默认检查200状态码
         assertions.append(Assertion(
-            jsonpath="status_code",
+            jsonpath="$.code",
             type="equals",
-            value=success_code,
-            AssertType="status_code",
-            description=f"检查HTTP状态码是否为{success_code}"
+            value=0,
+            AssertType="status",
+            description="检查响应状态码是否为0(成功)"
         ))
         
-        return assertions
+        # 如果API可能返回其他状态码，也添加相应的断言
+        if '201' in response_codes:
+            assertions.append(Assertion(
+                jsonpath="$.code",
+                type="equals",
+                value=201,
+                AssertType="status",
+                description="检查响应状态码是否为201(创建成功)"
+            ))
+            
+        if '204' in response_codes:
+            assertions.append(Assertion(
+                jsonpath="$.code",
+                type="equals",
+                value=204,
+                AssertType="status",
+                description="检查响应状态码是否为204(无内容)"
+            ))
         
+        return assertions
+    
     def _generate_business_assertions(self, api_info: Dict) -> List[Assertion]:
-        """生成通用业务断言"""
+        """生成业务断言"""
         assertions = []
         
-        # 遍历通用断言规则
-        for field, rules in self.common_assertions.items():
-            for rule in rules:
-                # 检查API信息中是否包含相关字段
-                if self._should_apply_rule(rule, api_info):
-                    assertion = self._convert_rule_to_assertion(rule)
-                    assertions.append(assertion)
-                    
-        return assertions
+        # 应用通用断言规则
+        for rule in self.common_assertions:
+            if self._should_apply_rule(rule, api_info):
+                assertion = self._convert_rule_to_assertion(rule)
+                assertions.append(assertion)
         
+        return assertions
+    
     def _generate_structure_assertions(self, response_schema: Dict, prefix: str = "$") -> List[Assertion]:
-        """生成响应结构断言"""
+        """生成结构断言"""
         assertions = []
         
         if not response_schema:
@@ -201,7 +218,7 @@ class AssertionGenerator:
                     type="is_not_null",
                     value=None,
                     AssertType="structure",
-                    description=f"检查响应中是否包含{prop_name}字段"
+                    description=f"检查{prop_name}字段是否存在"
                 ))
                 
                 # 递归处理嵌套对象
