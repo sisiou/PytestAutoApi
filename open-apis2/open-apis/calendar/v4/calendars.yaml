@@ -1,0 +1,30 @@
+case_common:
+  allureEpic: 日历服务API
+  allureFeature: Calendar
+  allureStory: 创建共享日历
+01_open-apis_calendar_v4_calendars:
+  host: https://open.feishu.cn/open-apis
+  url: /calendar/v4/calendars
+  method: post
+  detail: 测试创建共享日历
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c84t53IYTKC74QMYG4UDPNGKB2DDQIFZVAHR
+  requestType: json
+  is_run:
+  data:
+    summary: 测试日历
+    description: 使用开放接口创建日历
+    permissions: private
+    color: -1
+    summary_alias: 日历备注名
+  dependence_case: false
+  dependence_case_data:
+  current_request_set_cache:
+  - type: response
+    jsonpath: $.data.calendar.calendar_id
+    name: redis:calendar_id
+  assert:
+    status_code: 200
+  sql:
+

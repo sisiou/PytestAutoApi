@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能建议 - 智能自动化API测试平台</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 自定义CSS -->
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/components/suggestions.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="../index.html">
+                <i class="fas fa-robot me-2"></i>智能自动化API测试平台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html">
+                            <i class="fas fa-home me-1"></i>主页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="api-docs.html">
+                            <i class="fas fa-code me-1"></i>API文档
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="test-cases.html">
+                            <i class="fas fa-list-check me-1"></i>测试用例
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="coverage.html">
+                            <i class="fas fa-chart-pie me-1"></i>覆盖度报告
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">
+                            <i class="fas fa-lightbulb me-1"></i>智能建议
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="settings.html">
+                            <i class="fas fa-cog me-1"></i>系统设置
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>管理员
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>个人资料</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i>退出</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 面包屑导航 -->
+    <div class="container-fluid mt-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="../index.html">主页</a></li>
+                <li class="breadcrumb-item active" aria-current="page">智能建议</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="container-fluid mt-4">
+        <!-- 页面标题和操作按钮 -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h2><i class="fas fa-lightbulb me-2"></i>智能建议</h2>
+                <p class="text-muted">基于AI分析提供的测试优化建议</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-outline-primary me-2" id="refreshBtn">
+                    <i class="fas fa-sync-alt me-2"></i>刷新建议
+                </button>
+                <button class="btn btn-primary" id="generateBtn">
+                    <i class="fas fa-magic me-2"></i>生成新建议
+                </button>
+            </div>
+        </div>
+
+        <!-- 建议统计卡片 -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card suggestions-card border-primary">
+                    <div class="card-body text-center">
+                        <div class="suggestions-icon text-primary mb-3">
+                            <i class="fas fa-lightbulb fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">总建议数</h5>
+                        <h2 class="suggestions-count" id="totalSuggestions">24</h2>
+                        <div class="suggestions-trend text-success">
+                            <i class="fas fa-arrow-up"></i> 12% 较上周
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card suggestions-card border-success">
+                    <div class="card-body text-center">
+                        <div class="suggestions-icon text-success mb-3">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">已采纳</h5>
+                        <h2 class="suggestions-count" id="adoptedSuggestions">18</h2>
+                        <div class="suggestions-trend text-success">
+                            <i class="fas fa-arrow-up"></i> 8% 较上周
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card suggestions-card border-warning">
+                    <div class="card-body text-center">
+                        <div class="suggestions-icon text-warning mb-3">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">待处理</h5>
+                        <h2 class="suggestions-count" id="pendingSuggestions">4</h2>
+                        <div class="suggestions-trend text-warning">
+                            <i class="fas fa-minus"></i> 持平
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card suggestions-card border-info">
+                    <div class="card-body text-center">
+                        <div class="suggestions-icon text-info mb-3">
+                            <i class="fas fa-percentage fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">采纳率</h5>
+                        <h2 class="suggestions-count" id="adoptionRate">75%</h2>
+                        <div class="suggestions-trend text-success">
+                            <i class="fas fa-arrow-up"></i> 5% 较上周
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 筛选和搜索区域 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="categoryFilter" class="form-label">建议类别</label>
+                        <select class="form-select" id="categoryFilter">
+                            <option value="">全部类别</option>
+                            <option value="coverage">覆盖度提升</option>
+                            <option value="performance">性能优化</option>
+                            <option value="security">安全增强</option>
+                            <option value="usability">可用性改进</option>
+                            <option value="maintenance">维护性提升</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="priorityFilter" class="form-label">优先级</label>
+                        <select class="form-select" id="priorityFilter">
+                            <option value="">全部优先级</option>
+                            <option value="high">高优先级</option>
+                            <option value="medium">中优先级</option>
+                            <option value="low">低优先级</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="statusFilter" class="form-label">状态</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="">全部状态</option>
+                            <option value="pending">待处理</option>
+                            <option value="adopted">已采纳</option>
+                            <option value="rejected">已拒绝</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="searchInput" class="form-label">搜索建议</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="searchInput" placeholder="搜索建议内容...">
+                            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 建议列表 -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">智能建议列表</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <input type="radio" class="btn-check" name="viewMode" id="cardView" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="cardView">
+                        <i class="fas fa-th-large"></i>
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="viewMode" id="listView" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="listView">
+                        <i class="fas fa-list"></i>
+                    </label>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- 卡片视图 -->
+                <div id="suggestionsCardView" class="suggestions-container">
+                    <!-- 建议卡片将通过JavaScript动态加载 -->
+                </div>
+                
+                <!-- 列表视图 -->
+                <div id="suggestionsListView" class="suggestions-list-container d-none">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>建议内容</th>
+                                    <th>类别</th>
+                                    <th>优先级</th>
+                                    <th>状态</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suggestionsTableBody">
+                                <!-- 表格行将通过JavaScript动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 空状态 -->
+                <div id="emptyState" class="text-center py-5 d-none">
+                    <i class="fas fa-lightbulb fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">暂无智能建议</h4>
+                    <p class="text-muted">点击"生成新建议"按钮获取基于AI分析的测试优化建议</p>
+                    <button class="btn btn-primary mt-3" id="emptyStateGenerateBtn">
+                        <i class="fas fa-magic me-2"></i>生成新建议
+                    </button>
+                </div>
+                
+                <!-- 加载状态 -->
+                <div id="loadingState" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2 text-muted">正在加载智能建议...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 建议详情模态框 -->
+    <div class="modal fade" id="suggestionDetailModal" tabindex="-1" aria-labelledby="suggestionDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="suggestionDetailModalLabel">建议详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="suggestion-meta">
+                                <span class="suggestion-id">ID: <span id="detailSuggestionId">#SUG-001</span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="suggestion-badges">
+                                <span class="badge bg-primary" id="detailCategory">覆盖度提升</span>
+                                <span class="badge bg-danger" id="detailPriority">高优先级</span>
+                                <span class="badge bg-warning" id="detailStatus">待处理</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>建议内容</h6>
+                        <p id="detailContent" class="suggestion-content">
+                            建议增加对用户注销API的测试用例，以覆盖用户账户注销的完整流程。当前测试用例主要集中在用户注册和登录功能，缺少对用户注销功能的验证。
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>建议理由</h6>
+                        <p id="detailReason" class="suggestion-reason">
+                            根据API文档分析，系统提供了用户注销API，但现有测试用例中未包含对该接口的测试。用户注销是用户生命周期管理的重要环节，应当包含在测试覆盖范围内。
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>预期收益</h6>
+                        <p id="detailBenefit" class="suggestion-benefit">
+                            通过添加用户注销API的测试用例，可以将API覆盖度提升约3%，并确保用户生命周期管理的完整性，提高系统的可靠性。
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>实施建议</h6>
+                        <div id="detailImplementation" class="suggestion-implementation">
+                            <ol>
+                                <li>创建用户注销API的测试用例</li>
+                                <li>验证注销后的用户状态</li>
+                                <li>测试注销后的会话处理</li>
+                                <li>验证注销后的权限控制</li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>相关API</h6>
+                        <div id="detailRelatedApis" class="suggestion-related-apis">
+                            <span class="badge bg-light text-dark me-2">用户注销API</span>
+                            <span class="badge bg-light text-dark me-2">用户状态查询API</span>
+                            <span class="badge bg-light text-dark me-2">会话管理API</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="suggestion-meta">
+                                <small class="text-muted">创建时间: <span id="detailCreatedAt">2023-11-15 14:30:25</span></small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="suggestion-meta">
+                                <small class="text-muted">置信度: <span id="detailConfidence">85%</span></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-danger me-auto" id="rejectSuggestionBtn">
+                        <i class="fas fa-times me-2"></i>拒绝建议
+                    </button>
+                    <button type="button" class="btn btn-success" id="adoptSuggestionBtn">
+                        <i class="fas fa-check me-2"></i>采纳建议
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 生成建议模态框 -->
+    <div class="modal fade" id="generateModal" tabindex="-1" aria-labelledby="generateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="generateModalLabel">生成智能建议</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="generateForm">
+                        <div class="mb-3">
+                            <label for="generateType" class="form-label">建议类型</label>
+                            <select class="form-select" id="generateType">
+                                <option value="all">全部类型</option>
+                                <option value="coverage">覆盖度提升</option>
+                                <option value="performance">性能优化</option>
+                                <option value="security">安全增强</option>
+                                <option value="usability">可用性改进</option>
+                                <option value="maintenance">维护性提升</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="generatePriority" class="form-label">最低优先级</label>
+                            <select class="form-select" id="generatePriority">
+                                <option value="low">低优先级及以上</option>
+                                <option value="medium">中优先级及以上</option>
+                                <option value="high">仅高优先级</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="generateCount" class="form-label">建议数量</label>
+                            <input type="number" class="form-control" id="generateCount" min="1" max="20" value="5">
+                        </div>
+                        <div class="mb-3">
+                            <label for="generateDescription" class="form-label">描述要求（可选）</label>
+                            <textarea class="form-control" id="generateDescription" rows="3" placeholder="描述您希望获取的建议类型或关注点..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmGenerateBtn">
+                        <i class="fas fa-magic me-2"></i>生成建议
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 自定义JS -->
+    <script src="../js/components/suggestions.js"></script>
+</body>
+</html>

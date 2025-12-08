@@ -1,0 +1,21 @@
+case_common:
+  allureEpic: 日历服务API
+  allureFeature: 查询日历信息
+  allureStory: 查询日历信息
+01_open-apis_calendar_v4_calendars_calendar_id:
+  host: https://open.feishu.cn/open-apis
+  url: /calendar/v4/calendars/$cache{redis:calendar_id}
+  method: get
+  detail: 测试查询日历信息
+  headers:
+    Authorization: Bearer t-g104c84t53IYTKC74QMYG4UDPNGKB2DDQIFZVAHR
+  requestType: data
+  is_run:
+  data: {}
+  dependence_case: false
+  dependence_case_data:
+  current_request_set_cache:
+  assert:
+    status_code: 200
+  sql:
+

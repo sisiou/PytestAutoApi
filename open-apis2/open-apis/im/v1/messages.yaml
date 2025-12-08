@@ -1,0 +1,32 @@
+case_common:
+  allureEpic: 即时通讯API
+  allureFeature: 发送消息
+  allureStory: 发送消息
+01_open-apis_im_v1_messages:
+  host: https://open.feishu.cn/open-apis
+  url: /im/v1/messages?receive_id_type=open_id
+  method: post
+  detail: 测试发送消息
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c85XB2ZVRV5AYMFOII2GB4MWIVR5DNQUDPL3
+  requestType: json
+  is_run:
+  data:
+    receive_id: ou_0d83637fb561cdc1e0562991339c713b
+    msg_type: image
+    uuid: 9335d34e-590b-416e-b0ad-6d48b9dbf051
+    content: '{"image_key":"$cache{redis:image_key}"}'
+  dependence_case: true
+  dependence_case_data:
+  - case_id: 01_open-apis_im_v1_images
+    dependent_data:
+    - dependent_type: response
+      jsonpath: $.data.image_key
+      set_cache: redis:image_key
+      replace_key: data.content
+  current_request_set_cache:
+  assert:
+    status_code: 200
+  sql:
+

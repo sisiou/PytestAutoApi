@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>覆盖度报告 - 智能自动化测试平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="../css/main.css" rel="stylesheet">
+    <link href="../css/components/coverage.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="fas fa-robot me-2"></i>智能自动化测试平台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html">
+                            <i class="fas fa-home me-1"></i>首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">
+                            <i class="fas fa-tachometer-alt me-1"></i>仪表板
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="api-docs.html">
+                            <i class="fas fa-code me-1"></i>API文档
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="test-cases.html">
+                            <i class="fas fa-vial me-1"></i>测试用例
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="coverage.html">
+                            <i class="fas fa-chart-pie me-1"></i>覆盖度报告
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="suggestions.html">
+                            <i class="fas fa-lightbulb me-1"></i>智能建议
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>管理员
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-1"></i>设置</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-question-circle me-1"></i>帮助</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-1"></i>退出</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 面包屑导航 -->
+    <div class="container mt-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="../index.html">首页</a></li>
+                <li class="breadcrumb-item active">覆盖度报告</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- 主要内容 -->
+    <main class="container mt-4">
+        <!-- 页面标题和操作 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">覆盖度报告</h1>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" id="refreshBtn">
+                    <i class="fas fa-sync-alt me-2"></i>刷新
+                </button>
+                <button class="btn btn-success" id="generateBtn">
+                    <i class="fas fa-chart-line me-2"></i>生成报告
+                </button>
+                <button class="btn btn-primary" id="exportBtn">
+                    <i class="fas fa-download me-2"></i>导出报告
+                </button>
+            </div>
+        </div>
+
+        <!-- 总体覆盖度概览 -->
+        <section class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">API覆盖度</h5>
+                        <div class="coverage-circle" data-percent="85">
+                            <svg width="120" height="120">
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="#e9ecef" stroke-width="10"></circle>
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="#0d6efd" stroke-width="10"
+                                    stroke-dasharray="314" stroke-dashoffset="47" stroke-linecap="round"
+                                    transform="rotate(-90 60 60)"></circle>
+                            </svg>
+                            <div class="coverage-text">85%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">场景覆盖度</h5>
+                        <div class="coverage-circle" data-percent="72">
+                            <svg width="120" height="120">
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="#e9ecef" stroke-width="10"></circle>
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="#198754" stroke-width="10"
+                                    stroke-dasharray="314" stroke-dashoffset="88" stroke-linecap="round"
+                                    transform="rotate(-90 60 60)"></circle>
+                            </svg>
+                            <div class="coverage-text">72%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">参数覆盖度</h5>
+                        <div class="coverage-circle" data-percent="68">
+                            <svg width="120" height="120">
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="#e9ecef" stroke-width="10"></circle>
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="#ffc107" stroke-width="10"
+                                    stroke-dasharray="314" stroke-dashoffset="100" stroke-linecap="round"
+                                    transform="rotate(-90 60 60)"></circle>
+                            </svg>
+                            <div class="coverage-text">68%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">综合覆盖度</h5>
+                        <div class="coverage-circle" data-percent="75">
+                            <svg width="120" height="120">
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="#e9ecef" stroke-width="10"></circle>
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="#6f42c1" stroke-width="10"
+                                    stroke-dasharray="314" stroke-dashoffset="79" stroke-linecap="round"
+                                    transform="rotate(-90 60 60)"></circle>
+                            </svg>
+                            <div class="coverage-text">75%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 覆盖度趋势图 -->
+        <section class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">覆盖度趋势</h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <input type="radio" class="btn-check" name="trendPeriod" id="weekTrend" autocomplete="off" checked>
+                            <label class="btn btn-outline-secondary" for="weekTrend">最近7天</label>
+                            
+                            <input type="radio" class="btn-check" name="trendPeriod" id="monthTrend" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="monthTrend">最近30天</label>
+                            
+                            <input type="radio" class="btn-check" name="trendPeriod" id="quarterTrend" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="quarterTrend">最近90天</label>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="coverageTrendChart" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- API覆盖度详情 -->
+        <section class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">API覆盖度详情</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>API名称</th>
+                                        <th>覆盖度</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="apiCoverageTable">
+                                    <!-- API覆盖度数据将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">场景覆盖度详情</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>场景名称</th>
+                                        <th>覆盖度</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="scenarioCoverageTable">
+                                    <!-- 场景覆盖度数据将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 覆盖度热力图 -->
+        <section class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">API覆盖度热力图</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="coverageHeatmap">
+                            <!-- 覆盖度热力图将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 未覆盖部分分析 -->
+        <section class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">未覆盖部分分析</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="accordion" id="uncoveredAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="uncoveredApisHeading">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#uncoveredApis" aria-expanded="true" aria-controls="uncoveredApis">
+                                        未覆盖的API (3个)
+                                    </button>
+                                </h2>
+                                <div id="uncoveredApis" class="accordion-collapse collapse show" aria-labelledby="uncoveredApisHeading" data-bs-parent="#uncoveredAccordion">
+                                    <div class="accordion-body">
+                                        <ul class="list-group" id="uncoveredApisList">
+                                            <!-- 未覆盖API列表将通过JavaScript动态生成 -->
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="uncoveredScenariosHeading">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#uncoveredScenarios" aria-expanded="false" aria-controls="uncoveredScenarios">
+                                        未覆盖的场景 (5个)
+                                    </button>
+                                </h2>
+                                <div id="uncoveredScenarios" class="accordion-collapse collapse" aria-labelledby="uncoveredScenariosHeading" data-bs-parent="#uncoveredAccordion">
+                                    <div class="accordion-body">
+                                        <ul class="list-group" id="uncoveredScenariosList">
+                                            <!-- 未覆盖场景列表将通过JavaScript动态生成 -->
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="uncoveredParamsHeading">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#uncoveredParams" aria-expanded="false" aria-controls="uncoveredParams">
+                                        未覆盖的参数 (8个)
+                                    </button>
+                                </h2>
+                                <div id="uncoveredParams" class="accordion-collapse collapse" aria-labelledby="uncoveredParamsHeading" data-bs-parent="#uncoveredAccordion">
+                                    <div class="accordion-body">
+                                        <ul class="list-group" id="uncoveredParamsList">
+                                            <!-- 未覆盖参数列表将通过JavaScript动态生成 -->
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 生成报告模态框 -->
+    <div class="modal fade" id="generateModal" tabindex="-1" aria-labelledby="generateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="generateModalLabel">生成覆盖度报告</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="generateForm">
+                        <div class="mb-3">
+                            <label for="reportName" class="form-label">报告名称</label>
+                            <input type="text" class="form-control" id="reportName" value="覆盖度报告" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reportType" class="form-label">报告类型</label>
+                            <select class="form-select" id="reportType" required>
+                                <option value="comprehensive">综合覆盖度报告</option>
+                                <option value="api">API覆盖度报告</option>
+                                <option value="scenario">场景覆盖度报告</option>
+                                <option value="parameter">参数覆盖度报告</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reportFormat" class="form-label">报告格式</label>
+                            <select class="form-select" id="reportFormat" required>
+                                <option value="html">HTML</option>
+                                <option value="pdf">PDF</option>
+                                <option value="excel">Excel</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">包含内容</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="includeCharts" checked>
+                                <label class="form-check-label" for="includeCharts">图表</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="includeDetails" checked>
+                                <label class="form-check-label" for="includeDetails">详细数据</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="includeRecommendations" checked>
+                                <label class="form-check-label" for="includeRecommendations">改进建议</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmGenerateBtn">生成</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导出报告模态框 -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exportModalLabel">导出覆盖度报告</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="exportForm">
+                        <div class="mb-3">
+                            <label for="exportFormat" class="form-label">导出格式</label>
+                            <select class="form-select" id="exportFormat" required>
+                                <option value="html">HTML</option>
+                                <option value="pdf">PDF</option>
+                                <option value="excel">Excel</option>
+                                <option value="json">JSON</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="exportFileName" class="form-label">文件名</label>
+                            <input type="text" class="form-control" id="exportFileName" value="coverage_report" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">导出内容</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="exportSummary" checked>
+                                <label class="form-check-label" for="exportSummary">总体概览</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="exportTrends" checked>
+                                <label class="form-check-label" for="exportTrends">趋势数据</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="exportDetails" checked>
+                                <label class="form-check-label" for="exportDetails">详细数据</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="exportUncovered" checked>
+                                <label class="form-check-label" for="exportUncovered">未覆盖部分</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmExportBtn">导出</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>智能自动化测试平台</h5>
+                    <p>基于AI的API测试自动化解决方案</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>&copy; 2025 智能自动化测试平台. 保留所有权利.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/components/coverage.js"></script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仪表板 - 智能自动化测试平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="../css/main.css" rel="stylesheet">
+    <link href="../css/components/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="fas fa-robot me-2"></i>智能自动化测试平台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html">
+                            <i class="fas fa-home me-1"></i>首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="dashboard.html">
+                            <i class="fas fa-tachometer-alt me-1"></i>仪表板
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="api-docs.html">
+                            <i class="fas fa-code me-1"></i>API文档
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="test-cases.html">
+                            <i class="fas fa-vial me-1"></i>测试用例
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="coverage.html">
+                            <i class="fas fa-chart-pie me-1"></i>覆盖度报告
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="suggestions.html">
+                            <i class="fas fa-lightbulb me-1"></i>智能建议
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>管理员
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-1"></i>设置</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-question-circle me-1"></i>帮助</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-1"></i>退出</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 面包屑导航 -->
+    <div class="container mt-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="../index.html">首页</a></li>
+                <li class="breadcrumb-item active">仪表板</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- 主要内容 -->
+    <main class="container mt-4">
+        <!-- 页面标题 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">仪表板</h1>
+            <button class="btn btn-primary" id="refreshBtn">
+                <i class="fas fa-sync-alt me-2"></i>刷新数据
+            </button>
+        </div>
+
+        <!-- 统计卡片 -->
+        <section class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card stats-card text-white bg-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="card-title">API总数</h4>
+                                <p class="card-text display-6" id="totalApis">9</p>
+                            </div>
+                            <div class="stats-icon">
+                                <i class="fas fa-code fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card stats-card text-white bg-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="card-title">测试用例</h4>
+                                <p class="card-text display-6" id="totalTestCases">33</p>
+                            </div>
+                            <div class="stats-icon">
+                                <i class="fas fa-vial fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card stats-card text-white bg-info">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="card-title">通过率</h4>
+                                <p class="card-text display-6" id="passRate">81.8%</p>
+                            </div>
+                            <div class="stats-icon">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card stats-card text-white bg-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="card-title">覆盖度</h4>
+                                <p class="card-text display-6" id="coverage">0.0%</p>
+                            </div>
+                            <div class="stats-icon">
+                                <i class="fas fa-chart-pie fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 图表区域 -->
+        <section class="row mb-4">
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">测试执行趋势</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="testTrendChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">覆盖度分布</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="coverageDistributionChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 最新活动和建议 -->
+        <section class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">最新测试执行</h5>
+                        <a href="test-cases.html" class="btn btn-sm btn-outline-primary">查看全部</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>测试用例</th>
+                                        <th>状态</th>
+                                        <th>执行时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentTestsTable">
+                                    <tr>
+                                        <td>用户注册测试</td>
+                                        <td><span class="badge bg-success">通过</span></td>
+                                        <td>2分钟前</td>
+                                    </tr>
+                                    <tr>
+                                        <td>用户登录测试</td>
+                                        <td><span class="badge bg-success">通过</span></td>
+                                        <td>5分钟前</td>
+                                    </tr>
+                                    <tr>
+                                        <td>商品浏览测试</td>
+                                        <td><span class="badge bg-danger">失败</span></td>
+                                        <td>8分钟前</td>
+                                    </tr>
+                                    <tr>
+                                        <td>添加商品到购物车测试</td>
+                                        <td><span class="badge bg-success">通过</span></td>
+                                        <td>10分钟前</td>
+                                    </tr>
+                                    <tr>
+                                        <td>创建订单测试</td>
+                                        <td><span class="badge bg-success">通过</span></td>
+                                        <td>12分钟前</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">高优先级建议</h5>
+                        <a href="suggestions.html" class="btn btn-sm btn-outline-success">查看全部</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="suggestions-list" id="highPrioritySuggestions">
+                            <div class="suggestion-item p-3 border-bottom">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">加强认证相关API的安全测试</h6>
+                                        <p class="text-muted small mb-2">增加对认证相关API的安全测试，包括SQL注入、XSS攻击等常见安全漏洞的测试。</p>
+                                        <div>
+                                            <span class="badge bg-danger me-1">关键</span>
+                                            <span class="badge bg-secondary me-1">安全测试</span>
+                                            <span class="badge bg-light text-dark">预计工作量: 4-8小时</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="suggestion-item p-3 border-bottom">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">提高用户注册登录场景功能覆盖度</h6>
+                                        <p class="text-muted small mb-2">当前功能覆盖度为0.0%，建议增加测试用例以覆盖所有功能点。</p>
+                                        <div>
+                                            <span class="badge bg-warning me-1">高</span>
+                                            <span class="badge bg-secondary me-1">覆盖度</span>
+                                            <span class="badge bg-light text-dark">预计工作量: 2-4小时</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="suggestion-item p-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">增加商品浏览购买场景的参数覆盖度</h6>
+                                        <p class="text-muted small mb-2">当前参数覆盖度为0.0%，建议增加不同参数组合的测试用例。</p>
+                                        <div>
+                                            <span class="badge bg-warning me-1">高</span>
+                                            <span class="badge bg-secondary me-1">覆盖度</span>
+                                            <span class="badge bg-light text-dark">预计工作量: 3-6小时</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>智能自动化测试平台</h5>
+                    <p>基于AI的API测试自动化解决方案</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>&copy; 2025 智能自动化测试平台. 保留所有权利.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/components/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,459 @@
+{
+  "relation_info": {
+    "title": "接口关联关系总览",
+    "description": "所有接口的依赖、数据流转、权限关联关系，包含场景化条件依赖和参数级入参/出参传递",
+    "total_apis": 6,
+    "relations": [
+      {
+        "api_path": "/open-apis/im/v1/messages",
+        "api_name": "发送消息",
+        "global_dependent_apis": [],
+        "conditional_dependent_apis": [
+          {
+            "dependent_api_path": "/open-apis/im/v1/images",
+            "trigger_scenarios": [
+              "发送图片消息",
+              "发送富媒体消息"
+            ],
+            "trigger_conditions": [
+              {
+                "param_name": "msg_type",
+                "param_location": "body",
+                "match_rule": "in [image, file, audio, media, sticker]",
+                "description": "当消息类型为图片、文件、音频、视频、表情包时触发"
+              }
+            ],
+            "dependent_reason": "需要先上传图片或文件获取资源标识（如 image_key）才能在消息中引用",
+            "param_mapping": [
+              {
+                "source_param": "image_key",
+                "source_param_type": "string",
+                "target_param": "content",
+                "target_param_location": "body",
+                "mapping_rule": "将 image_key 嵌入 content 字段的 JSON 结构中作为图片引用"
+              }
+            ],
+            "call_timing": "调用当前接口前",
+            "optional": false
+          },
+          {
+            "dependent_api_path": "/open-apis/contact/v3/users",
+            "trigger_scenarios": [
+              "向指定用户发送消息"
+            ],
+            "trigger_conditions": [
+              {
+                "param_name": "receive_id_type",
+                "param_location": "query",
+                "match_rule": "in [open_id, union_id, user_id, email]",
+                "description": "当接收者 ID 类型为用户相关类型时需确保用户存在"
+              }
+            ],
+            "dependent_reason": "确保目标用户已存在于通讯录中，否则无法发送单聊消息",
+            "param_mapping": [
+              {
+                "source_param": "user_id",
+                "source_param_type": "string",
+                "target_param": "receive_id",
+                "target_param_location": "body",
+                "mapping游戏副本": "直接传递用户 ID 作为 receive_id 参数"
+              }
+            ],
+            "call_timing": "调用当前接口前",
+            "optional": true
+          }
+        ],
+        "data_flow": {
+          "global_input": [],
+          "conditional_input": [
+            {
+              "trigger_scenarios": [
+                "发送图片消息"
+              ],
+              "api_path": "/open-apis/im/v1/images",
+              "params": [
+                "image_key"
+              ]
+            },
+            {
+              "trigger_scenarios": [
+                "向用户发送消息"
+              ],
+              "api_path": "/open-apis/contact/v3/users",
+              "params": [
+                "user_id",
+                "open_id"
+              ]
+            }
+          ],
+          "output_data_dest": [],
+          "storage_location": "IM 消息表"
+        },
+        "permission_relation": {
+          "required_permission": "im:message:send_as_bot 或 im:message 或 im:message:send",
+          "auth_param": "Authorization",
+          "auth_param_location": "header",
+          "auth_api_path": null
+        },
+        "upstream_apis": [
+          "/open-apis/im/v1/images",
+          "/open-apis/contact/v3/users"
+        ],
+        "downstream_apis": []
+      },
+      {
+        "api_path": "/open-apis/contact/v3/users",
+        "api_name": "创建用户",
+        "global_dependent_apis": [],
+        "conditional_dependent_apis": [
+          {
+            "dependent_api_path": "/open-apis/im/v1/images",
+            "trigger_scenarios": [
+              "设置用户头像"
+            ],
+            "trigger_conditions": [
+              {
+                "param_name": "avatar_key",
+                "param_location": "body",
+                "match_rule": "present",
+                "description": "当请求体中包含 avatar_key 参数时触发"
+              }
+            ],
+            "dependent_reason": "需要先上传头像图片并获取 avatar_key 才能用于创建用户",
+            "param_mapping": [
+              {
+                "source_param": "image_key",
+                "source_param_type": "string",
+                "target_param": "avatar_key",
+                "target_param_location": "body",
+                "mapping_rule": "将上传图片返回的 image_key 直接赋值给 avatar_key"
+              }
+            ],
+            "call_timing": "调用当前接口前",
+            "optional": true
+          }
+        ],
+        "data_flow": {
+          "global_input": [],
+          "conditional_input": [
+            {
+              "trigger_scenarios": [
+                "设置头像"
+              ],
+              "api_path": "/open-apis/im/v1/images",
+              "params": [
+                "image_key"
+              ]
+            }
+          ],
+          "output_data_dest": [
+            {
+              "api_path": "/open-apis/im/v1/messages",
+              "params": [
+                "open_id",
+                "user_id"
+              ]
+            }
+          ],
+          "storage_location": "通讯录用户表"
+        },
+        "permission_relation": {
+          "required_permission": "contact:contact",
+          "auth_param": "Authorization",
+          "auth_param_location": "header",
+          "auth_api_path": null
+        },
+        "upstream_apis": [
+          "/open-apis/im/v1/images"
+        ],
+        "downstream_apis": [
+          "/open-apis/im/v1/messages"
+        ]
+      },
+      {
+        "api_path": "/open-apis/calendar/v4/calendars",
+        "api_name": "创建共享日历",
+        "global_dependent_apis": [],
+        "conditional_dependent_apis": [],
+        "data_flow": {
+          "global_input": [],
+          "conditional_input": [],
+          "output_data_dest": [
+            {
+              "api_path": "/open-apis/calendar/v4/calendars/:calendar_id",
+              "params": [
+                "calendar_id"
+              ]
+            },
+            {
+              "api_path": "/open-apis/calendar/v4/calendars/:calendar_id",
+              "params": [
+                "calendar_id"
+              ]
+            }
+          ],
+          "storage_location": "日历服务存储"
+        },
+        "permission_relation": {
+          "required_permission": "calendar:calendar:create",
+          "auth_param": "Authorization",
+          "auth_param_location": "header",
+          "auth_api_path": null
+        },
+        "upstream_apis": [],
+        "downstream_apis": [
+          "/open-apis/calendar/v4/calendars/:calendar_id",
+          "/open-apis/calendar/v4/calendars/:calendar_id"
+        ]
+      },
+      {
+        "api_path": "/open-apis/im/v1/images",
+        "api_name": "上传图片",
+        "global_dependent_apis": [],
+        "conditional_dependent_apis": [],
+        "data_flow": {
+          "global_input": [],
+          "conditional_input": [],
+          "output_data_dest": [
+            {
+              "api_path": "/open-apis/im/v1/messages",
+              "params": [
+                "image_key"
+              ]
+            },
+            {
+              "api_path": "/open-apis/contact/v3/users",
+              "params": [
+                "image_key"
+              ]
+            }
+          ],
+          "storage_location": "飞书开放平台图片存储"
+        },
+        "permission_relation": {
+          "required_permission": "im:resource:upload",
+          "auth_param": "Authorization",
+          "auth_param_location": "header",
+          "auth_api_path": null
+        },
+        "upstream_apis": [],
+        "downstream_apis": [
+          "/open-apis/im/v1/messages",
+          "/open-apis/contact/v3/users"
+        ]
+      },
+      {
+        "api_path": "/open-apis/calendar/v4/calendars/:calendar_id",
+        "api_name": "查询日历信息",
+        "global_dependent_apis": [],
+        "conditional_dependent_apis": [],
+        "data_flow": {
+          "global_input": [],
+          "conditional_input": [],
+          "output_data_dest": [
+            {
+              "api_path": "/open-apis/calendar/v4/calendars/:calendar_id",
+              "params": [
+                "calendar_id"
+              ]
+            },
+            {
+              "api_path": "/open-apis/calendar/v4/calendars/:calendar_id",
+              "params": [
+                "calendar_id"
+              ]
+            }
+          ],
+          "storage_location": "日历服务存储"
+        },
+        "permission_relation": {
+          "required_permission": "calendar:calendar:read",
+          "auth_param": "Authorization",
+          "auth_param_location": "header",
+          "auth_api_path": null
+        },
+        "upstream_apis": [],
+        "downstream_apis": [
+          "/open-apis/calendar/v4/calendars/:calendar_id",
+          "/open-apis/calendar/v4/calendars/:calendar_id"
+        ]
+      },
+      {
+        "api_path": "/open-apis/calendar/v4/calendars/:calendar_id",
+        "api_name": "删除共享日历",
+        "global_dependent_apis": [],
+        "conditional_dependent_apis": [],
+        "data_flow": {
+          "global_input": [],
+          "conditional_input": [],
+          "output_data_dest": [],
+          "storage_location": "日历服务存储"
+        },
+        "permission_relation": {
+          "required_permission": "calendar:calendar:delete",
+          "auth_param": "Authorization",
+          "auth_param_location": "header",
+          "auth_api_path": null
+        },
+        "upstream_apis": [],
+        "downstream_apis": []
+      }
+    ],
+    "key_relation_scenarios": [
+      {
+        "scenario_name": "发送图片消息",
+        "api_sequence": [
+          "/open-apis/im/v1/images",
+          "/open-apis/im/v1/messages"
+        ],
+        "sequence_detail": [
+          {
+            "api_path": "/open-apis/im/v1/images",
+            "call_order": 1,
+            "is_necessary": true,
+            "output_params": [
+              "image_key"
+            ],
+            "next_api_mapping": [
+              {
+                "next_api_path": "/open-apis/im/v1/messages",
+                "param_mapping": [
+                  {
+                    "source_param": "image_key",
+                    "target_param": "content",
+                    "target_param_location": "body"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "api_path": "/open-apis/im/v1/messages",
+            "call_order": 2,
+            "is_necessary": true,
+            "output_params": [
+              "message_id"
+            ],
+            "next_api_mapping": []
+          }
+        ],
+        "description": "首先调用上传图片接口获取 image_key，然后在发送消息接口的 content 字段中使用该 image_key 构造图片消息内容。msg_type 必须设为 'image'，且 content 中嵌入 {\"image_key\": \"xxx\"} 结构。"
+      },
+      {
+        "scenario_name": "发送文本消息",
+        "api_sequence": [
+          "/open-apis/im/v1/messages"
+        ],
+        "sequence_detail": [
+          {
+            "api_path": "/open-apis/im/v1/messages",
+            "call_order": 1,
+            "is_necessary": true,
+            "output_params": [
+              "message_id"
+            ],
+            "next_api_mapping": []
+          }
+        ],
+        "description": "仅需调用发送消息接口，无需前置操作。设置 msg_type 为 'text'，并在 content 中传入文本内容即可完成发送。"
+      },
+      {
+        "scenario_name": "创建带头像的用户",
+        "api_sequence": [
+          "/open-apis/im/v1/images",
+          "/open-apis/contact/v3/users"
+        ],
+        "sequence_detail": [
+          {
+            "api_path": "/open-apis/im/v1/images",
+            "call_order": 1,
+            "is_necessary": true,
+            "output_params": [
+              "image_key"
+            ],
+            "next_api_mapping": [
+              {
+                "next_api_path": "/open-apis/contact/v3/users",
+                "param_mapping": [
+                  {
+                    "source_param": "image_key",
+                    "target_param": "avatar_key",
+                    "target_param_location": "body"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "api_path": "/open-apis/contact/v3/users",
+            "call_order": 2,
+            "is_necessary": true,
+            "output_params": [
+              "user_id",
+              "open_id"
+            ],
+            "next_api_mapping": []
+          }
+        ],
+        "description": "先上传头像图片获得 image_key，再在创建用户时将其作为 avatar_key 使用。image_type 需选择 'avatar' 类型以符合头像用途要求。"
+      },
+      {
+        "scenario_name": "创建并管理共享日历",
+        "api_sequence": [
+          "/open-apis/calendar/v4/calendars",
+          "/open-apis/calendar/v4/calendars/:calendar_id",
+          "/open-apis/calendar/v4/calendars/:calendar_id"
+        ],
+        "sequence_detail": [
+          {
+            "api_path": "/open-apis/calendar/v4/calendars",
+            "call_order": 1,
+            "is_necessary": true,
+            "output_params": [
+              "calendar_id"
+            ],
+            "next_api_mapping": [
+              {
+                "next_api_path": "/open-apis/calendar/v4/calendars/:calendar_id",
+                "param_mapping": [
+                  {
+                    "source_param": "calendar_id",
+                    "target_param": "calendar_id",
+                    "target_param_location": "path"
+                  }
+                ]
+              },
+              {
+                "next_api_path": "/open-apis/calendar/v4/calendars/:calendar_id",
+                "param_mapping": [
+                  {
+                    "source_param": "calendar_id",
+                    "target_param": "calendar_id",
+                    "target_param_location": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "api_path": "/open-apis/calendar/v4/calendars/:calendar_id",
+            "call_order": 2,
+            "is_necessary": false,
+            "output_params": [
+              "calendar"
+            ],
+            "next_api_mapping": []
+          },
+          {
+            "api_path": "/open-apis/calendar/v4/calendars/:calendar_id",
+            "call_order": 3,
+            "is_necessary": false,
+            "output_params": [],
+            "next_api_mapping": []
+          }
+        ],
+        "description": "先创建共享日历获取 calendar_id，随后可基于该 ID 查询其详细信息或执行删除操作。查询与删除均为可选后续动作，但均依赖于创建接口返回的日历唯一标识。"
+      }
+    ]
+  }
+}

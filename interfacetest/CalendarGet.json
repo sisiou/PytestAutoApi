@@ -1,0 +1,123 @@
+{
+  "info": {
+    "title": "查询日历信息",
+    "description": "调用该接口以当前身份查询指定日历的信息。"
+  },
+  "servers": [
+    {
+      "url": "https://open.feishu.cn"
+    }
+  ],
+  "paths": {
+    "/open-apis/calendar/v4/calendars/{calendar_id}": {
+      "get": {
+        "summary": "查询日历信息",
+        "description": "当前身份必须对日历有访问权限。Authorization 可使用 tenant_access_token 或 user_access_token。",
+        "tags": [
+          "日历"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer t-xxxxxxxxxxxxxxxxxxxx"
+            },
+            "description": "tenant_access_token 或 user_access_token，格式：Bearer ${token}"
+          },
+          {
+            "name": "calendar_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "feishu.cn_xxxxxxxxxx@group.calendar.feishu.cn"
+            },
+            "description": "目标日历 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功查询日历信息",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCalendarResponse"
+                },
+                "example": {
+                  "code": 0,
+                  "msg": "success",
+                  "data": {
+                    "calendar_id": "feishu.cn_xxxxxxxxxx@group.calendar.feishu.cn",
+                    "summary": "测试日历",
+                    "description": "使用开放接口创建日历",
+                    "permissions": "private",
+                    "color": -1,
+                    "type": "shared",
+                    "summary_alias": "日历备注名",
+                    "is_deleted": false,
+                    "is_third_party": false,
+                    "role": "owner"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GetCalendarResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "msg": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "calendar_id": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "permissions": {
+                "type": "string"
+              },
+              "color": {
+                "type": "integer"
+              },
+              "type": {
+                "type": "string"
+              },
+              "summary_alias": {
+                "type": "string"
+              },
+              "is_deleted": {
+                "type": "boolean"
+              },
+              "is_third_party": {
+                "type": "boolean"
+              },
+              "role": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
