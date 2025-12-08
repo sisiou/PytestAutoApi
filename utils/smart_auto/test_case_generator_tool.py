@@ -1,17 +1,17 @@
 """
-测试用例生成功能模块
-基于LangChain工具实现，用于根据API文档自动生成测试用例
+测试用例生成工具
+支持从指定路径读取OpenAPI文档、API依赖关系和测试场景，并生成测试用例
 """
 
+import os
 import json
-from typing import Dict, List, Any, Optional, Union
-from dataclasses import dataclass
-from langchain.tools import BaseTool
-from pydantic import BaseModel, Field
+import yaml
 import random
 import string
-from .test_generator import TestCase, TestSuite
-from .openapi_parser_tool import OpenAPIParseTool
+from typing import Dict, List, Any, Optional, Tuple, Type
+from pydantic import BaseModel
+from langchain.tools import BaseTool
+from dataclasses import dataclass
 
 
 @dataclass
@@ -20,13 +20,15 @@ class GeneratedTestCase:
     name: str
     description: str
     method: str
-    url: str
+    path: str
     headers: Dict[str, str]
     params: Dict[str, Any]
     body: Optional[Dict[str, Any]]
     expected_status: int
     expected_response: Optional[Dict[str, Any]]
     assertions: List[Dict[str, Any]]
+    preconditions: List[Dict[str, Any]]
+    postconditions: List[Dict[str, Any]]
 
 
 @dataclass
@@ -35,89 +37,62 @@ class GeneratedTestSuite:
     name: str
     description: str
     test_cases: List[GeneratedTestCase]
-    setup: Optional[Dict[str, Any]]
-    teardown: Optional[Dict[str, Any]]
 
 
 class TestCaseGeneratorInput(BaseModel):
-    """测试用例生成工具输入模型"""
-    openapi_source: str = Field(description="OpenAPI 3.0.0文档来源，可以是URL、文件路径或JSON/YAML字符串")
-    source_type: str = Field(description="来源类型：url、file或content")
-    test_type: str = Field(description="测试类型：basic(基础测试)、boundary(边界测试)、error(错误测试)或all(全部)")
-    num_cases: Optional[int] = Field(description="每个API生成的测试用例数量，默认为3")
+    """测试用例生成器的输入参数"""
+    file_id: str  # 用于从指定路径读取OpenAPI文档、API依赖关系和测试场景
+    test_type: str = "all"  # 测试类型: basic(基础测试), boundary(边界测试), error(错误测试), scene(场景测试), all(全部)
 
 
 class TestCaseGeneratorTool(BaseTool):
     """测试用例生成工具"""
-    name = "test_case_generator_tool"
-    description = "根据OpenAPI 3.0.0文档自动生成API测试用例"
-    args_schema: type[BaseModel] = TestCaseGeneratorInput
-    
-    def _run(self, openapi_source: str, source_type: str, test_type: str = "all", num_cases: int = 3) -> Dict[str, Any]:
+    name = "test_case_generator"
+    description = "根据OpenAPI文档、API依赖关系和测试场景生成测试用例"
+    args_schema: Type[BaseModel] = TestCaseGeneratorInput
+
+    def _run(self, file_id: str, test_type: str = "all") -> Dict[str, Any]:
         """执行测试用例生成"""
         try:
-            # 首先解析OpenAPI文档
-            parse_tool = OpenAPIParseTool()
-            parse_result = parse_tool._run(openapi_source, source_type)
+            # 加载OpenAPI文档
+            openapi_doc = self._load_openapi_document(file_id)
+            if not openapi_doc:
+                return {"error": "无法加载OpenAPI文档"}
             
-            if "error" in parse_result:
-                return parse_result
+            # 加载API依赖关系
+            api_relation = self._load_api_relation(file_id)
             
-            endpoints = parse_result.get("endpoints", [])
-            schemas = parse_result.get("schemas", {})
-            base_url = parse_result.get("base_url", "")
+            # 加载测试场景
+            test_scene = self._load_test_scene(file_id)
             
-            # 添加调试信息
-            print(f"DEBUG: Found {len(endpoints)} endpoints")
-            if len(endpoints) > 0:
-                print(f"DEBUG: First endpoint: {endpoints[0]}")
+            # 提取API端点信息
+            endpoints = self._extract_endpoints(openapi_doc)
             
-            # 生成测试用例
+            # 根据测试类型生成测试用例
             test_suites = []
             
-            for i, endpoint in enumerate(endpoints):
-                print(f"DEBUG: Processing endpoint {i+1}/{len(endpoints)}: {endpoint.get('method')} {endpoint.get('path')}")
-                
-                method = endpoint["method"]
-                path = endpoint["path"]
-                endpoint_name = f"{method}_{path.replace('/', '_').replace('{', '').replace('}', '')}"
-                
-                # 生成不同类型的测试用例
-                test_cases = []
-                
-                if test_type in ["basic", "all"]:
-                    basic_cases = self._generate_basic_test_cases(endpoint, schemas, base_url, num_cases)
-                    print(f"DEBUG: Generated {len(basic_cases)} basic test cases for {method} {path}")
-                    test_cases.extend(basic_cases)
-                
-                if test_type in ["boundary", "all"]:
-                    boundary_cases = self._generate_boundary_test_cases(endpoint, schemas, base_url, num_cases)
-                    print(f"DEBUG: Generated {len(boundary_cases)} boundary test cases for {method} {path}")
-                    test_cases.extend(boundary_cases)
-                
-                if test_type in ["error", "all"]:
-                    error_cases = self._generate_error_test_cases(endpoint, schemas, base_url, num_cases)
-                    print(f"DEBUG: Generated {len(error_cases)} error test cases for {method} {path}")
-                    test_cases.extend(error_cases)
-                
-                print(f"DEBUG: Total test cases for {method} {path}: {len(test_cases)}")
-                
-                # 创建测试套件
-                test_suite = GeneratedTestSuite(
-                    name=f"{endpoint_name}_test_suite",
-                    description=f"测试{method} {path}接口",
-                    test_cases=test_cases,
-                    setup=self._generate_setup(endpoint),
-                    teardown=self._generate_teardown(endpoint)
-                )
-                
-                test_suites.append(test_suite)
+            if test_type in ["all", "basic"]:
+                basic_suite = self._generate_basic_test_cases(endpoints)
+                test_suites.append(basic_suite)
             
-            print(f"DEBUG: Total test suites: {len(test_suites)}")
-            print(f"DEBUG: Total test cases: {sum(len(suite.test_cases) for suite in test_suites)}")
+            if test_type in ["all", "boundary"]:
+                boundary_suite = self._generate_boundary_test_cases(endpoints)
+                test_suites.append(boundary_suite)
             
-            # 生成测试套件汇总
-            summary = self._generate_test_summary(test_suites)
+            if test_type in ["all", "error"]:
+                error_suite = self._generate_error_test_cases(endpoints)
+                test_suites.append(error_suite)
+            
+            if test_type in ["all", "scene"] and test_scene:
+                scene_suite = self._generate_scene_based_test_cases(test_scene, endpoints)
+                test_suites.extend(scene_suite)
+            
+            if test_type in ["all", "relation"] and api_relation:
+                relation_suite = self._generate_relation_based_test_cases(api_relation, endpoints)
+                test_suites.extend(relation_suite)
+            
+            # 生成测试统计信息
+            stats = self._generate_test_statistics(test_suites)
             
             return {
                 "test_suites": [
@@ -129,249 +104,650 @@ class TestCaseGeneratorTool(BaseTool):
                                 "name": case.name,
                                 "description": case.description,
                                 "method": case.method,
-                                "url": case.url,
+                                "path": case.path,
                                 "headers": case.headers,
                                 "params": case.params,
                                 "body": case.body,
                                 "expected_status": case.expected_status,
                                 "expected_response": case.expected_response,
-                                "assertions": case.assertions
-                            } for case in suite.test_cases
-                        ],
-                        "setup": suite.setup,
-                        "teardown": suite.teardown
-                    } for suite in test_suites
+                                "assertions": case.assertions,
+                                "preconditions": case.preconditions,
+                                "postconditions": case.postconditions
+                            }
+                            for case in suite.test_cases
+                        ]
+                    }
+                    for suite in test_suites
                 ],
-                "summary": summary
+                "statistics": stats
             }
-            
         except Exception as e:
-            return {"error": f"生成测试用例失败: {str(e)}"}
+            return {"error": f"生成测试用例时出错: {str(e)}"}
     
-    def _generate_basic_test_cases(self, endpoint: Dict, schemas: Dict, base_url: str, num_cases: int) -> List[GeneratedTestCase]:
+    def _load_openapi_document(self, file_id: str) -> Optional[Dict]:
+        """加载OpenAPI文档"""
+        # 尝试YAML格式
+        yaml_path = f"/Users/oss/code/PytestAutoApi/uploads/openapi/{file_id}.yaml"
+        if os.path.exists(yaml_path):
+            with open(yaml_path, 'r', encoding='utf-8') as f:
+                return yaml.safe_load(f)
+        
+        # 尝试JSON格式
+        json_path = f"/Users/oss/code/PytestAutoApi/uploads/openapi/{file_id}.json"
+        if os.path.exists(json_path):
+            with open(json_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        
+        return None
+    
+    def _load_api_relation(self, file_id: str) -> Optional[Dict]:
+        """加载API依赖关系"""
+        relation_path = f"/Users/oss/code/PytestAutoApi/uploads/relation/{file_id}.json"
+        if os.path.exists(relation_path):
+            with open(relation_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        
+        return None
+    
+    def _load_test_scene(self, file_id: str) -> Optional[Dict]:
+        """加载测试场景"""
+        scene_path = f"/Users/oss/code/PytestAutoApi/uploads/scene/{file_id}.json"
+        if os.path.exists(scene_path):
+            with open(scene_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        
+        return None
+    
+    def _extract_endpoints(self, openapi_doc: Dict) -> List[Dict]:
+        """从OpenAPI文档中提取API端点信息"""
+        endpoints = []
+        
+        if "paths" not in openapi_doc:
+            return endpoints
+        
+        for path, path_item in openapi_doc["paths"].items():
+            for method, endpoint in path_item.items():
+                if method.upper() in ["GET", "POST", "PUT", "DELETE", "PATCH"]:
+                    endpoints.append({
+                        "path": path,
+                        "method": method.upper(),
+                        "operation_id": endpoint.get("operationId", f"{method}_{path}"),
+                        "summary": endpoint.get("summary", ""),
+                        "description": endpoint.get("description", ""),
+                        "parameters": endpoint.get("parameters", []),
+                        "requestBody": endpoint.get("requestBody", {}),
+                        "responses": endpoint.get("responses", {}),
+                        "security": endpoint.get("security", []),
+                        "tags": endpoint.get("tags", [])
+                    })
+        
+        return endpoints
+    
+    def _generate_basic_test_cases(self, endpoints: List[Dict]) -> GeneratedTestSuite:
         """生成基础测试用例"""
         test_cases = []
-        method = endpoint["method"]
-        path = endpoint["path"]
         
-        # 生成正常情况测试用例
-        for i in range(min(num_cases, 2)):
-            case_name = f"test_{method.lower()}_{path.replace('/', '_').replace('{', '').replace('}', '')}_basic_{i+1}"
+        for endpoint in endpoints:
+            # 生成基础请求参数
+            params = self._generate_basic_params(endpoint.get("parameters", []))
             
-            # 生成参数
-            params = self._generate_params(endpoint, schemas, "basic")
+            # 生成基础请求体
+            body = self._generate_basic_body(endpoint.get("requestBody", {}))
             
-            # 生成请求体
-            body = self._generate_request_body(endpoint, schemas, "basic")
+            # 生成请求头
+            headers = self._generate_headers(endpoint)
+            
+            # 获取预期成功状态码
+            expected_status = self._get_expected_success_status(endpoint["method"])
             
             # 生成预期响应
-            expected_status = self._get_expected_success_status(method)
-            expected_response = self._generate_expected_response(endpoint, schemas, expected_status)
+            expected_response = self._generate_expected_response(endpoint, {}, expected_status)
             
             # 生成断言
             assertions = self._generate_assertions(endpoint, expected_status, expected_response)
             
-            # 构建URL，避免重复路径
-            if base_url and path.startswith(base_url):
-                # 如果path已经包含base_url，直接使用path
-                url = path
-            else:
-                # 否则组合base_url和path
-                url = f"{base_url}{path}"
+            # 生成前置条件和后置条件
+            preconditions = self._generate_preconditions(endpoint)
+            postconditions = self._generate_postconditions(endpoint)
             
             test_case = GeneratedTestCase(
-                name=case_name,
-                description=f"测试{method} {path}接口 - 基础测试用例{i+1}",
-                method=method,
-                url=url,
-                headers=self._generate_headers(endpoint),
+                name=f"基础测试 - {endpoint['summary'] or endpoint['operation_id']}",
+                description=f"测试{endpoint['method']} {endpoint['path']}的基础功能",
+                method=endpoint["method"],
+                path=endpoint["path"],
+                headers=headers,
                 params=params,
                 body=body,
                 expected_status=expected_status,
                 expected_response=expected_response,
-                assertions=assertions
+                assertions=assertions,
+                preconditions=preconditions,
+                postconditions=postconditions
             )
             
             test_cases.append(test_case)
         
-        return test_cases
+        return GeneratedTestSuite(
+            name="基础测试套件",
+            description="包含所有API的基础功能测试用例",
+            test_cases=test_cases
+        )
     
-    def _generate_boundary_test_cases(self, endpoint: Dict, schemas: Dict, base_url: str, num_cases: int) -> List[GeneratedTestCase]:
+    def _generate_boundary_test_cases(self, endpoints: List[Dict]) -> GeneratedTestSuite:
         """生成边界测试用例"""
         test_cases = []
-        method = endpoint["method"]
-        path = endpoint["path"]
         
-        # 生成边界值测试用例
-        boundary_cases = [
-            {"name": "empty_params", "description": "空参数测试"},
-            {"name": "max_length", "description": "最大长度测试"},
-            {"name": "min_length", "description": "最小长度测试"}
-        ]
+        for endpoint in endpoints:
+            # 生成边界测试用例
+            boundary_cases = [
+                ("空参数测试", "测试空参数情况", "empty_params"),
+                ("最大长度测试", "测试参数最大长度情况", "max_length"),
+                ("最小长度测试", "测试参数最小长度情况", "min_length")
+            ]
+            
+            for case_name, case_desc, case_type in boundary_cases:
+                # 生成边界请求参数
+                params = self._generate_boundary_params(endpoint.get("parameters", []), case_type)
+                
+                # 生成边界请求体
+                body = self._generate_boundary_body(endpoint.get("requestBody", {}), case_type)
+                
+                # 生成请求头
+                headers = self._generate_headers(endpoint)
+                
+                # 获取预期成功状态码
+                expected_status = self._get_expected_success_status(endpoint["method"])
+                
+                # 生成预期响应
+                expected_response = self._generate_expected_response(endpoint, {}, expected_status)
+                
+                # 生成断言
+                assertions = self._generate_assertions(endpoint, expected_status, expected_response)
+                
+                # 生成前置条件和后置条件
+                preconditions = self._generate_preconditions(endpoint)
+                postconditions = self._generate_postconditions(endpoint)
+                
+                test_case = GeneratedTestCase(
+                    name=f"{case_name} - {endpoint['summary'] or endpoint['operation_id']}",
+                    description=f"{case_desc}: {endpoint['method']} {endpoint['path']}",
+                    method=endpoint["method"],
+                    path=endpoint["path"],
+                    headers=headers,
+                    params=params,
+                    body=body,
+                    expected_status=expected_status,
+                    expected_response=expected_response,
+                    assertions=assertions,
+                    preconditions=preconditions,
+                    postconditions=postconditions
+                )
+                
+                test_cases.append(test_case)
         
-        for i, case_type in enumerate(boundary_cases[:min(num_cases, len(boundary_cases))]):
-            case_name = f"test_{method.lower()}_{path.replace('/', '_').replace('{', '').replace('}', '')}_boundary_{case_type['name']}"
-            
-            # 生成参数
-            params = self._generate_params(endpoint, schemas, "boundary", case_type["name"])
-            
-            # 生成请求体
-            body = self._generate_request_body(endpoint, schemas, "boundary", case_type["name"])
-            
-            # 生成预期响应
-            expected_status = self._get_expected_success_status(method)
-            expected_response = self._generate_expected_response(endpoint, schemas, expected_status)
-            
-            # 生成断言
-            assertions = self._generate_assertions(endpoint, expected_status, expected_response)
-            
-            # 构建URL，避免重复路径
-            if base_url and path.startswith(base_url):
-                # 如果path已经包含base_url，直接使用path
-                url = path
-            else:
-                # 否则组合base_url和path
-                url = f"{base_url}{path}"
-            
-            test_case = GeneratedTestCase(
-                name=case_name,
-                description=f"测试{method} {path}接口 - {case_type['description']}",
-                method=method,
-                url=url,
-                headers=self._generate_headers(endpoint),
-                params=params,
-                body=body,
-                expected_status=expected_status,
-                expected_response=expected_response,
-                assertions=assertions
-            )
-            
-            test_cases.append(test_case)
-        
-        return test_cases
+        return GeneratedTestSuite(
+            name="边界测试套件",
+            description="包含所有API的边界条件测试用例",
+            test_cases=test_cases
+        )
     
-    def _generate_error_test_cases(self, endpoint: Dict, schemas: Dict, base_url: str, num_cases: int) -> List[GeneratedTestCase]:
+    def _generate_error_test_cases(self, endpoints: List[Dict]) -> GeneratedTestSuite:
         """生成错误测试用例"""
         test_cases = []
-        method = endpoint["method"]
-        path = endpoint["path"]
         
-        # 生成错误情况测试用例
-        error_cases = [
-            {"name": "invalid_method", "description": "无效HTTP方法测试", "status": 405},
-            {"name": "missing_required", "description": "缺少必需参数测试", "status": 400},
-            {"name": "invalid_format", "description": "无效格式测试", "status": 400},
-            {"name": "unauthorized", "description": "未授权测试", "status": 401}
-        ]
-        
-        for i, case_type in enumerate(error_cases[:min(num_cases, len(error_cases))]):
-            case_name = f"test_{method.lower()}_{path.replace('/', '_').replace('{', '').replace('}', '')}_error_{case_type['name']}"
+        for endpoint in endpoints:
+            # 生成错误测试用例
+            error_cases = [
+                ("缺少必需参数测试", "测试缺少必需参数情况", "missing_required"),
+                ("无效格式测试", "测试参数格式错误情况", "invalid_format"),
+                ("未授权测试", "测试未授权访问情况", "unauthorized")
+            ]
             
-            # 生成参数
-            params = self._generate_params(endpoint, schemas, "error", case_type["name"])
-            
-            # 生成请求体
-            body = self._generate_request_body(endpoint, schemas, "error", case_type["name"])
-            
-            # 生成预期响应
-            expected_status = case_type["status"]
-            expected_response = self._generate_expected_response(endpoint, schemas, expected_status)
-            
-            # 生成断言
-            assertions = self._generate_assertions(endpoint, expected_status, expected_response)
-            
-            # 构建URL，避免重复路径
-            if base_url and path.startswith(base_url):
-                # 如果path已经包含base_url，直接使用path
-                url = path
-            else:
-                # 否则组合base_url和path
-                url = f"{base_url}{path}"
-            
-            test_case = GeneratedTestCase(
-                name=case_name,
-                description=f"测试{method} {path}接口 - {case_type['description']}",
-                method=method,
-                url=url,
-                headers=self._generate_headers(endpoint),
-                params=params,
-                body=body,
-                expected_status=expected_status,
-                expected_response=expected_response,
-                assertions=assertions
-            )
-            
-            test_cases.append(test_case)
-        
-        return test_cases
-    
-    def _generate_params(self, endpoint: Dict, schemas: Dict, test_type: str, case_type: str = "") -> Dict[str, Any]:
-        """生成请求参数"""
-        params = {}
-        
-        for param in endpoint.get("parameters", []):
-            param_name = param["name"]
-            param_in = param.get("in", param.get("param_in", ""))  # 兼容两种格式
-            param_type = param.get("type", "string")
-            required = param.get("required", False)
-            
-            # 只生成查询参数和路径参数
-            if param_in in ["query", "path"]:
-                # 根据测试类型生成不同的参数值
-                if test_type == "basic":
-                    value = self._generate_basic_value(param_type, param)
-                elif test_type == "boundary":
-                    value = self._generate_boundary_value(param_type, param, case_type)
-                elif test_type == "error":
-                    value = self._generate_error_value(param_type, param, case_type)
-                else:
-                    value = self._generate_basic_value(param_type, param)
+            for case_name, case_desc, case_type in error_cases:
+                # 生成错误请求参数
+                params = self._generate_error_params(endpoint.get("parameters", []), case_type)
                 
-                # 对于路径参数，总是提供值
-                if param_in == "path" or required:
-                    params[param_name] = value
-                # 对于可选查询参数，在错误测试中可能不提供
-                elif test_type == "error" and case_type == "missing_required" and not required:
-                    continue  # 跳过可选参数
-                else:
-                    params[param_name] = value
+                # 生成错误请求体
+                body = self._generate_error_body(endpoint.get("requestBody", {}), case_type)
+                
+                # 生成请求头
+                headers = self._generate_headers(endpoint)
+                
+                # 对于未授权测试，移除认证头
+                if case_type == "unauthorized" and "Authorization" in headers:
+                    del headers["Authorization"]
+                
+                # 获取预期错误状态码
+                expected_status = self._get_expected_error_status(case_type)
+                
+                # 生成预期响应
+                expected_response = self._generate_expected_response(endpoint, {}, expected_status)
+                
+                # 生成断言
+                assertions = self._generate_assertions(endpoint, expected_status, expected_response)
+                
+                # 生成前置条件和后置条件
+                preconditions = self._generate_preconditions(endpoint)
+                postconditions = self._generate_postconditions(endpoint)
+                
+                test_case = GeneratedTestCase(
+                    name=f"{case_name} - {endpoint['summary'] or endpoint['operation_id']}",
+                    description=f"{case_desc}: {endpoint['method']} {endpoint['path']}",
+                    method=endpoint["method"],
+                    path=endpoint["path"],
+                    headers=headers,
+                    params=params,
+                    body=body,
+                    expected_status=expected_status,
+                    expected_response=expected_response,
+                    assertions=assertions,
+                    preconditions=preconditions,
+                    postconditions=postconditions
+                )
+                
+                test_cases.append(test_case)
         
-        return params
+        return GeneratedTestSuite(
+            name="错误测试套件",
+            description="包含所有API的错误情况测试用例",
+            test_cases=test_cases
+        )
     
-    def _generate_request_body(self, endpoint: Dict, schemas: Dict, test_type: str, case_type: str = "") -> Optional[Dict[str, Any]]:
-        """生成请求体"""
-        request_body = endpoint.get("request_body")
+    def _generate_scene_based_test_cases(self, test_scene: Dict, endpoints: List[Dict]) -> List[GeneratedTestSuite]:
+        """基于测试场景生成测试用例"""
+        test_suites = []
         
-        # 添加调试信息
-        print(f"DEBUG: Request body for {endpoint.get('method')} {endpoint.get('path')}: {request_body}")
+        # 提取业务场景
+        business_scenes = test_scene.get("business_scenes", [])
         
-        if not request_body:
-            return None
-        
-        # 处理我们的数据结构
-        if "content_types" in request_body:
-            if "application/json" not in request_body.get("content_types", []):
-                return None
+        for scene in business_scenes:
+            scene_name = scene.get("name", "")
+            scene_description = scene.get("description", "")
+            scene_apis = scene.get("apis", [])
             
-            schema = request_body.get("schema", {})
-        else:
-            # 处理标准OpenAPI 3.0格式
-            content = request_body.get("content", {})
-            json_content = content.get("application/json")
-            if not json_content:
-                return None
+            test_cases = []
             
-            schema = json_content.get("schema", {})
+            # 为每个场景中的API生成测试用例
+            for api_info in scene_apis:
+                api_path = api_info.get("path", "")
+                api_method = api_info.get("method", "")
+                api_params = api_info.get("params", {})
+                api_body = api_info.get("body", {})
+                
+                # 查找匹配的端点
+                matching_endpoint = None
+                for endpoint in endpoints:
+                    if endpoint["path"] == api_path and endpoint["method"].upper() == api_method.upper():
+                        matching_endpoint = endpoint
+                        break
+                
+                if not matching_endpoint:
+                    continue
+                
+                # 生成请求头
+                headers = self._generate_headers(matching_endpoint)
+                
+                # 获取预期成功状态码
+                expected_status = self._get_expected_success_status(matching_endpoint["method"])
+                
+                # 生成预期响应
+                expected_response = self._generate_expected_response(matching_endpoint, {}, expected_status)
+                
+                # 生成断言
+                assertions = self._generate_assertions(matching_endpoint, expected_status, expected_response)
+                
+                # 生成场景特定的前置条件和后置条件
+                preconditions = self._generate_scene_preconditions(scene, api_info)
+                postconditions = self._generate_scene_postconditions(scene, api_info)
+                
+                test_case = GeneratedTestCase(
+                    name=f"场景测试 - {scene_name} - {matching_endpoint['summary'] or matching_endpoint['operation_id']}",
+                    description=f"测试场景'{scene_name}'中的API: {matching_endpoint['method']} {matching_endpoint['path']}",
+                    method=matching_endpoint["method"],
+                    path=matching_endpoint["path"],
+                    headers=headers,
+                    params=api_params,
+                    body=api_body,
+                    expected_status=expected_status,
+                    expected_response=expected_response,
+                    assertions=assertions,
+                    preconditions=preconditions,
+                    postconditions=postconditions
+                )
+                
+                test_cases.append(test_case)
+            
+            if test_cases:
+                test_suite = GeneratedTestSuite(
+                    name=f"场景测试套件 - {scene_name}",
+                    description=scene_description,
+                    test_cases=test_cases
+                )
+                test_suites.append(test_suite)
         
-        # 根据测试类型生成不同的请求体
-        if test_type == "basic":
-            return self._generate_basic_object(schema, schemas)
-        elif test_type == "boundary":
-            return self._generate_boundary_object(schema, schemas, case_type)
-        elif test_type == "error":
-            return self._generate_error_object(schema, schemas, case_type)
-        else:
-            return self._generate_basic_object(schema, schemas)
+        return test_suites
+    
+    def _generate_relation_based_test_cases(self, api_relation: Dict, endpoints: List[Dict]) -> List[GeneratedTestSuite]:
+        """基于API依赖关系生成测试用例"""
+        test_suites = []
+        
+        # 提取全局依赖API
+        global_dependencies = api_relation.get("global_dependencies", [])
+        
+        # 提取条件依赖API
+        conditional_dependencies = api_relation.get("conditional_dependencies", [])
+        
+        # 提取数据流转
+        data_flows = api_relation.get("data_flows", [])
+        
+        # 提取权限关系
+        permission_relations = api_relation.get("permission_relations", [])
+        
+        # 为全局依赖API生成测试用例
+        if global_dependencies:
+            global_test_cases = []
+            
+            for dep_info in global_dependencies:
+                api_path = dep_info.get("path", "")
+                api_method = dep_info.get("method", "")
+                dependency_description = dep_info.get("description", "")
+                
+                # 查找匹配的端点
+                matching_endpoint = None
+                for endpoint in endpoints:
+                    if endpoint["path"] == api_path and endpoint["method"].upper() == api_method.upper():
+                        matching_endpoint = endpoint
+                        break
+                
+                if not matching_endpoint:
+                    continue
+                
+                # 生成基础请求参数和请求体
+                params = self._generate_basic_params(matching_endpoint.get("parameters", []))
+                body = self._generate_basic_body(matching_endpoint.get("requestBody", {}))
+                
+                # 生成请求头
+                headers = self._generate_headers(matching_endpoint)
+                
+                # 获取预期成功状态码
+                expected_status = self._get_expected_success_status(matching_endpoint["method"])
+                
+                # 生成预期响应
+                expected_response = self._generate_expected_response(matching_endpoint, {}, expected_status)
+                
+                # 生成断言
+                assertions = self._generate_assertions(matching_endpoint, expected_status, expected_response)
+                
+                # 生成依赖特定的前置条件和后置条件
+                preconditions = self._generate_dependency_preconditions(dep_info)
+                postconditions = self._generate_dependency_postconditions(dep_info)
+                
+                test_case = GeneratedTestCase(
+                    name=f"依赖测试 - 全局依赖 - {matching_endpoint['summary'] or matching_endpoint['operation_id']}",
+                    description=f"测试全局依赖API: {dependency_description} - {matching_endpoint['method']} {matching_endpoint['path']}",
+                    method=matching_endpoint["method"],
+                    path=matching_endpoint["path"],
+                    headers=headers,
+                    params=params,
+                    body=body,
+                    expected_status=expected_status,
+                    expected_response=expected_response,
+                    assertions=assertions,
+                    preconditions=preconditions,
+                    postconditions=postconditions
+                )
+                
+                global_test_cases.append(test_case)
+            
+            if global_test_cases:
+                test_suite = GeneratedTestSuite(
+                    name="依赖测试套件 - 全局依赖",
+                    description="测试全局依赖API的测试用例",
+                    test_cases=global_test_cases
+                )
+                test_suites.append(test_suite)
+        
+        # 为条件依赖API生成测试用例
+        if conditional_dependencies:
+            conditional_test_cases = []
+            
+            for dep_info in conditional_dependencies:
+                api_path = dep_info.get("path", "")
+                api_method = dep_info.get("method", "")
+                dependency_description = dep_info.get("description", "")
+                condition = dep_info.get("condition", "")
+                
+                # 查找匹配的端点
+                matching_endpoint = None
+                for endpoint in endpoints:
+                    if endpoint["path"] == api_path and endpoint["method"].upper() == api_method.upper():
+                        matching_endpoint = endpoint
+                        break
+                
+                if not matching_endpoint:
+                    continue
+                
+                # 生成基础请求参数和请求体
+                params = self._generate_basic_params(matching_endpoint.get("parameters", []))
+                body = self._generate_basic_body(matching_endpoint.get("requestBody", {}))
+                
+                # 生成请求头
+                headers = self._generate_headers(matching_endpoint)
+                
+                # 获取预期成功状态码
+                expected_status = self._get_expected_success_status(matching_endpoint["method"])
+                
+                # 生成预期响应
+                expected_response = self._generate_expected_response(matching_endpoint, {}, expected_status)
+                
+                # 生成断言
+                assertions = self._generate_assertions(matching_endpoint, expected_status, expected_response)
+                
+                # 生成依赖特定的前置条件和后置条件
+                preconditions = self._generate_dependency_preconditions(dep_info)
+                postconditions = self._generate_dependency_postconditions(dep_info)
+                
+                test_case = GeneratedTestCase(
+                    name=f"依赖测试 - 条件依赖 - {matching_endpoint['summary'] or matching_endpoint['operation_id']}",
+                    description=f"测试条件依赖API: {dependency_description} (条件: {condition}) - {matching_endpoint['method']} {matching_endpoint['path']}",
+                    method=matching_endpoint["method"],
+                    path=matching_endpoint["path"],
+                    headers=headers,
+                    params=params,
+                    body=body,
+                    expected_status=expected_status,
+                    expected_response=expected_response,
+                    assertions=assertions,
+                    preconditions=preconditions,
+                    postconditions=postconditions
+                )
+                
+                conditional_test_cases.append(test_case)
+            
+            if conditional_test_cases:
+                test_suite = GeneratedTestSuite(
+                    name="依赖测试套件 - 条件依赖",
+                    description="测试条件依赖API的测试用例",
+                    test_cases=conditional_test_cases
+                )
+                test_suites.append(test_suite)
+        
+        # 为数据流转生成测试用例
+        if data_flows:
+            flow_test_cases = []
+            
+            for flow_info in data_flows:
+                source_api = flow_info.get("source_api", {})
+                target_api = flow_info.get("target_api", {})
+                flow_description = flow_info.get("description", "")
+                data_mapping = flow_info.get("data_mapping", {})
+                
+                # 查找匹配的源端点
+                source_endpoint = None
+                for endpoint in endpoints:
+                    if endpoint["path"] == source_api.get("path", "") and endpoint["method"].upper() == source_api.get("method", "").upper():
+                        source_endpoint = endpoint
+                        break
+                
+                # 查找匹配的目标端点
+                target_endpoint = None
+                for endpoint in endpoints:
+                    if endpoint["path"] == target_api.get("path", "") and endpoint["method"].upper() == target_api.get("method", "").upper():
+                        target_endpoint = endpoint
+                        break
+                
+                if not source_endpoint or not target_endpoint:
+                    continue
+                
+                # 生成源API的请求参数和请求体
+                source_params = self._generate_basic_params(source_endpoint.get("parameters", []))
+                source_body = self._generate_basic_body(source_endpoint.get("requestBody", {}))
+                
+                # 生成源API的请求头
+                source_headers = self._generate_headers(source_endpoint)
+                
+                # 获取源API的预期成功状态码
+                source_expected_status = self._get_expected_success_status(source_endpoint["method"])
+                
+                # 生成源API的预期响应
+                source_expected_response = self._generate_expected_response(source_endpoint, {}, source_expected_status)
+                
+                # 生成源API的断言
+                source_assertions = self._generate_assertions(source_endpoint, source_expected_status, source_expected_response)
+                
+                # 生成数据流转特定的前置条件和后置条件
+                preconditions = self._generate_flow_preconditions(flow_info, source_api)
+                postconditions = self._generate_flow_postconditions(flow_info, target_api)
+                
+                test_case = GeneratedTestCase(
+                    name=f"数据流转测试 - {source_endpoint['summary'] or source_endpoint['operation_id']}",
+                    description=f"测试数据流转: {flow_description} - {source_endpoint['method']} {source_endpoint['path']} -> {target_endpoint['method']} {target_endpoint['path']}",
+                    method=source_endpoint["method"],
+                    path=source_endpoint["path"],
+                    headers=source_headers,
+                    params=source_params,
+                    body=source_body,
+                    expected_status=source_expected_status,
+                    expected_response=source_expected_response,
+                    assertions=source_assertions,
+                    preconditions=preconditions,
+                    postconditions=postconditions
+                )
+                
+                flow_test_cases.append(test_case)
+            
+            if flow_test_cases:
+                test_suite = GeneratedTestSuite(
+                    name="数据流转测试套件",
+                    description="测试API间数据流转的测试用例",
+                    test_cases=flow_test_cases
+                )
+                test_suites.append(test_suite)
+        
+        # 为权限关系生成测试用例
+        if permission_relations:
+            permission_test_cases = []
+            
+            for perm_info in permission_relations:
+                api_path = perm_info.get("path", "")
+                api_method = perm_info.get("method", "")
+                permission_description = perm_info.get("description", "")
+                required_permission = perm_info.get("required_permission", "")
+                
+                # 查找匹配的端点
+                matching_endpoint = None
+                for endpoint in endpoints:
+                    if endpoint["path"] == api_path and endpoint["method"].upper() == api_method.upper():
+                        matching_endpoint = endpoint
+                        break
+                
+                if not matching_endpoint:
+                    continue
+                
+                # 生成基础请求参数和请求体
+                params = self._generate_basic_params(matching_endpoint.get("parameters", []))
+                body = self._generate_basic_body(matching_endpoint.get("requestBody", {}))
+                
+                # 生成请求头（包含权限信息）
+                headers = self._generate_headers(matching_endpoint)
+                headers["X-Permission"] = required_permission
+                
+                # 获取预期成功状态码
+                expected_status = self._get_expected_success_status(matching_endpoint["method"])
+                
+                # 生成预期响应
+                expected_response = self._generate_expected_response(matching_endpoint, {}, expected_status)
+                
+                # 生成断言
+                assertions = self._generate_assertions(matching_endpoint, expected_status, expected_response)
+                
+                # 生成权限特定的前置条件和后置条件
+                preconditions = self._generate_permission_preconditions(perm_info)
+                postconditions = self._generate_permission_postconditions(perm_info)
+                
+                test_case = GeneratedTestCase(
+                    name=f"权限测试 - {matching_endpoint['summary'] or matching_endpoint['operation_id']}",
+                    description=f"测试权限关系: {permission_description} (需要权限: {required_permission}) - {matching_endpoint['method']} {matching_endpoint['path']}",
+                    method=matching_endpoint["method"],
+                    path=matching_endpoint["path"],
+                    headers=headers,
+                    params=params,
+                    body=body,
+                    expected_status=expected_status,
+                    expected_response=expected_response,
+                    assertions=assertions,
+                    preconditions=preconditions,
+                    postconditions=postconditions
+                )
+                
+                permission_test_cases.append(test_case)
+            
+            if permission_test_cases:
+                test_suite = GeneratedTestSuite(
+                    name="权限测试套件",
+                    description="测试API权限关系的测试用例",
+                    test_cases=permission_test_cases
+                )
+                test_suites.append(test_suite)
+        
+        return test_suites
+    
+    def _generate_test_statistics(self, test_suites: List[GeneratedTestSuite]) -> Dict[str, int]:
+        """生成测试统计信息"""
+        total_suites = len(test_suites)
+        total_cases = sum(len(suite.test_cases) for suite in test_suites)
+        
+        # 按类型统计测试用例数量
+        basic_cases = 0
+        boundary_cases = 0
+        error_cases = 0
+        scene_cases = 0
+        relation_cases = 0
+        
+        for suite in test_suites:
+            for case in suite.test_cases:
+                if "基础" in case.name:
+                    basic_cases += 1
+                elif "边界" in case.name:
+                    boundary_cases += 1
+                elif "错误" in case.name:
+                    error_cases += 1
+                elif "scene" in suite.name:
+                    scene_cases += 1
+                else:
+                    relation_cases += 1
+        
+        return {
+            "total_suites": total_suites,
+            "total_cases": total_cases,
+            "basic_cases": basic_cases,
+            "boundary_cases": boundary_cases,
+            "error_cases": error_cases,
+            "scene_cases": scene_cases,
+            "relation_cases": relation_cases
+        }
+    
+    # 以下是辅助方法，用于生成各种测试数据
     
     def _generate_basic_value(self, param_type: str, param: Dict) -> Any:
         """生成基础值"""
@@ -527,6 +903,17 @@ class TestCaseGeneratorTool(BaseTool):
         else:
             return 200
     
+    def _get_expected_error_status(self, case_type: str) -> int:
+        """获取预期错误状态码"""
+        if case_type == "missing_required":
+            return 400
+        elif case_type == "invalid_format":
+            return 400
+        elif case_type == "unauthorized":
+            return 401
+        else:
+            return 400
+    
     def _generate_expected_response(self, endpoint: Dict, schemas: Dict, status_code: int) -> Optional[Dict[str, Any]]:
         """生成预期响应"""
         responses = endpoint.get("responses", {})
@@ -580,42 +967,294 @@ class TestCaseGeneratorTool(BaseTool):
         
         return assertions
     
-    def _generate_setup(self, endpoint: Dict) -> Optional[Dict[str, Any]]:
-        """生成测试前置条件"""
-        # 根据需要生成前置条件，例如创建测试数据
-        return None
+    def _generate_preconditions(self, endpoint: Dict) -> List[Dict[str, Any]]:
+        """生成前置条件"""
+        preconditions = []
+        
+        # 添加通用前置条件
+        preconditions.append({
+            "type": "api_available",
+            "description": f"确保API {endpoint['method']} {endpoint['path']} 可用"
+        })
+        
+        # 如果API需要认证，添加认证前置条件
+        if endpoint.get("security"):
+            preconditions.append({
+                "type": "authenticated",
+                "description": "确保用户已认证"
+            })
+        
+        return preconditions
     
-    def _generate_teardown(self, endpoint: Dict) -> Optional[Dict[str, Any]]:
-        """生成测试后置条件"""
-        # 根据需要生成后置条件，例如清理测试数据
-        return None
+    def _generate_postconditions(self, endpoint: Dict) -> List[Dict[str, Any]]:
+        """生成后置条件"""
+        postconditions = []
+        
+        # 添加通用后置条件
+        postconditions.append({
+            "type": "response_received",
+            "description": "确保收到响应"
+        })
+        
+        return postconditions
     
-    def _generate_test_summary(self, test_suites: List[GeneratedTestSuite]) -> Dict[str, Any]:
-        """生成测试汇总"""
-        total_suites = len(test_suites)
-        total_cases = sum(len(suite.test_cases) for suite in test_suites)
+    def _generate_scene_preconditions(self, scene: Dict, api_info: Dict) -> List[Dict[str, Any]]:
+        """生成场景特定的前置条件"""
+        preconditions = []
         
-        # 按测试类型统计
-        basic_cases = 0
-        boundary_cases = 0
-        error_cases = 0
+        # 添加场景前置条件
+        scene_preconditions = scene.get("preconditions", [])
+        for condition in scene_preconditions:
+            preconditions.append({
+                "type": "scene_condition",
+                "description": condition.get("description", "")
+            })
         
-        for suite in test_suites:
-            for case in suite.test_cases:
-                if "basic" in case.name:
-                    basic_cases += 1
-                elif "boundary" in case.name:
-                    boundary_cases += 1
-                elif "error" in case.name:
-                    error_cases += 1
+        # 添加API特定的前置条件
+        api_preconditions = api_info.get("preconditions", [])
+        for condition in api_preconditions:
+            preconditions.append({
+                "type": "api_condition",
+                "description": condition.get("description", "")
+            })
         
-        return {
-            "total_suites": total_suites,
-            "total_cases": total_cases,
-            "basic_cases": basic_cases,
-            "boundary_cases": boundary_cases,
-            "error_cases": error_cases
-        }
+        return preconditions
+    
+    def _generate_scene_postconditions(self, scene: Dict, api_info: Dict) -> List[Dict[str, Any]]:
+        """生成场景特定的后置条件"""
+        postconditions = []
+        
+        # 添加场景后置条件
+        scene_postconditions = scene.get("postconditions", [])
+        for condition in scene_postconditions:
+            postconditions.append({
+                "type": "scene_condition",
+                "description": condition.get("description", "")
+            })
+        
+        # 添加API特定的后置条件
+        api_postconditions = api_info.get("postconditions", [])
+        for condition in api_postconditions:
+            postconditions.append({
+                "type": "api_condition",
+                "description": condition.get("description", "")
+            })
+        
+        return postconditions
+    
+    def _generate_dependency_preconditions(self, dep_info: Dict) -> List[Dict[str, Any]]:
+        """生成依赖特定的前置条件"""
+        preconditions = []
+        
+        # 添加依赖前置条件
+        dependency_preconditions = dep_info.get("preconditions", [])
+        for condition in dependency_preconditions:
+            preconditions.append({
+                "type": "dependency_condition",
+                "description": condition.get("description", "")
+            })
+        
+        return preconditions
+    
+    def _generate_dependency_postconditions(self, dep_info: Dict) -> List[Dict[str, Any]]:
+        """生成依赖特定的后置条件"""
+        postconditions = []
+        
+        # 添加依赖后置条件
+        dependency_postconditions = dep_info.get("postconditions", [])
+        for condition in dependency_postconditions:
+            postconditions.append({
+                "type": "dependency_condition",
+                "description": condition.get("description", "")
+            })
+        
+        return postconditions
+    
+    def _generate_flow_preconditions(self, flow_info: Dict, source_api: Dict) -> List[Dict[str, Any]]:
+        """生成数据流转特定的前置条件"""
+        preconditions = []
+        
+        # 添加数据流转前置条件
+        flow_preconditions = flow_info.get("preconditions", [])
+        for condition in flow_preconditions:
+            preconditions.append({
+                "type": "flow_condition",
+                "description": condition.get("description", "")
+            })
+        
+        # 添加源API特定的前置条件
+        source_preconditions = source_api.get("preconditions", [])
+        for condition in source_preconditions:
+            preconditions.append({
+                "type": "source_condition",
+                "description": condition.get("description", "")
+            })
+        
+        return preconditions
+    
+    def _generate_flow_postconditions(self, flow_info: Dict, target_api: Dict) -> List[Dict[str, Any]]:
+        """生成数据流转特定的后置条件"""
+        postconditions = []
+        
+        # 添加数据流转后置条件
+        flow_postconditions = flow_info.get("postconditions", [])
+        for condition in flow_postconditions:
+            postconditions.append({
+                "type": "flow_condition",
+                "description": condition.get("description", "")
+            })
+        
+        # 添加目标API特定的后置条件
+        target_postconditions = target_api.get("postconditions", [])
+        for condition in target_postconditions:
+            postconditions.append({
+                "type": "target_condition",
+                "description": condition.get("description", "")
+            })
+        
+        return postconditions
+    
+    def _generate_permission_preconditions(self, perm_info: Dict) -> List[Dict[str, Any]]:
+        """生成权限特定的前置条件"""
+        preconditions = []
+        
+        # 添加权限前置条件
+        permission_preconditions = perm_info.get("preconditions", [])
+        for condition in permission_preconditions:
+            preconditions.append({
+                "type": "permission_condition",
+                "description": condition.get("description", "")
+            })
+        
+        # 添加用户具有所需权限的前置条件
+        required_permission = perm_info.get("required_permission", "")
+        if required_permission:
+            preconditions.append({
+                "type": "user_has_permission",
+                "description": f"确保用户具有权限: {required_permission}"
+            })
+        
+        return preconditions
+    
+    def _generate_permission_postconditions(self, perm_info: Dict) -> List[Dict[str, Any]]:
+        """生成权限特定的后置条件"""
+        postconditions = []
+        
+        # 添加权限后置条件
+        permission_postconditions = perm_info.get("postconditions", [])
+        for condition in permission_postconditions:
+            postconditions.append({
+                "type": "permission_condition",
+                "description": condition.get("description", "")
+            })
+        
+        return postconditions
+    
+    def _generate_basic_params(self, parameters: List[Dict]) -> Dict[str, Any]:
+        """生成基础请求参数"""
+        params = {}
+        
+        for param in parameters:
+            param_name = param.get("name", "")
+            param_in = param.get("in", "")
+            param_required = param.get("required", False)
+            param_schema = param.get("schema", {})
+            param_type = param_schema.get("type", "string")
+            
+            # 只生成必需参数和一些可选参数
+            if param_required or random.random() > 0.3:
+                if param_in == "query":
+                    params[param_name] = self._generate_basic_value(param_type, param_schema)
+        
+        return params
+    
+    def _generate_boundary_params(self, parameters: List[Dict], case_type: str) -> Dict[str, Any]:
+        """生成边界请求参数"""
+        params = {}
+        
+        for param in parameters:
+            param_name = param.get("name", "")
+            param_in = param.get("in", "")
+            param_required = param.get("required", False)
+            param_schema = param.get("schema", {})
+            param_type = param_schema.get("type", "string")
+            
+            # 只生成必需参数和一些可选参数
+            if param_required or random.random() > 0.3:
+                if param_in == "query":
+                    params[param_name] = self._generate_boundary_value(param_type, param_schema, case_type)
+        
+        return params
+    
+    def _generate_error_params(self, parameters: List[Dict], case_type: str) -> Dict[str, Any]:
+        """生成错误请求参数"""
+        params = {}
+        
+        for param in parameters:
+            param_name = param.get("name", "")
+            param_in = param.get("in", "")
+            param_required = param.get("required", False)
+            param_schema = param.get("schema", {})
+            param_type = param_schema.get("type", "string")
+            
+            # 对于缺少必需参数的情况，不生成该参数
+            if case_type == "missing_required" and param_required:
+                continue
+            
+            # 只生成必需参数和一些可选参数
+            if param_required or random.random() > 0.3:
+                if param_in == "query":
+                    params[param_name] = self._generate_error_value(param_type, param_schema, case_type)
+        
+        return params
+    
+    def _generate_basic_body(self, request_body: Dict) -> Optional[Dict[str, Any]]:
+        """生成基础请求体"""
+        if not request_body:
+            return None
+        
+        content = request_body.get("content", {})
+        json_content = content.get("application/json")
+        
+        if not json_content:
+            return None
+        
+        schema = json_content.get("schema", {})
+        
+        # 根据模式生成示例请求体
+        return self._generate_basic_object(schema, {})
+    
+    def _generate_boundary_body(self, request_body: Dict, case_type: str) -> Optional[Dict[str, Any]]:
+        """生成边界请求体"""
+        if not request_body:
+            return None
+        
+        content = request_body.get("content", {})
+        json_content = content.get("application/json")
+        
+        if not json_content:
+            return None
+        
+        schema = json_content.get("schema", {})
+        
+        # 根据模式生成边界请求体
+        return self._generate_boundary_object(schema, {}, case_type)
+    
+    def _generate_error_body(self, request_body: Dict, case_type: str) -> Optional[Dict[str, Any]]:
+        """生成错误请求体"""
+        if not request_body:
+            return None
+        
+        content = request_body.get("content", {})
+        json_content = content.get("application/json")
+        
+        if not json_content:
+            return None
+        
+        schema = json_content.get("schema", {})
+        
+        # 根据模式生成错误请求体
+        return self._generate_error_object(schema, {}, case_type)
 
 
 def create_test_generator_tools():

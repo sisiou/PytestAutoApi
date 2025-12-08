@@ -412,44 +412,48 @@ class TestCaseGenerator:
             for i, (test_data, expected_status) in enumerate(exception_test_cases):
                 case_id = f"exception_{api_id.replace('/', '_').replace('{', '_').replace('}', '_')}_{i+1}"
                 
-                # 生成断言数据，期望返回错误状态码
-                assert_data = {"status_code": expected_status}
+                # 生成测试数据和预期结果
+                test_case_data = {
+                    "host": test_data.get("host", "${host()}"),
+                    "url": test_data.get("path", api.path),
+                    "method": test_data.get("method", api.method),
+                    "headers": test_data.get("headers", self._generate_headers_for_api(api)),
+                    "data": test_data.get("data", {})
+                }
+                
+                expected_results = {
+                    "status_code": expected_status,
+                    "asserts": [
+                        {
+                            "type": "status_code",
+                            "expected": expected_status
+                        }
+                    ]
+                }
                 
                 # 创建测试用例
-                test_case = TestCase(
-                    case_id=case_id,
-                    case_name=f"异常测试{api.summary}_{i+1}",
-                    api_method=api.method,
-                    api_path=api.path,
-                    host="${host()}",
-                    headers=self._generate_headers_for_api(api),
-                    request_type=self._get_request_type(api),
-                    data=test_data,
-                    is_run=True,
-                    detail=f"测试{api.summary}的异常情况",
-                    dependence_case=False,
-                    dependence_case_data=None,
-                    current_request_set_cache=None,
-                    sql=None,
-                    assert_data=assert_data,
-                    setup_sql=None,
-                    teardown=None,
-                    teardown_sql=None,
-                    sleep=None
-                )
+                test_case = {
+                    "case_id": case_id,
+                    "case_name": f"异常测试{api.summary}_{i+1}",
+                    "test_case_description": f"测试{api.summary}的异常情况",
+                    "api_path": test_data.get("path", api.path),
+                    "api_method": test_data.get("method", api.method),
+                    "test_data": test_case_data,
+                    "expected_results": expected_results
+                }
                 
                 test_cases.append(test_case)
                 
             # 创建测试套件
-            test_suite = TestSuite(
-                suite_id=f"suite_exception_{api_id.replace('/', '_').replace('{', '_').replace('}', '_')}",
-                suite_name=f"{api.summary}异常测试",
-                description=f"测试{api.summary}的异常情况",
-                test_cases=test_cases,
-                allure_epic="异常测试",
-                allure_feature=getattr(api, 'tags', ['API'])[0] if getattr(api, 'tags', None) else 'API功能测试',
-                allure_story=f"{api.summary}异常测试"
-            )
+            test_suite = {
+                "suite_id": f"suite_exception_{api_id.replace('/', '_').replace('{', '_').replace('}', '_')}",
+                "suite_name": f"{api.summary}异常测试",
+                "suite_description": f"测试{api.summary}的异常情况",
+                "test_cases": test_cases,
+                "allure_epic": "异常测试",
+                "allure_feature": getattr(api, 'tags', ['API'])[0] if getattr(api, 'tags', None) else 'API功能测试',
+                "allure_story": f"{api.summary}异常测试"
+            }
             
             self.test_suites.append(test_suite)
             
@@ -628,6 +632,101 @@ class TestCaseGenerator:
         """为API生成异常测试数据"""
         exception_test_cases = []
         
+        # 针对飞书API的特殊处理
+        if hasattr(api, 'host') and 'open.feishu.cn' in api.host:
+            # 飞书API异常测试用例
+            if api.path.startswith('/open-apis/im/v1/messages'):
+                # 无效的receive_id_type
+                invalid_receive_id_type = {
+                    'method': api.method,
+                    'path': api.path,
+                    'headers': self._generate_headers_for_api(api),
+                    'data': {
+                        'receive_id_type': 'invalid_type',
+                        'receive_id': 'test_user_id',
+                        'msg_type': 'text',
+                        'content': json.dumps({"text": "这是一条测试消息"})
+                    }
+                }
+                exception_test_cases.append((invalid_receive_id_type, 400))
+                
+                # 缺少必填字段receive_id
+                missing_receive_id = {
+                    'method': api.method,
+                    'path': api.path,
+                    'headers': self._generate_headers_for_api(api),
+                    'data': {
+                        'receive_id_type': 'user_id',
+                        'msg_type': 'text',
+                        'content': json.dumps({"text": "这是一条测试消息"})
+                    }
+                }
+                exception_test_cases.append((missing_receive_id, 400))
+                
+                # 无效的msg_type
+                invalid_msg_type = {
+                    'method': api.method,
+                    'path': api.path,
+                    'headers': self._generate_headers_for_api(api),
+                    'data': {
+                        'receive_id_type': 'user_id',
+                        'receive_id': 'test_user_id',
+                        'msg_type': 'invalid_type',
+                        'content': json.dumps({"text": "这是一条测试消息"})
+                    }
+                }
+                exception_test_cases.append((invalid_msg_type, 400))
+                
+            elif api.path.startswith('/open-apis/authen/v1/access_token'):
+                # 无效的app_id
+                invalid_app_id = {
+                    'method': api.method,
+                    'path': api.path,
+                    'headers': self._generate_headers_for_api(api),
+                    'data': {
+                        'app_id': 'invalid_app_id',
+                        'app_secret': 'test_app_secret'
+                    }
+                }
+                exception_test_cases.append((invalid_app_id, 401))
+                
+                # 缺少app_secret
+                missing_app_secret = {
+                    'method': api.method,
+                    'path': api.path,
+                    'headers': self._generate_headers_for_api(api),
+                    'data': {
+                        'app_id': 'test_app_id'
+                    }
+                }
+                exception_test_cases.append((missing_app_secret, 400))
+                
+            elif api.path.startswith('/open-apis/im/v1/chats'):
+                # 无效的page_size
+                invalid_page_size = {
+                    'method': api.method,
+                    'path': api.path,
+                    'headers': self._generate_headers_for_api(api),
+                    'data': {
+                        'page_size': 'invalid_size',
+                        'page_token': 'test_token'
+                    }
+                }
+                exception_test_cases.append((invalid_page_size, 400))
+                
+                # 超大的page_size
+                oversized_page_size = {
+                    'method': api.method,
+                    'path': api.path,
+                    'headers': self._generate_headers_for_api(api),
+                    'data': {
+                        'page_size': 1000,  # 超过限制
+                        'page_token': 'test_token'
+                    }
+                }
+                exception_test_cases.append((oversized_page_size, 400))
+        
+        # 通用异常测试用例
         # 无效的HTTP方法测试
         invalid_method_test = {
             'method': 'INVALID',

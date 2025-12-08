@@ -2398,6 +2398,20 @@ function loadUploadedDocuments() {
                             viewDocument('openapi', doc.file_id);
                         });
                         
+                        const generateBtn = document.createElement('button');
+                        generateBtn.className = 'btn btn-sm btn-outline-success me-1';
+                        generateBtn.innerHTML = '<i class="fas fa-code"></i> 生成测试用例';
+                        generateBtn.addEventListener('click', () => {
+                            generateTestCases(doc.file_id);
+                        });
+                        
+                        const executeBtn = document.createElement('button');
+                        executeBtn.className = 'btn btn-sm btn-outline-info me-1';
+                        executeBtn.innerHTML = '<i class="fas fa-play"></i> 执行测试用例';
+                        executeBtn.addEventListener('click', () => {
+                            executeTestCases(doc.file_id);
+                        });
+                        
                         const editBtn = document.createElement('button');
                         editBtn.className = 'btn btn-sm btn-outline-warning me-1';
                         editBtn.innerHTML = '<i class="fas fa-edit"></i> 编辑';
@@ -2409,6 +2423,8 @@ function loadUploadedDocuments() {
                         deleteBtn.addEventListener('click', () => deleteDocument('openapi', doc.file_id));
                         
                         actionsCell.appendChild(viewBtn);
+                        actionsCell.appendChild(generateBtn);
+                        actionsCell.appendChild(executeBtn);
                         actionsCell.appendChild(editBtn);
                         actionsCell.appendChild(deleteBtn);
                         row.appendChild(actionsCell);
@@ -3134,6 +3150,86 @@ function deleteDocument(docType, docId) {
     }
 }
 
+// 生成测试用例
+function generateTestCases(taskId) {
+    if (!taskId) {
+        showSmartTestNotification('文档ID不能为空', 'error');
+        return;
+    }
+    
+    showLoading('正在生成测试用例...');
+    
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const apiUrl = baseUrl + '/api/generate_test_cases';
+    
+    fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            file_id: taskId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showSmartTestNotification('测试用例生成成功', 'success');
+            // 刷新测试用例列表
+            loadTestCases();
+            updateTestCasesStats();
+        } else {
+            showSmartTestNotification('测试用例生成失败: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('生成测试用例失败:', error);
+        showSmartTestNotification('生成测试用例失败: ' + error.message, 'error');
+    });
+}
+
+// 执行测试用例
+function executeTestCases(taskId) {
+    if (!taskId) {
+        showSmartTestNotification('文档ID不能为空', 'error');
+        return;
+    }
+    
+    showLoading('正在执行测试用例...');
+    
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const apiUrl = baseUrl + '/api/execute_test_cases';
+    
+    fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            file_id: taskId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showSmartTestNotification('测试用例执行成功', 'success');
+            // 刷新测试用例列表
+            loadTestCases();
+            updateTestCasesStats();
+        } else {
+            showSmartTestNotification('测试用例执行失败: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('执行测试用例失败:', error);
+        showSmartTestNotification('执行测试用例失败: ' + error.message, 'error');
+    });
+}
+
 // 初始化文档标签页切换功能
 function initDocumentTabs() {
     // 获取所有标签页按钮和内容区域 - 使用正确的ID
@@ -3191,7 +3287,7 @@ function loadMultiApiDocuments() {
     const noMultiApiDocsMessage = document.getElementById('noMultiApiDocsMessage');
     
     if (multiApiTableBody) {
-        multiApiTableBody.innerHTML = '<tr><td colspan="4" class="text-center"><div class="spinner-border spinner-border-sm me-2" role="status"></div>正在加载多接口文档...</td></tr>';
+        multiApiTableBody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm me-2" role="status"></div>正在加载多接口文档...</td></tr>';
     }
     
     // 使用直接拼接URL的方式，避免undefined问题
@@ -3247,6 +3343,16 @@ function loadMultiApiDocuments() {
                     apiCountCell.textContent = doc.api_count || 0;
                     row.appendChild(apiCountCell);
                     
+                    // 上传时间
+                    const uploadTimeCell = document.createElement('td');
+                    if (doc.upload_time) {
+                        const uploadDate = new Date(doc.upload_time);
+                        uploadTimeCell.textContent = uploadDate.toLocaleString();
+                    } else {
+                        uploadTimeCell.textContent = '未知时间';
+                    }
+                    row.appendChild(uploadTimeCell);
+                    
                     // 操作
                     const actionsCell = document.createElement('td');
                     
@@ -3257,6 +3363,20 @@ function loadMultiApiDocuments() {
                         viewMultiApiDocument(doc.document_id);
                     });
                     
+                    const generateBtn = document.createElement('button');
+                    generateBtn.className = 'btn btn-sm btn-outline-success me-1';
+                    generateBtn.innerHTML = '<i class="fas fa-code"></i> 生成测试用例';
+                    generateBtn.addEventListener('click', () => {
+                        generateTestCases(doc.document_id);
+                    });
+                    
+                    const executeBtn = document.createElement('button');
+                    executeBtn.className = 'btn btn-sm btn-outline-info me-1';
+                    executeBtn.innerHTML = '<i class="fas fa-play"></i> 执行测试用例';
+                    executeBtn.addEventListener('click', () => {
+                        executeTestCases(doc.document_id);
+                    });
+                    
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'btn btn-sm btn-outline-danger';
                     deleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
@@ -3265,6 +3385,8 @@ function loadMultiApiDocuments() {
                     });
                     
                     actionsCell.appendChild(viewBtn);
+                    actionsCell.appendChild(generateBtn);
+                    actionsCell.appendChild(executeBtn);
                     actionsCell.appendChild(deleteBtn);
                     row.appendChild(actionsCell);
                     
@@ -3277,7 +3399,7 @@ function loadMultiApiDocuments() {
             
             // 显示错误信息
             if (multiApiTableBody) {
-                multiApiTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">加载多接口文档失败: ' + error.message + '</td></tr>';
+                multiApiTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">加载多接口文档失败: ' + error.message + '</td></tr>';
             }
         });
 }

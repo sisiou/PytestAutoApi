@@ -11,16 +11,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlparse, urlunparse
 import urllib3
-from feishu_parse import transform_feishu_url, is_file_exist, download_json
+from .feishu_parse import transform_feishu_url, is_file_exist, download_json
 from openai import OpenAI
 from dotenv import load_dotenv
 from typing import List, Dict, Optional
-from feishu_parse import download_json, transform_feishu_url
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import requests
-from urllib.parse import urlparse
-import urllib3
-from feishu_parse import transform_feishu_url, is_file_exist, download_json
 
 # 加载环境变量
 load_dotenv()

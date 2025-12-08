@@ -4329,6 +4329,654 @@ def static_files(path):
     
     return send_from_directory('frontend', path)
 
+# 9. 生成测试用例接口
+@app.route('/api/generate_test_cases', methods=['POST'])
+def generate_test_cases_by_file_id():
+    """
+    根据file_id生成测试用例
+    """
+    try:
+        logger.info("收到生成测试用例请求")
+        
+        # 获取请求数据
+        data = request.get_json()
+        if not data:
+            logger.error("请求体不能为空")
+            return jsonify({'error': '请求体不能为空'}), 400
+        
+        file_id = data.get('file_id')
+        if not file_id:
+            logger.error("file_id是必需参数")
+            return jsonify({'error': 'file_id是必需参数'}), 400
+        
+        logger.info(f"开始为file_id: {file_id}生成测试用例...")
+        
+        # 导入必要的模块
+        import os
+        import json
+        import yaml
+        from utils.feishu_config import feishu_config
+        
+        # 从配置中获取授权令牌和基础URL
+        authorization = feishu_config.get_authorization()
+        base_url = feishu_config.get_base_url()
+        
+        # 构建文件路径
+        api_file_path = f"/Users/oss/code/PytestAutoApi/uploads/openapi/openapi_{file_id}.yaml"
+        scene_file_path = f"/Users/oss/code/PytestAutoApi/uploads/scene/scene_{file_id}.json"
+        relation_file_path = f"/Users/oss/code/PytestAutoApi/uploads/relation/relation_{file_id}.json"
+        
+        logger.info(f"检查文件路径: {api_file_path}, {scene_file_path}")
+        
+        # 检查API文档文件是否存在
+        if not os.path.exists(api_file_path):
+            logger.error(f'API文档文件不存在: {api_file_path}')
+            return jsonify({
+                'success': False,
+                'error': f'API文档文件不存在: {api_file_path}'
+            }), 404
+        
+        # 加载API文档
+        with open(api_file_path, 'r', encoding='utf-8') as f:
+            if api_file_path.endswith('.yaml') or api_file_path.endswith('.yml'):
+                doc_data = yaml.safe_load(f)
+            else:
+                doc_data = json.load(f)
+        
+        # 加载测试场景（必须存在）
+        if not os.path.exists(scene_file_path):
+            logger.error(f'测试场景文件不存在: {scene_file_path}，请先上传场景文件')
+            return jsonify({
+                'success': False,
+                'error': f'测试场景文件不存在: {scene_file_path}，请先上传场景文件'
+            }), 404
+            
+        with open(scene_file_path, 'r', encoding='utf-8') as f:
+            scenes_data = json.load(f)
+        
+        # 加载API依赖关系（如果存在）
+        relations_data = {}
+        if os.path.exists(relation_file_path):
+            with open(relation_file_path, 'r', encoding='utf-8') as f:
+                relations_data = json.load(f)
+        
+        # 从场景文件中获取业务场景数据
+        test_scenes_list = []
+        if 'business_scenes' in scenes_data and 'scenes' in scenes_data['business_scenes']:
+            test_scenes_list = scenes_data['business_scenes']['scenes']
+        elif 'scenes_name' in scenes_data:
+            # 兼容旧格式
+            test_scenes_list = scenes_data['scenes_name']
+        
+        # 检查场景数据是否为空
+        if not test_scenes_list:
+            logger.error(f'场景文件中没有有效的测试场景数据: {scene_file_path}')
+            return jsonify({
+                'success': False,
+                'error': f'场景文件中没有有效的测试场景数据: {scene_file_path}'
+            }), 400
+        
+        logger.info(f"找到 {len(test_scenes_list)} 个测试场景")
+        
+        # 如果有关联关系数据，生成基于关联关系的测试场景
+        if relations_data and 'relation_info' in relations_data:
+            # 这里简化处理，实际项目中应该实现关联关系分析
+            pass
+        
+        paths = doc_data.get('paths', {})
+        
+        # 创建YAML格式的测试用例
+        yaml_test_cases = {
+            "case_common": {
+                "allureEpic": "API测试",
+                "allureFeature": "功能测试",
+                "allureStory": "API功能测试"
+            }
+        }
+        
+        # 为每个测试场景生成测试用例
+        test_case_index = 1
+        
+        for scene in test_scenes_list:
+            # 处理新格式的场景数据
+            if 'scene_id' in scene:
+                # 新格式场景数据
+                scene_name = scene.get('scene_name', '')
+                scene_description = scene.get('scene_description', '')
+                scene_priority = scene.get('priority', 'P1').replace('P', '')  # 将P1转换为1
+                related_apis = scene.get('related_apis', [])
+                test_focus = scene.get('test_focus', [])
+                exception_scenarios = scene.get('exception_scenarios', [])
+                api_call_combo = scene.get('api_call_combo', [])
+                
+                # 从related_apis或api_call_combo中提取API路径和方法
+                scene_path = ''
+                scene_method = 'POST'  # 默认方法
+                if related_apis:
+                    scene_path = related_apis[0]
+                elif api_call_combo:
+                    scene_path = api_call_combo[0].get('api_path', '')
+                
+                # 根据路径确定HTTP方法
+                if scene_path and scene_path in paths:
+                    for method in paths[scene_path]:
+                        if method.upper() in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']:
+                            scene_method = method.upper()
+                            break
+                
+                # 创建兼容格式的场景对象
+                scene_obj = {
+                    'name': scene_name,
+                    'description': scene_description,
+                    'type': 'business_flow',  # 业务场景默认为业务流程类型
+                    'path': scene_path,
+                    'method': scene_method,
+                    'priority': 'high' if scene_priority == '1' else 'medium' if scene_priority == '2' else 'low',
+                    'test_focus': test_focus,
+                    'exception_scenarios': exception_scenarios,
+                    'api_call_combo': api_call_combo
+                }
+            else:
+                # 旧格式场景数据
+                scene_obj = scene
+            
+            scene_type = scene_obj.get('type', 'basic')
+            scene_path = scene_obj.get('path', '')
+            scene_method = scene_obj.get('method', '')
+            
+            # 获取对应的API定义
+            api_definition = None
+            if scene_path and scene_method and scene_path in paths:
+                api_definition = paths[scene_path].get(scene_method.lower(), {})
+            
+            # 生成基础测试用例
+            test_cases = []
+            
+            # 根据API路径生成特定的测试数据
+            test_data = {}
+            expected_results = {"status_code": 200}
+            
+            # 根据不同的API路径生成特定的测试数据
+            if '/im/v1/messages' in scene_path:
+                # 发送消息API的测试数据
+                test_data = {
+                    "receive_id_type": "open_id",
+                    "receive_id": "ou_xxx",
+                    "msg_type": "text",
+                    "content": "{\"text\":\"测试消息\"}"
+                }
+                expected_results = {"status_code": 200, "response_contains": "success"}
+            
+            # 正常请求测试用例
+            normal_case = {
+                "name": f"正常请求 - {scene_method} {scene_path}",
+                "description": f"测试{scene_method} {scene_path}的正常请求功能",
+                "type": "normal",
+                "priority": "high",
+                "api_path": scene_path,
+                "api_method": scene_method,
+                "test_case_description": scene_obj.get('description', ''),
+                "test_data": test_data,
+                "expected_results": expected_results
+            }
+            test_cases.append(normal_case)
+            
+            # 异常场景测试用例
+            for exception_scenario in scene_obj.get('exception_scenarios', []):
+                exception_test_data = test_data.copy()
+                exception_expected_results = {"status_code": 400}
+                
+                if "无效接收者ID" in exception_scenario:
+                    exception_test_data["receive_id"] = "invalid_id"
+                    exception_expected_results["feishu_code"] = 230013
+                elif "空消息内容" in exception_scenario:
+                    exception_test_data["content"] = "{\"text\":\"\"}"
+                    exception_expected_results["feishu_code"] = 230025
+                elif "无效图片key" in exception_scenario:
+                    exception_test_data["content"] = "{\"image_key\":\"invalid_key\"}"
+                    exception_expected_results["feishu_code"] = 300240
+                
+                exception_case = {
+                    "name": f"异常请求 - {exception_scenario}",
+                    "description": f"测试{scene_method} {scene_path}的{exception_scenario}异常场景",
+                    "type": "exception",
+                    "priority": "medium",
+                    "api_path": scene_path,
+                    "api_method": scene_method,
+                    "test_case_description": f"测试{exception_scenario}异常场景",
+                    "test_data": exception_test_data,
+                    "expected_results": exception_expected_results
+                }
+                test_cases.append(exception_case)
+            
+            # 将测试用例转换为YAML格式
+            for test_case in test_cases:
+                # 从API路径生成测试用例键名
+                api_path = test_case.get('api_path', scene_path)
+                if api_path.startswith('/'):
+                    api_path = api_path[1:]  # 去掉开头的斜杠
+                # 将路径中的斜杠替换为下划线
+                api_path_key = api_path.replace('/', '_')
+                
+                # 生成测试用例键名
+                test_case_key = f"{test_case_index:02d}_{api_path_key}"
+                
+                # 构建YAML格式的测试用例
+                yaml_test_case = {
+                    "host": base_url,
+                    "url": api_path,
+                    "method": test_case.get('api_method', scene_method).lower(),
+                    "detail": test_case.get('test_case_description', ''),
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {authorization}"
+                    },
+                    "requestType": "json",
+                    "is_run": None,
+                    "data": test_case.get('test_data', {}),
+                    "dependence_case": False,
+                    "assert": {
+                        "status_code": test_case.get('expected_results', {}).get('status_code', 200)
+                    },
+                    "sql": None
+                }
+                
+                # 添加飞书错误码（如果有）
+                if 'feishu_code' in test_case.get('expected_results', {}):
+                    yaml_test_case["assert"]["feishu_code"] = test_case['expected_results']['feishu_code']
+                
+                # 添加到YAML测试用例字典
+                yaml_test_cases[test_case_key] = yaml_test_case
+                test_case_index += 1
+        
+        # 确保输出目录存在
+        output_dir = "/Users/oss/code/PytestAutoApi/uploads/test_cases"
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # 生成输出文件路径
+        output_file_path = f"{output_dir}/test_cases_{file_id}.yaml"
+        
+        # 写入YAML文件
+        with open(output_file_path, 'w', encoding='utf-8') as f:
+            yaml.dump(yaml_test_cases, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        
+        logger.info(f"测试用例生成完成，共生成 {len(yaml_test_cases)-1} 个测试用例，保存到 {output_file_path}")
+        
+        result = {
+            'success': True,
+            'message': f"成功生成 {len(yaml_test_cases)-1} 个测试用例",
+            'file_path': output_file_path,
+            'test_cases_count': len(yaml_test_cases)-1
+        }
+        logger.info(f"返回结果: {result}")
+        return jsonify(result)
+            
+    except Exception as e:
+        logger.error(f"生成测试用例时出错: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'生成测试用例时出错: {str(e)}'
+        }), 500
+
+# 10. 执行测试用例并生成指标接口
+@app.route('/api/execute_test_cases', methods=['POST'])
+def execute_test_cases_by_file_id():
+    """
+    根据file_id读取测试用例文件，生成测试代码，执行测试并生成指标
+    """
+    try:
+        logger.info("收到执行测试用例请求")
+        
+        # 获取请求数据
+        data = request.get_json()
+        if not data:
+            logger.error("请求体不能为空")
+            return jsonify({'error': '请求体不能为空'}), 400
+        
+        file_id = data.get('file_id')
+        if not file_id:
+            logger.error("file_id是必需参数")
+            return jsonify({'error': 'file_id是必需参数'}), 400
+        
+        logger.info(f"开始执行file_id: {file_id}的测试用例...")
+        
+        # 导入必要的模块
+        import os
+        import json
+        import yaml
+        import subprocess
+        import sys
+        from datetime import datetime
+        
+        # 构建测试用例文件路径
+        test_cases_file_path = f"/Users/oss/code/PytestAutoApi/uploads/test_cases/test_cases_{file_id}.yaml"
+        
+        # 检查测试用例文件是否存在
+        if not os.path.exists(test_cases_file_path):
+            logger.error(f'测试用例文件不存在: {test_cases_file_path}')
+            return jsonify({
+                'success': False,
+                'error': f'测试用例文件不存在: {test_cases_file_path}'
+            }), 404
+        
+        # 加载测试用例
+        with open(test_cases_file_path, 'r', encoding='utf-8') as f:
+            test_cases_data = yaml.safe_load(f)
+        
+        # 创建测试代码目录
+        test_code_dir = f"/Users/oss/code/PytestAutoApi/uploads/test_codes/test_code_{file_id}"
+        os.makedirs(test_code_dir, exist_ok=True)
+        
+        # 创建测试报告目录
+        test_report_dir = f"/Users/oss/code/PytestAutoApi/uploads/test_reports/test_reports_{file_id}"
+        os.makedirs(test_report_dir, exist_ok=True)
+        
+        # 生成测试代码
+        test_code_content = generate_test_code(test_cases_data, file_id)
+        
+        # 写入测试代码文件
+        test_code_file = f"{test_code_dir}/test_{file_id}.py"
+        with open(test_code_file, 'w', encoding='utf-8') as f:
+            f.write(test_code_content)
+        
+        # 创建conftest.py文件
+        conftest_content = generate_conftest_file(test_cases_data)
+        conftest_file = f"{test_code_dir}/conftest.py"
+        with open(conftest_file, 'w', encoding='utf-8') as f:
+            f.write(conftest_content)
+        
+        # 执行测试
+        logger.info(f"开始执行测试: {test_code_file}")
+        test_report_file = f"{test_report_dir}/report_{file_id}.html"
+        
+        # 构建pytest命令
+        pytest_cmd = [
+            sys.executable, "-m", "pytest", 
+            test_code_dir,
+            "--html=" + test_report_file,
+            "--self-contained-html",
+            "-v",
+            "--tb=short"
+        ]
+        
+        # 执行测试
+        start_time = datetime.now()
+        result = subprocess.run(
+            pytest_cmd,
+            capture_output=True,
+            text=True,
+            cwd="/Users/oss/code/PytestAutoApi"
+        )
+        end_time = datetime.now()
+        execution_time = (end_time - start_time).total_seconds()
+        
+        # 解析测试结果
+        test_results = parse_test_results(result.stdout, result.stderr, result.returncode)
+        
+        # 生成测试指标
+        test_metrics = generate_test_metrics(test_results, test_cases_data, execution_time)
+        
+        # 保存测试指标
+        metrics_file = f"{test_report_dir}/metrics_{file_id}.json"
+        with open(metrics_file, 'w', encoding='utf-8') as f:
+            json.dump(test_metrics, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"测试执行完成，报告保存到: {test_report_file}")
+        
+        # 返回结果
+        response_data = {
+            'success': True,
+            'message': f"测试执行完成，共执行 {test_metrics['total_tests']} 个测试用例",
+            'test_report_file': test_report_file,
+            'test_metrics_file': metrics_file,
+            'test_metrics': test_metrics,
+            'execution_time': execution_time
+        }
+        
+        logger.info(f"返回结果: {response_data}")
+        return jsonify(response_data)
+            
+    except Exception as e:
+        logger.error(f"执行测试用例时出错: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'执行测试用例时出错: {str(e)}'
+        }), 500
+
+def generate_test_code(test_cases_data, file_id):
+    """
+    根据测试用例数据生成pytest测试代码
+    """
+    # 提取公共配置
+    case_common = test_cases_data.get('case_common', {})
+    allure_epic = case_common.get('allureEpic', 'API测试')
+    allure_feature = case_common.get('allureFeature', '功能测试')
+    allure_story = case_common.get('allureStory', 'API功能测试')
+    
+    # 生成测试代码
+    test_code = f'''"""
+自动生成的测试代码
+文件ID: {file_id}
+生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+"""
+
+import pytest
+import requests
+import json
+import allure
+from typing import Dict, Any
+
+# 测试配置
+BASE_URL = "https://open.feishu.cn/open-apis"
+TIMEOUT = 10
+
+@allure.epic("{allure_epic}")
+@allure.feature("{allure_feature}")
+@allure.story("{allure_story}")
+class Test{file_id.replace("-", "_").replace("_", " ").title().replace(" ", "")}:
+    """
+    自动生成的测试类
+    """
+    
+    @pytest.fixture(scope="class")
+    def headers(self):
+        """获取请求头"""
+        return {{
+            "Content-Type": "application/json",
+            "Authorization": "Bearer t-g104c91QHHBJAGCXFG5ZZN733P7FGVFA6FP4LBO2"
+        }}
+    
+'''
+    
+    # 为每个测试用例生成测试方法
+    for case_key, case_data in test_cases_data.items():
+        if case_key == 'case_common':
+            continue
+            
+        case_name = case_key.replace("-", "_").replace(".", "_")
+        case_url = case_data.get('url', '')
+        case_method = case_data.get('method', 'get')
+        case_detail = case_data.get('detail', '')
+        case_headers = case_data.get('headers', {})
+        case_data_request = case_data.get('data', {})
+        case_assert = case_data.get('assert', {})
+        expected_status_code = case_assert.get('status_code', 200)
+        
+        # 生成测试方法
+        test_method = f'''
+    @allure.title("{case_detail}")
+    @allure.description("""
+    测试URL: {case_url}
+    请求方法: {case_method.upper()}
+    预期状态码: {expected_status_code}
+    """)
+    def test_{case_name}(self, headers):
+        """测试用例: {case_detail}"""
+        # 构建请求URL
+        url = f"{{BASE_URL}}/{case_url}"
+        
+        # 发送请求
+        response = requests.{case_method}(
+            url,
+            headers=headers,
+            json={case_data_request},
+            timeout=TIMEOUT
+        )
+        
+        # 验证响应状态码
+        assert response.status_code == {expected_status_code}, f"预期状态码: {expected_status_code}, 实际状态码: {{response.status_code}}"
+        
+        # 验证响应内容
+        if response.status_code == 200:
+            response_data = response.json()
+            assert response_data is not None, "响应数据不应为空"
+'''
+        
+        # 添加额外的断言
+        if 'feishu_code' in case_assert:
+            expected_feishu_code = case_assert['feishu_code']
+            test_method += f'''
+            # 验证飞书错误码
+            if 'code' in response_data:
+                assert response_data['code'] == {expected_feishu_code}, f"预期飞书错误码: {expected_feishu_code}, 实际错误码: {{response_data['code']}}"
+'''
+        
+        test_code += test_method
+    
+    return test_code
+
+def generate_conftest_file(test_cases_data):
+    """
+    生成conftest.py文件
+    """
+    conftest_content = '''"""
+pytest配置文件
+"""
+
+import pytest
+import allure
+import os
+import sys
+
+# 添加项目根目录到Python路径
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """
+    生成allure报告
+    """
+    outcome = yield
+    rep = outcome.get_result()
+    
+    if rep.when == "call" and rep.failed:
+        # 添加失败截图或日志
+        try:
+            with allure.step("失败信息"):
+                allure.attach(str(rep.longrepr), name="失败原因", attachment_type=allure.attachment_type.TEXT)
+        except Exception as e:
+            print(f"添加allure附件失败: {str(e)}")
+'''
+    return conftest_content
+
+def parse_test_results(stdout, stderr, returncode):
+    """
+    解析测试结果
+    """
+    # 基本测试结果
+    test_results = {
+        'stdout': stdout,
+        'stderr': stderr,
+        'returncode': returncode,
+        'success': returncode == 0
+    }
+    
+    # 解析测试统计信息
+    try:
+        # 从stdout中提取测试统计信息
+        lines = stdout.split('\n')
+        for line in lines:
+            if 'passed' in line and 'failed' in line:
+                # 示例行: "5 passed, 2 failed in 10.23s"
+                parts = line.split()
+                for i, part in enumerate(parts):
+                    if part == 'passed' and i > 0:
+                        test_results['passed'] = int(parts[i-1])
+                    elif part == 'failed' and i > 0:
+                        test_results['failed'] = int(parts[i-1])
+                    elif part == 'error' and i > 0:
+                        test_results['error'] = int(parts[i-1])
+                    elif part == 'skipped' and i > 0:
+                        test_results['skipped'] = int(parts[i-1])
+                break
+    except Exception as e:
+        print(f"解析测试统计信息失败: {str(e)}")
+        test_results['passed'] = 0
+        test_results['failed'] = 0
+        test_results['error'] = 0
+        test_results['skipped'] = 0
+    
+    return test_results
+
+def generate_test_metrics(test_results, test_cases_data, execution_time):
+    """
+    生成测试指标
+    """
+    # 计算测试用例总数
+    total_cases = len([k for k in test_cases_data.keys() if k != 'case_common'])
+    
+    # 获取测试结果
+    passed = test_results.get('passed', 0)
+    failed = test_results.get('failed', 0)
+    error = test_results.get('error', 0)
+    skipped = test_results.get('skipped', 0)
+    
+    # 计算成功率
+    success_rate = (passed / total_cases * 100) if total_cases > 0 else 0
+    
+    # 计算失败率
+    failure_rate = ((failed + error) / total_cases * 100) if total_cases > 0 else 0
+    
+    # 生成测试指标
+    test_metrics = {
+        'total_tests': total_cases,
+        'passed': passed,
+        'failed': failed,
+        'error': error,
+        'skipped': skipped,
+        'success_rate': round(success_rate, 2),
+        'failure_rate': round(failure_rate, 2),
+        'execution_time': round(execution_time, 2),
+        'average_time_per_test': round(execution_time / total_cases, 2) if total_cases > 0 else 0,
+        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'status': 'PASSED' if (failed + error) == 0 else 'FAILED'
+    }
+    
+    # 添加测试用例分类统计
+    normal_cases = 0
+    exception_cases = 0
+    
+    for case_key, case_data in test_cases_data.items():
+        if case_key == 'case_common':
+            continue
+            
+        detail = case_data.get('detail', '')
+        if '异常' in detail or '错误' in detail:
+            exception_cases += 1
+        else:
+            normal_cases += 1
+    
+    test_metrics['normal_cases'] = normal_cases
+    test_metrics['exception_cases'] = exception_cases
+    
+    # 添加测试覆盖率指标
+    test_metrics['coverage'] = {
+        'api_endpoints': len(set(case_data.get('url', '') for case_key, case_data in test_cases_data.items() if case_key != 'case_common')),
+        'test_types': ['正常场景', '异常场景'] if exception_cases > 0 else ['正常场景']
+    }
+    
+    return test_metrics
+
 # 启动服务器
 if __name__ == '__main__':
     import argparse

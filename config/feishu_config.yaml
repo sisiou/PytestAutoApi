@@ -1,0 +1,15 @@
+# 飞书API配置文件
+feishu:
+  app_id: cli_a9bc54da2978dbd2
+  app_secret: P9O4saSdY4jIM0cPH9FT4gdbPVwjWGDt
+  authorization: t-g104c91QHHBJAGCXFG5ZZN733P7FGVFA6FP4LBO2
+  
+# API配置
+api:
+  base_url: https://open.feishu.cn/open-apis
+  timeout: 30
+  
+# 测试配置
+test:
+  default_receive_id_type: open_id
+  default_receive_id: ou_xxx

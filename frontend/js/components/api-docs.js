@@ -228,6 +228,14 @@ function bindEventListeners() {
             populateApiSelectOptions();
         });
     }
+    
+    // 生成测试用例按钮
+    const generateTestBtn = document.getElementById('generateTestBtn');
+    if (generateTestBtn) {
+        generateTestBtn.addEventListener('click', function() {
+            generateTestCases();
+        });
+    }
 }
 
 // 加载API数据
@@ -890,6 +898,9 @@ function viewApiDetail(apiId) {
     
     // 保存当前API ID供生成测试用例使用
     window.currentApiId = apiId;
+    
+    // 设置当前文档ID
+    window.currentDocId = getDocIdFromUrl();
 }
 
 // 生成示例请求
@@ -939,10 +950,10 @@ async function generateTestCases() {
     const generateBtn = document.getElementById('generateTestBtn');
     if (!generateBtn) return;
     
-    // 获取当前API ID
-    const apiId = window.currentApiId;
-    if (!apiId) {
-        showSmartTestNotification('请先选择一个API', 'warning');
+    // 获取当前文档ID
+    const docTaskId = window.currentDocId || getDocIdFromUrl();
+    if (!docTaskId) {
+        showSmartTestNotification('请先选择一个API文档', 'warning');
         return;
     }
     
@@ -951,26 +962,13 @@ async function generateTestCases() {
     generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 生成中...';
     
     try {
-        // 从全局API数据中获取当前API信息
-        const api = window.apiData.find(item => item.id === apiId);
-        if (!api) {
-            throw new Error('找不到API信息');
-        }
-        
-        // 获取文档ID
-        const docTaskId = window.currentDocId || getDocIdFromUrl();
-        if (!docTaskId) {
-            throw new Error('文档ID缺失，请刷新页面重试');
-        }
-        
         // 准备请求数据
         const requestData = {
-            api_path: api.path,
-            api_method: api.method
+            file_id: docTaskId
         };
         
         // 调用后端API生成测试用例
-        const response = await fetch(API_CONFIG.buildUrl(API_CONFIG.DOCS.GENERATE_TEST_CASES.replace('{doc_task_id}', docTaskId)), {
+        const response = await fetch(API_CONFIG.buildUrl('/api/generate_test_cases'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -986,7 +984,7 @@ async function generateTestCases() {
         const result = await response.json();
         
         // 显示成功消息
-        showSmartTestNotification(`测试用例生成成功！共生成 ${result.data.test_cases_count || 0} 个测试用例`, 'success');
+        showSmartTestNotification(`测试用例生成成功！共生成 ${result.test_cases_count || 0} 个测试用例`, 'success');
         
         // 关闭API详情模态框
         const modalElement = document.getElementById('apiDetailModal');
@@ -1628,6 +1626,12 @@ function updateFileListDisplay() {
                 <button class="btn btn-sm btn-outline-primary" onclick="viewFileDetails('${file.id}')">
                     <i class="fas fa-eye"></i> 查看
                 </button>
+                <button class="btn btn-sm btn-outline-success" onclick="generateTestCasesForFile('${file.id}')">
+                    <i class="fas fa-code"></i> 生成测试用例
+                </button>
+                <button class="btn btn-sm btn-outline-warning" onclick="executeTestCasesForFile('${file.id}')">
+                    <i class="fas fa-play"></i> 执行测试用例
+                </button>
                 <button class="btn btn-sm btn-outline-danger" onclick="deleteFile('${file.id}')">
                     <i class="fas fa-trash"></i> 删除
                 </button>
@@ -1660,6 +1664,22 @@ function formatDate(dateString) {
 function viewFileDetails(fileId) {
     // 跳转到测试中心页面并指定文件ID
     window.location.href = `test-center.html?fileId=${fileId}`;
+}
+
+// 为文件生成测试用例
+function generateTestCasesForFile(fileId) {
+    console.log('为文件生成测试用例:', fileId);
+    
+    // 跳转到测试中心页面并指定文件ID，并触发生成测试用例
+    window.location.href = `test-center.html?fileId=${fileId}&action=generate`;
+}
+
+// 为文件执行测试用例
+function executeTestCasesForFile(fileId) {
+    console.log('为文件执行测试用例:', fileId);
+    
+    // 跳转到测试中心页面并指定文件ID，并触发执行测试用例
+    window.location.href = `test-center.html?fileId=${fileId}&action=execute`;
 }
 
 // 删除文件

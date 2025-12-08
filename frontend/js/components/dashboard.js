@@ -208,7 +208,7 @@ function updateStatistics() {
             document.getElementById('apiCount').textContent = data.data.api_count || 0;
             
             // 更新测试用例数量
-            document.getElementById('testCaseCount').textContent = data.data.test_case_count || 0;
+            document.getElementById('testCaseCount').textContent = data.data.test_cases_count || 0;
             
             // 更新执行次数
             document.getElementById('executionCount').textContent = data.data.execution_count || 0;

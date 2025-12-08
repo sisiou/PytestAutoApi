@@ -10,8 +10,8 @@ import json
 from typing import Dict, List, Optional, Union
 
 # 导入自定义模块
-from .api_input_processor import APIInputProcessor
-from .test_case_generator import TestCaseGenerator
+from api_input_processor import APIInputProcessor
+from test_case_generator import TestCaseGenerator
 
 
 def main():

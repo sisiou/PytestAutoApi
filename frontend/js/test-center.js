@@ -8,6 +8,51 @@ let scenarios = [];
 let relations = [];
 let selectedApis = new Set();
 
+// 获取URL参数
+function getUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        fileId: params.get('fileId'),
+        action: params.get('action')
+    };
+}
+
+// 处理URL参数
+function handleUrlParams() {
+    const { fileId, action } = getUrlParams();
+    
+    if (!fileId || !action) {
+        return; // 没有必要的参数，直接返回
+    }
+    
+    console.log(`处理URL参数: fileId=${fileId}, action=${action}`);
+    
+    // 切换到OpenAPI文档标签页
+    const openApiDocsTab = document.getElementById('openapi-docs-tab');
+    if (openApiDocsTab) {
+        const tab = new bootstrap.Tab(openApiDocsTab);
+        tab.show();
+    }
+    
+    // 先加载OpenAPI文档列表，然后执行相应操作
+    setTimeout(async () => {
+        try {
+            // 先加载OpenAPI文档列表
+            await loadOpenApiDocs();
+            
+            // 根据action执行相应操作
+            if (action === 'generate') {
+                generateTestCasesFromOpenApi(fileId, '');
+            } else if (action === 'execute') {
+                executeTestCasesForFile(fileId, '');
+            }
+        } catch (error) {
+            console.error('处理URL参数失败:', error);
+            showNotification('处理URL参数失败: ' + error.message, 'error');
+        }
+    }, 500);
+}
+
 // 页面初始化
 document.addEventListener('DOMContentLoaded', function() {
     initTestCenter();
@@ -36,6 +81,16 @@ function loadSavedData() {
                 }
             }
             
+            // 如果有测试用例，加载测试用例
+            if (testCases.length > 0) {
+                loadTestCases();
+            }
+        } catch (error) {
+            console.error('加载保存的配置失败:', error);
+        }
+    }
+}
+
 // 加载OpenAPI文档列表
 async function loadOpenApiDocs() {
     console.log('开始加载OpenAPI文档列表');
@@ -224,6 +279,73 @@ async function generateTestCasesFromOpenApi(fileId, fileName) {
     }
 }
 
+// 执行指定文件的测试用例
+async function executeTestCasesForFile(fileId, fileName) {
+    console.log(`开始执行文件测试用例: ${fileName} (ID: ${fileId})`);
+    
+    try {
+        // 显示加载状态
+        showLoading();
+        
+        // 检查API_CONFIG是否已定义
+        if (!window.API_CONFIG) {
+            console.warn('API_CONFIG未定义，使用默认值');
+            window.API_CONFIG = {
+                BASE_URL: 'http://127.0.0.1:5000'
+            };
+        }
+        
+        // 使用直接拼接URL的方式，避免undefined问题
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const apiUrl = baseUrl + `/api/docs/execute-test-cases/${fileId}`;
+        
+        console.log('API请求URL:', apiUrl);
+        
+        // 设置60秒超时（执行测试用例可能需要更长时间）
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`执行测试用例失败: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('执行测试用例响应:', data);
+        
+        if (data.success) {
+            showNotification(`成功执行 ${fileName} 的测试用例`, 'success');
+            
+            // 刷新测试用例列表，显示执行结果
+            loadTestCases();
+            
+            // 切换到测试用例标签页
+            const testCasesTab = document.getElementById('test-cases-tab');
+            if (testCasesTab) {
+                const tab = new bootstrap.Tab(testCasesTab);
+                tab.show();
+            }
+        } else {
+            throw new Error(data.message || '执行测试用例失败');
+        }
+        
+    } catch (error) {
+        console.error('执行测试用例失败:', error);
+        showNotification('执行测试用例失败: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
 // 删除OpenAPI文档
 async function deleteOpenApiDoc(fileId, fileName) {
     console.log(`开始删除OpenAPI文档: ${fileName} (ID: ${fileId})`);
@@ -297,18 +419,76 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// 更新测试用例计数
+function updateTestCasesCount() {
+    // 获取测试用例统计信息元素
+    const totalCasesElement = document.getElementById('totalCases');
+    const passedCasesElement = document.getElementById('passedCases');
+    const failedCasesElement = document.getElementById('failedCases');
+    const passRateElement = document.getElementById('passRate');
+    
+    if (!totalCasesElement || !passedCasesElement || !failedCasesElement || !passRateElement) {
+        console.warn('测试用例统计信息元素未找到');
+        return;
+    }
+    
+    // 计算测试用例统计信息
+    const totalCases = testCases.length;
+    const passedCases = testCases.filter(tc => tc.status === 'passed').length;
+    const failedCases = testCases.filter(tc => tc.status === 'failed').length;
+    const passRate = totalCases > 0 ? Math.round((passedCases / totalCases) * 100) : 0;
+    
+    // 更新统计信息显示
+    totalCasesElement.textContent = totalCases;
+    passedCasesElement.textContent = passedCases;
+    failedCasesElement.textContent = failedCases;
+    passRateElement.textContent = passRate + '%';
+}
+
 // 加载测试用例
-            if (testCases.length > 0) {
-                loadTestCases();
+function loadTestCases() {
+    try {
+        // 从localStorage加载测试用例数据
+        const savedTestCases = localStorage.getItem('testCases');
+        if (savedTestCases) {
+            testCases = JSON.parse(savedTestCases);
+            console.log(`已加载 ${testCases.length} 个测试用例`);
+            
+            // 更新测试用例计数
+            updateTestCasesCount();
+            
+            // 渲染测试用例列表
+            const viewMode = document.querySelector('input[name="viewMode"]:checked')?.value || 'list';
+            renderTestCasesList(viewMode);
+            
+            // 填充API筛选器
+            populateApiFilter();
+        } else {
+            console.log('没有找到保存的测试用例');
+            // 清空测试用例容器
+            const container = document.getElementById('testCasesListContainer');
+            if (container) {
+                container.innerHTML = '<div class="text-center text-muted py-4">暂无测试用例，请先生成测试用例</div>';
             }
-        } catch (error) {
-            console.error('加载保存的配置失败:', error);
+            
+            // 重置统计信息
+            updateTestCasesCount();
+        }
+    } catch (error) {
+        console.error('加载测试用例失败:', error);
+        // 显示错误信息
+        const container = document.getElementById('testCasesListContainer');
+        if (container) {
+            container.innerHTML = '<div class="alert alert-danger">加载测试用例失败，请刷新页面重试</div>';
         }
     }
 }
 
 // 初始化测试中心
 function initTestCenter() {
+    // 处理URL参数
+    handleUrlParams();
+    
     // 初始化测试用例标签页
     initTestCasesTab();
     
@@ -333,8 +513,14 @@ function initTestCasesTab() {
     const generateCasesBtn = document.getElementById('generateCasesBtn');
     if (generateCasesBtn) {
         generateCasesBtn.addEventListener('click', function() {
-            // 显示提示信息，需要从API文档生成测试用例
-            alert('请先在"接口文档"标签页中上传API文档，然后可以生成测试用例');
+            // 检查是否有API文档数据
+            if (!apiDocData) {
+                alert('请先在"接口文档"标签页中上传API文档，然后可以生成测试用例');
+                return;
+            }
+            
+            // 调用生成测试用例函数
+            generateTestCases();
         });
     }
     
@@ -521,6 +707,12 @@ async function loadUploadedDocs() {
                 <td>
                     <button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${doc.task_id}')">
                         <i class="fas fa-eye"></i> 查看
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="generateTestCases('${doc.task_id}')">
+                        <i class="fas fa-code"></i> 生成测试用例
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" onclick="executeTestCases('${doc.task_id}')">
+                        <i class="fas fa-play"></i> 执行测试用例
                     </button>
                     <button class="btn btn-sm btn-outline-danger" onclick="deleteDocument('${doc.task_id}', '${doc.filename || ''}')">
                         <i class="fas fa-trash"></i> 删除
@@ -1136,12 +1328,21 @@ async function viewDocument(taskId) {
         
         // 设置生成测试用例按钮的事件
         const generateTestCasesBtn = document.getElementById('generateTestCasesBtn');
-        generateTestCasesBtn.onclick = function() {
-            generateTestCasesFromDoc(taskId);
-            // 关闭当前模态框
-            const modal = bootstrap.Modal.getInstance(document.getElementById('documentDetailsModal'));
-            modal.hide();
-        };
+        if (generateTestCasesBtn) {
+            console.log('找到生成测试用例按钮，taskId:', taskId);
+            generateTestCasesBtn.onclick = function() {
+                console.log('点击了生成测试用例按钮，taskId:', taskId);
+                // 使用taskId作为file_id，因为在这个上下文中它们是相同的
+                generateTestCasesFromDoc(taskId);
+                // 关闭当前模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('documentDetailsModal'));
+                if (modal) {
+                    modal.hide();
+                }
+            };
+        } else {
+            console.error('未找到生成测试用例按钮');
+        }
         
         // 显示模态框
         const modal = new bootstrap.Modal(document.getElementById('documentDetailsModal'));
@@ -1508,13 +1709,16 @@ function getMethodColor(method) {
 }
 
 // 从文档生成测试用例
-async function generateTestCasesFromDoc(taskId) {
+async function generateTestCasesFromDoc(fileId) {
+    console.log('开始生成测试用例，fileId:', fileId);
     try {
         showLoading();
         
         // 使用直接拼接URL的方式，避免undefined问题
         const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
-        const apiUrl = baseUrl + '/api/test-cases/generate';
+        const apiUrl = baseUrl + '/api/generate_test_cases';
+        console.log('API请求URL:', apiUrl);
+        console.log('请求参数:', { file_id: fileId });
         
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -1522,9 +1726,11 @@ async function generateTestCasesFromDoc(taskId) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                task_id: taskId
+                file_id: fileId
             })
         });
+        
+        console.log('API响应状态:', response.status);
         
         if (!response.ok) {
             throw new Error(`生成测试用例失败: ${response.status}`);
@@ -1534,12 +1740,12 @@ async function generateTestCasesFromDoc(taskId) {
         console.log('测试用例生成结果:', result);
         
         if (result.success) {
-            showNotification(`成功生成 ${result.data.test_cases_count || 0} 个测试用例`, 'success');
+            showNotification(`成功生成测试用例`, 'success');
             
             // 刷新文档列表
             loadUploadedDocs();
         } else {
-            showNotification('生成测试用例失败: ' + (result.message || '未知错误'), 'error');
+            showNotification('生成测试用例失败: ' + (result.error || result.message || '未知错误'), 'error');
         }
         
     } catch (error) {
@@ -2195,6 +2401,142 @@ function formatFileSize(bytes) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 生成测试用例
+function generateTestCases(taskId) {
+    console.log('开始生成测试用例，文档ID:', taskId);
+    
+    if (!taskId) {
+        showNotification('无法获取文档ID', 'error');
+        return;
+    }
+    
+    showLoading('正在生成测试用例，请稍候...');
+    
+    // 调用后端API生成测试用例
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    
+    fetch(`${baseUrl}/api/generate_test_cases`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            file_id: taskId
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        hideLoading();
+        
+        if (data.success) {
+            showNotification(data.message || '测试用例生成成功', 'success');
+            
+            // 重新加载测试用例列表
+            loadTestCases();
+            
+            // 更新测试用例统计
+            updateTestCasesStats();
+        } else {
+            showNotification(data.error || '生成测试用例失败', 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('生成测试用例失败:', error);
+        showNotification('生成测试用例失败: ' + error.message, 'error');
+    });
+}
+
+// 提取API端点
+function extractApiEndpoints(apiDoc) {
+    return new Promise((resolve, reject) => {
+        try {
+            if (!apiDoc || !apiDoc.paths) {
+                resolve([]);
+                return;
+            }
+            
+            const endpoints = [];
+            const paths = apiDoc.paths;
+            
+            Object.keys(paths).forEach(path => {
+                const pathItem = paths[path];
+                
+                // 遍历所有HTTP方法
+                ['get', 'post', 'put', 'delete', 'patch', 'head', 'options'].forEach(method => {
+                    if (pathItem[method]) {
+                        endpoints.push({
+                            method: method.toUpperCase(),
+                            path: path,
+                            operation: pathItem[method]
+                        });
+                    }
+                });
+            });
+            
+            resolve(endpoints);
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+// 执行测试用例
+function executeTestCases(taskId) {
+    console.log('开始执行测试用例，文档ID:', taskId);
+    
+    if (!taskId) {
+        showNotification('无法获取文档ID', 'error');
+        return;
+    }
+    
+    showLoading('正在执行测试用例，请稍候...');
+    
+    // 调用后端API执行测试用例
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    
+    fetch(`${baseUrl}/api/execute_test_cases`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            file_id: taskId
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        hideLoading();
+        
+        if (data.success) {
+            showNotification(data.message || '测试用例执行成功', 'success');
+            
+            // 重新加载测试用例列表
+            loadTestCases();
+            
+            // 更新测试用例统计
+            updateTestCasesStats();
+        } else {
+            showNotification(data.error || '执行测试用例失败', 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('执行测试用例失败:', error);
+        showNotification('执行测试用例失败: ' + error.message, 'error');
+    });
 }
 
 // 格式化日期时间

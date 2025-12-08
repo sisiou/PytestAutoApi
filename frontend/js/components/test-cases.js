@@ -841,20 +841,11 @@ function generateTestCases() {
     // 调用后端API生成测试用例
     const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
     
-    // 根据文档类型选择不同的API端点
-    let generateUrl;
-    if (docType === 'single') {
-        // 单接口文档使用原有的API端点
-        const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
-        const testCasesEndpoint = endpoints.TEST_CASES || {};
-        generateUrl = baseUrl + (testCasesEndpoint.GENERATE || '/api/test-cases/generate');
-    } else {
-        // 多接口文档使用新的API端点
-        generateUrl = `${baseUrl}/api/multiapi/test-cases/generate`;
-    }
+    // 使用 generate_test_cases_by_file_id 接口
+    const generateUrl = `${baseUrl}/api/generate_test_cases`;
     
     const requestBody = {
-        task_id: apiDocSelect.value,
+        file_id: apiDocSelect.value,
         test_types: selectedTypes,
         doc_type: docType  // 添加文档类型信息
     };
@@ -875,22 +866,13 @@ function generateTestCases() {
     .then(data => {
         console.log('测试用例生成结果:', data);
         
-        // 添加到现有测试用例
-        if (data.test_cases && data.test_cases.length > 0) {
-            window.currentTestCases = [...window.currentTestCases, ...data.test_cases];
-            
-            // 更新统计和渲染
-            updateStatistics(window.currentTestCases);
-            const isListView = document.getElementById('listViewBtn').classList.contains('btn-primary');
-            if (!isListView) {
-                renderTestCasesGrid();
-            } else {
-                renderTestCasesList();
-            }
-            
-            showNotification(`成功生成 ${data.test_cases.length} 个测试用例`, 'success');
+        // 处理成功响应
+        if (data.success === true) {
+            // 刷新测试用例列表
+            loadTestCases();
+            showNotification(`成功生成 ${data.test_cases_count || 0} 个测试用例`, 'success');
         } else {
-            showNotification('未生成任何测试用例', 'warning');
+            showNotification('生成测试用例失败: ' + (data.error || '未知错误'), 'error');
         }
     })
     .catch(error => {

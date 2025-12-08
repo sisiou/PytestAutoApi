@@ -8,6 +8,7 @@
 
 import os
 import json
+from requests import api
 import yaml
 import asyncio
 from typing import Dict, List, Any, Optional, Tuple
@@ -21,12 +22,14 @@ except ImportError:
     # 尝试兼容旧版本
     from langchain.agents import AgentExecutor, initialize_agent
     NEW_LANGCHAIN = False
+
+# 强制使用旧版本，因为当前环境是0.0.263
+NEW_LANGCHAIN = False
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain.memory import ConversationBufferMemory
-
 from utils.smart_auto.api_parser import OpenAPIParser
 from utils.smart_auto.test_generator import TestCaseGenerator
 from utils.smart_auto.dependency_analyzer import DependencyAnalyzer
@@ -145,11 +148,19 @@ class OpenAPIAgent:
             ]
         
         # 创建提示模板
-        self.prompt = ChatPromptTemplate.from_messages([
-            ("system", "你是一个专业的API测试专家，能够根据OpenAPI 3.0.0文档自动生成测试用例、执行测试并分析结果。你有以下工具可以使用："),
-            ("user", "{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ])
+        if NEW_LANGCHAIN:
+            self.prompt = ChatPromptTemplate.from_messages([
+                ("system", "你是一个专业的API测试专家，能够根据file_id自动获取OpenAPI 3.0.0文档、预测场景、预测关联关系文档，自动生成测试用例、执行测试并分析结果。你有以下工具可以使用："),
+                ("user", "{input}"),
+                MessagesPlaceholder(variable_name="agent_scratchpad"),
+            ])
+        else:
+            # 旧版本LangChain使用不同的提示模板格式
+            from langchain.prompts import PromptTemplate
+            self.prompt = PromptTemplate(
+                input_variables=["input"],
+                template="你是一个专业的API测试专家，能够根据file_id自动获取OpenAPI 3.0.0文档、预测场景、预测关联关系文档，自动生成测试用例、执行测试并分析结果。你有以下工具可以使用：\n\n{input}"
+            )
         
         # 创建代理
         if NEW_LANGCHAIN:
@@ -186,7 +197,7 @@ class OpenAPIAgent:
                 if input_str.startswith('{') and input_str.endswith('}'):
                     # 如果是JSON字符串，解析为字典
                     input_data = json.loads(input_str)
-                    # 调用原始工具
+                    # 直接调用原始工具函数，不通过LangChain的工具机制
                     return tool.func(**input_data)
                 else:
                     # 如果不是JSON，直接作为第一个参数传递
@@ -282,12 +293,12 @@ class OpenAPIAgent:
             return json.dumps(error_result, ensure_ascii=False)
     
     @tool
-    def generate_test_scene_tool(self, api_doc: str, use_llm: bool = False) -> str:
+    def generate_test_scene_tool(self, file_id: str, use_llm: bool = False) -> str:
         """
-        根据OpenAPI 3.0.0文档生成测试场景
+        根据file_id从路径uploads/openapi/{file_id}.yaml/.json获取API文档并生成测试场景
         
         Args:
-            api_doc: OpenAPI 3.0.0文档的JSON字符串或YAML字符串
+            file_id: 文件名
             use_llm: 是否使用大模型增强测试场景生成，默认为False
             
         Returns:
@@ -296,20 +307,25 @@ class OpenAPIAgent:
         try:
             INFO.logger.info("开始生成测试场景...")
             
-            # 解析API文档
-            if isinstance(api_doc, str):
-                try:
-                    # 尝试解析为JSON
-                    doc_data = json.loads(api_doc)
-                except json.JSONDecodeError:
-                    # 如果不是JSON，尝试解析为YAML
-                    try:
-                        doc_data = yaml.safe_load(api_doc)
-                    except yaml.YAMLError:
-                        return json.dumps({
-                            "status": "error",
-                            "message": "API文档格式不正确，应为有效的JSON或YAML格式"
-                        }, ensure_ascii=False)
+            # 构建文件路径
+            api_file_path = f"/Users/oss/code/PytestAutoApi/uploads/openapi/{file_id}.yaml"
+            if not os.path.exists(api_file_path):
+                # 尝试JSON格式
+                api_file_path = f"/Users/oss/code/PytestAutoApi/uploads/openapi/{file_id}.json"
+            
+            # 检查文件是否存在
+            if not os.path.exists(api_file_path):
+                return json.dumps({
+                    "status": "error",
+                    "message": f"API文档文件不存在: {api_file_path}"
+                }, ensure_ascii=False)
+            
+            # 加载API文档
+            with open(api_file_path, 'r', encoding='utf-8') as f:
+                if api_file_path.endswith('.yaml') or api_file_path.endswith('.yml'):
+                    doc_data = yaml.safe_load(f)
+                else:
+                    doc_data = json.load(f)
             
             # 提取API信息
             paths = doc_data.get('paths', {})
@@ -601,12 +617,12 @@ class OpenAPIAgent:
             return None
     
     @tool
-    def generate_test_relation_tool(self, test_scenes: str) -> str:
+    def generate_test_relation_tool(self, file_id: str) -> str:
         """
-        生成测试场景之间的关系图
+        根据file_id从路径uploads/scene/{file_id}.json获取测试场景并生成测试场景之间的关系图
         
         Args:
-            test_scenes: 测试场景的JSON字符串
+            file_id: 文件名
             
         Returns:
             测试场景关系图的JSON字符串
@@ -614,8 +630,20 @@ class OpenAPIAgent:
         try:
             INFO.logger.info("开始生成测试场景关系图...")
             
-            # 解析测试场景
-            scenes_data = json.loads(test_scenes)
+            # 构建文件路径
+            scene_file_path = f"/Users/oss/code/PytestAutoApi/uploads/scene/{file_id}.json"
+            
+            # 检查文件是否存在
+            if not os.path.exists(scene_file_path):
+                return json.dumps({
+                    "status": "error",
+                    "message": f"测试场景文件不存在: {scene_file_path}"
+                }, ensure_ascii=False)
+            
+            # 加载测试场景
+            with open(scene_file_path, 'r', encoding='utf-8') as f:
+                scenes_data = json.load(f)
+            
             test_scenes_list = scenes_data.get('test_scenes', [])
             
             # 分析场景之间的关系
@@ -690,38 +718,128 @@ class OpenAPIAgent:
             return json.dumps(error_result, ensure_ascii=False)
     
     @tool
-    def generate_test_cases_tool(self, test_scenes: str, api_doc: str) -> str:
+    def generate_test_cases_tool(self, file_id: str, ) -> str:
         """
-        根据测试场景和API文档生成测试用例
+        根据file_id从路径uploads/openapi/{file_id}.yaml/.json获取API文档、
+        从路径uploads/scene/{file_id}.json获取API文档测试场景、
+        从路径uploads/relation/{file_id}.json获取API文档关联关系，然后根据
+        测试场景、关联关系和API文档生成测试用例
         
         Args:
-            test_scenes: 测试场景的JSON字符串
-            api_doc: API文档的JSON字符串
+            file_id: 文件ID，用于构建API文档、测试场景、关联关系文件路径
             
         Returns:
-            生成的测试用例的JSON字符串
+            生成的测试用例的YAML文件路径
         """
         try:
             INFO.logger.info("开始生成测试用例...")
             
-            # 解析测试场景和API文档
-            scenes_data = json.loads(test_scenes)
-            doc_data = json.loads(api_doc)
+            # 构建文件路径
+            api_file_path = f"/Users/oss/code/PytestAutoApi/uploads/openapi/openapi_{file_id}.yaml"
+            scene_file_path = f"/Users/oss/code/PytestAutoApi/uploads/scene/scene_{file_id}.json"
+            relation_file_path = f"/Users/oss/code/PytestAutoApi/uploads/relation/relation_{file_id}.json"
             
-            test_scenes_list = scenes_data.get('test_scenes', [])
+            # 检查文件是否存在
+            if not os.path.exists(api_file_path):
+                raise FileNotFoundError(f"API文档文件不存在: {api_file_path}")
+            
+            # 加载API文档
+            with open(api_file_path, 'r', encoding='utf-8') as f:
+                if api_file_path.endswith('.yaml') or api_file_path.endswith('.yml'):
+                    doc_data = yaml.safe_load(f)
+                else:
+                    doc_data = json.load(f)
+            
+            # 加载测试场景（如果存在）
+            scenes_data = {}
+            if os.path.exists(scene_file_path):
+                with open(scene_file_path, 'r', encoding='utf-8') as f:
+                    scenes_data = json.load(f)
+            
+            # 加载API依赖关系（如果存在）
+            relations_data = {}
+            if os.path.exists(relation_file_path):
+                with open(relation_file_path, 'r', encoding='utf-8') as f:
+                    relations_data = json.load(f)
+            
+            # 从场景文件中获取业务场景数据
+            test_scenes_list = []
+            if 'business_scenes' in scenes_data and 'scenes' in scenes_data['business_scenes']:
+                test_scenes_list = scenes_data['business_scenes']['scenes']
+            elif 'scenes_name' in scenes_data:
+                # 兼容旧格式
+                test_scenes_list = scenes_data['scenes_name']
+            
+            # 如果有关联关系数据，生成基于关联关系的测试场景
+            if relations_data and 'relation_info' in relations_data:
+                relation_scenes = self._generate_scenes_from_relations(relations_data)
+                # 将关联关系生成的场景添加到测试场景列表中
+                test_scenes_list.extend(relation_scenes)
+            
             paths = doc_data.get('paths', {})
             
             # 初始化测试用例生成器
             if not self.test_generator:
                 self.test_generator = TestCaseGenerator()
             
+            # 创建YAML格式的测试用例
+            yaml_test_cases = {
+                "case_common": {
+                    "allureEpic": "消息发送与管理API",
+                    "allureFeature": "发送消息",
+                    "allureStory": "发送消息"
+                }
+            }
+            
             # 为每个测试场景生成测试用例
-            all_test_cases = []
+            test_case_index = 1
             
             for scene in test_scenes_list:
-                scene_type = scene.get('type', 'basic')
-                scene_path = scene.get('path', '')
-                scene_method = scene.get('method', '')
+                # 处理新格式的场景数据
+                if 'scene_id' in scene:
+                    # 新格式场景数据
+                    scene_name = scene.get('scene_name', '')
+                    scene_description = scene.get('scene_description', '')
+                    scene_priority = scene.get('priority', 'P1').replace('P', '')  # 将P1转换为1
+                    related_apis = scene.get('related_apis', [])
+                    test_focus = scene.get('test_focus', [])
+                    exception_scenarios = scene.get('exception_scenarios', [])
+                    api_call_combo = scene.get('api_call_combo', [])
+                    
+                    # 从related_apis或api_call_combo中提取API路径和方法
+                    scene_path = ''
+                    scene_method = 'POST'  # 默认方法
+                    if related_apis:
+                        scene_path = related_apis[0]
+                    elif api_call_combo:
+                        scene_path = api_call_combo[0].get('api_path', '')
+                    
+                    # 根据路径确定HTTP方法
+                    if scene_path and scene_path in paths:
+                        for method in paths[scene_path]:
+                            if method.upper() in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']:
+                                scene_method = method.upper()
+                                break
+                    
+                    # 创建兼容格式的场景对象
+                    scene_obj = {
+                        'name': scene_name,
+                        'description': scene_description,
+                        'type': 'business_flow',  # 业务场景默认为业务流程类型
+                        'path': scene_path,
+                        'method': scene_method,
+                        'priority': 'high' if scene_priority == '1' else 'medium' if scene_priority == '2' else 'low',
+                        'test_focus': test_focus,
+                        'exception_scenarios': exception_scenarios,
+                        'api_call_combo': api_call_combo
+                    }
+                else:
+                    # 旧格式场景数据
+                    scene_obj = scene
+                
+                scene_type = scene_obj.get('type', 'basic')
+                scene_path = scene_obj.get('path', '')
+                scene_method = scene_obj.get('method', '')
                 
                 # 获取对应的API定义
                 api_definition = None
@@ -730,45 +848,80 @@ class OpenAPIAgent:
                 
                 # 根据场景类型生成测试用例
                 if scene_type == 'basic':
-                    test_cases = self._generate_basic_test_cases(scene, api_definition)
+                    test_cases = self._generate_basic_test_cases(scene_obj, api_definition)
                 elif scene_type == 'business_flow':
-                    test_cases = self._generate_business_flow_test_cases(scene, api_definition)
+                    test_cases = self._generate_business_flow_test_cases(scene_obj, api_definition)
                 elif scene_type == 'boundary':
-                    test_cases = self._generate_boundary_test_cases(scene, api_definition)
+                    test_cases = self._generate_boundary_test_cases(scene_obj, api_definition)
                 elif scene_type == 'security':
-                    test_cases = self._generate_security_test_cases(scene, api_definition)
+                    test_cases = self._generate_security_test_cases(scene_obj, api_definition)
                 elif scene_type == 'performance':
-                    test_cases = self._generate_performance_test_cases(scene, api_definition)
+                    test_cases = self._generate_performance_test_cases(scene_obj, api_definition)
                 elif scene_type == 'compatibility':
-                    test_cases = self._generate_compatibility_test_cases(scene, api_definition)
+                    test_cases = self._generate_compatibility_test_cases(scene_obj, api_definition)
                 else:
                     test_cases = []
                 
-                # 添加场景信息到测试用例
+                # 将测试用例转换为YAML格式
                 for test_case in test_cases:
-                    test_case['scene_name'] = scene['name']
-                    test_case['scene_type'] = scene_type
-                    test_case['scene_priority'] = scene.get('priority', 'medium')
-                
-                all_test_cases.extend(test_cases)
+                    # 从API路径生成测试用例键名
+                    api_path = test_case.get('api_path', scene_path)
+                    if api_path.startswith('/'):
+                        api_path = api_path[1:]  # 去掉开头的斜杠
+                    # 将路径中的斜杠替换为下划线
+                    api_path_key = api_path.replace('/', '_')
+                    
+                    # 生成测试用例键名
+                    test_case_key = f"{test_case_index:02d}_{api_path_key}"
+                    
+                    # 构建YAML格式的测试用例
+                    yaml_test_case = {
+                        "host": "https://open.feishu.cn/open-apis",
+                        "url": api_path,
+                        "method": test_case.get('api_method', scene_method).lower(),
+                        "detail": test_case.get('test_case_description', ''),
+                        "headers": {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer t-g104c85XB2ZVRV5AYMFOII2GB4MWIVR5DNQUDPL3"
+                        },
+                        "requestType": "json",
+                        "is_run": None,
+                        "data": test_case.get('test_data', {}),
+                        "dependence_case": False,
+                        "assert": {
+                            "status_code": test_case.get('expected_results', {}).get('status_code', 200)
+                        },
+                        "sql": None
+                    }
+                    
+                    # 添加飞书错误码（如果有）
+                    if 'feishu_code' in test_case.get('expected_results', {}):
+                        yaml_test_case["assert"]["feishu_code"] = test_case['expected_results']['feishu_code']
+                    
+                    # 添加到YAML测试用例字典
+                    yaml_test_cases[test_case_key] = yaml_test_case
+                    test_case_index += 1
             
-            # 使用LLM增强测试用例（如果可用）
-            if self.ai_client.is_available():
-                try:
-                    enhanced_test_cases = self._enhance_test_cases_with_llm(all_test_cases, doc_data)
-                    if enhanced_test_cases:
-                        all_test_cases = enhanced_test_cases
-                except Exception as e:
-                    ERROR.logger.warning(f"LLM增强测试用例失败，使用基础测试用例: {str(e)}")
+            # 确保输出目录存在
+            output_dir = "/Users/oss/code/PytestAutoApi/uploads/test_cases"
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # 生成输出文件路径
+            output_file_path = f"{output_dir}/test_cases_{file_id}.yaml"
+            
+            # 写入YAML文件
+            with open(output_file_path, 'w', encoding='utf-8') as f:
+                yaml.dump(yaml_test_cases, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            
+            INFO.logger.info(f"测试用例生成完成，共生成 {len(yaml_test_cases)-1} 个测试用例，保存到 {output_file_path}")
             
             result = {
                 "status": "success",
-                "message": f"成功生成 {len(all_test_cases)} 个测试用例",
-                "test_cases": all_test_cases,
-                "test_suites": self._group_test_cases_by_suite(all_test_cases)
+                "message": f"成功生成 {len(yaml_test_cases)-1} 个测试用例",
+                "file_path": output_file_path,
+                "test_cases_count": len(yaml_test_cases)-1
             }
             
-            INFO.logger.info(f"测试用例生成完成，共生成 {len(all_test_cases)} 个测试用例")
             return json.dumps(result, ensure_ascii=False)
             
         except Exception as e:
@@ -785,61 +938,51 @@ class OpenAPIAgent:
         path = scene.get('path', '')
         method = scene.get('method', '')
         
+        # 根据API路径生成特定的测试数据
+        test_data = {}
+        expected_results = {"status_code": 200}
+        
+        # 根据不同的API路径生成特定的测试数据
+        if '/im/v1/messages' in path:
+            # 发送消息API的测试数据
+            test_data = {
+                "receive_id_type": "open_id",
+                "receive_id": "ou_xxx",
+                "msg_type": "text",
+                "content": "{\"text\":\"测试消息\"}"
+            }
+            expected_results = {"status_code": 200, "response_contains": "success"}
+        elif '/auth/v3/app_access_token/internal' in path:
+            # 获取访问令牌API的测试数据
+            test_data = {
+                "app_id": "cli_xxx",
+                "app_secret": "xxx"
+            }
+            expected_results = {"status_code": 200, "response_contains": "app_access_token"}
+        elif '/im/v1/chats' in path:
+            # 创建群聊API的测试数据
+            test_data = {
+                "name": "测试群聊",
+                "user_id_list": ["ou_xxx", "ou_yyy"]
+            }
+            expected_results = {"status_code": 200, "response_contains": "chat_id"}
+        else:
+            # 默认测试数据
+            test_data = {"test": "value"}
+            expected_results = {"status_code": 200}
+        
         # 正常请求测试用例
         normal_case = {
             "name": f"正常请求 - {method} {path}",
             "description": f"测试{method} {path}的正常请求功能",
             "type": "normal",
             "priority": "high",
-            "path": path,
-            "method": method,
-            "headers": {},
-            "params": {},
-            "body": {},
-            "expected_status": 200,
-            "assertions": [
-                {"type": "status_code", "value": 200},
-                {"type": "response_time", "value": 5000}  # 5秒内响应
-            ]
+            "api_path": path,
+            "api_method": method,
+            "test_case_description": f"验证{method} {path}接口的正常功能",
+            "test_data": test_data,
+            "expected_results": expected_results
         }
-        
-        # 添加API定义中的参数
-        if api_definition:
-            # 处理查询参数
-            for param in api_definition.get('parameters', []):
-                if param.get('in') == 'query':
-                    param_name = param.get('name')
-                    param_schema = param.get('schema', {})
-                    param_type = param_schema.get('type', 'string')
-                    
-                    # 根据参数类型设置默认值
-                    if param_type == 'string':
-                        default_value = "test"
-                    elif param_type == 'integer':
-                        default_value = 1
-                    elif param_type == 'boolean':
-                        default_value = True
-                    else:
-                        default_value = None
-                    
-                    if default_value is not None:
-                        normal_case["params"][param_name] = default_value
-                
-                # 处理头部参数
-                elif param.get('in') == 'header':
-                    param_name = param.get('name')
-                    normal_case["headers"][param_name] = "test"
-            
-            # 处理请求体
-            request_body = api_definition.get('requestBody', {})
-            if request_body:
-                content = request_body.get('content', {})
-                if 'application/json' in content:
-                    schema = content['application/json'].get('schema', {})
-                    # 简单的请求体生成
-                    if schema.get('type') == 'object':
-                        normal_case["headers"]["Content-Type"] = "application/json"
-                        normal_case["body"] = {"test": "value"}
         
         test_cases.append(normal_case)
         
@@ -849,134 +992,541 @@ class OpenAPIAgent:
             "description": f"测试{method} {path}的必填参数验证",
             "type": "required_params",
             "priority": "high",
-            "path": path,
-            "method": method,
-            "headers": {},
-            "params": {},
-            "body": {},
-            "expected_status": 400,  # 期望返回400错误
-            "assertions": [
-                {"type": "status_code", "value": 400}
-            ]
+            "api_path": path,
+            "api_method": method,
+            "test_case_description": f"验证{method} {path}接口的必填参数验证功能",
+            "test_data": {},  # 空测试数据，模拟缺少必填参数
+            "expected_results": {"status_code": 400, "feishu_code": 99991400}
         }
         
         test_cases.append(required_params_case)
         
+        # 添加API特定的异常测试用例
+        if '/im/v1/messages' in path:
+            # 发送消息API的异常测试用例
+            # 1. Token无效
+            invalid_token_case = {
+                "name": f"Token无效 - {method} {path}",
+                "description": f"测试{method} {path}的Token无效场景",
+                "type": "invalid_token",
+                "priority": "high",
+                "api_path": path,
+                "api_method": method,
+                "test_case_description": "验证Token无效时接口返回正确的错误码",
+                "test_data": test_data,
+                "expected_results": {"status_code": 401, "feishu_code": 99991663}
+            }
+            test_cases.append(invalid_token_case)
+            
+            # 2. 参数非法
+            invalid_param_case = {
+                "name": f"参数非法 - {method} {path}",
+                "description": f"测试{method} {path}的参数非法场景",
+                "type": "invalid_param",
+                "priority": "high",
+                "api_path": path,
+                "api_method": method,
+                "test_case_description": "验证参数非法时接口返回正确的错误码",
+                "test_data": {
+                    "receive_id_type": "invalid_type",  # 非法的receive_id_type
+                    "receive_id": "ou_xxx",
+                    "msg_type": "text",
+                    "content": "{\"text\":\"测试消息\"}"
+                },
+                "expected_results": {"status_code": 400, "feishu_code": 99991400}
+            }
+            test_cases.append(invalid_param_case)
+            
+        elif '/auth/v3/app_access_token/internal' in path:
+            # 获取访问令牌API的异常测试用例
+            # 1. AppSecret错误
+            wrong_secret_case = {
+                "name": f"AppSecret错误 - {method} {path}",
+                "description": f"测试{method} {path}的AppSecret错误场景",
+                "type": "wrong_secret",
+                "priority": "high",
+                "api_path": path,
+                "api_method": method,
+                "test_case_description": "验证AppSecret错误时接口返回正确的错误码",
+                "test_data": {
+                    "app_id": "cli_xxx",
+                    "app_secret": "wrong_secret"
+                },
+                "expected_results": {"status_code": 403, "feishu_code": 99991401}
+            }
+            test_cases.append(wrong_secret_case)
+        
         return test_cases
+    
+    def _generate_test_data_with_llm(self, path: str, method: str, api_definition: dict) -> dict:
+        """
+        使用大模型根据API定义生成基础测试数据
+        
+        Args:
+            path: API路径
+            method: HTTP方法
+            api_definition: API定义
+            
+        Returns:
+            dict: 生成的测试数据
+        """
+        # 获取API的参数定义
+        parameters = api_definition.get('parameters', [])
+        request_body = api_definition.get('requestBody', {})
+        
+        # 构建提示词
+        prompt = f"""
+        请为以下API生成有效的测试数据：
+        
+        API路径: {path}
+        HTTP方法: {method}
+        
+        参数定义:
+        {json.dumps(parameters, indent=2, ensure_ascii=False)}
+        
+        请求体定义:
+        {json.dumps(request_body, indent=2, ensure_ascii=False)}
+        
+        请生成一个JSON格式的测试数据，包含所有必需的参数，并确保数据格式符合API定义。
+        只返回JSON数据，不要包含任何解释。
+        """
+        
+        try:
+            # 调用大模型生成测试数据
+            response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "你是一个专业的API测试数据生成助手，请根据API定义生成有效的测试数据。"},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3
+            )
+            
+            # 解析响应
+            content = response.choices[0].message.content.strip()
+            
+            # 尝试解析JSON
+            try:
+                test_data = json.loads(content)
+                return test_data
+            except json.JSONDecodeError:
+                # 如果解析失败，尝试提取JSON部分
+                start = content.find('{')
+                end = content.rfind('}') + 1
+                if start != -1 and end != 0:
+                    json_str = content[start:end]
+                    return json.loads(json_str)
+                else:
+                    # 如果仍然失败，返回基本测试数据
+                    return {"test": "value"}
+                    
+        except Exception as e:
+            print(f"使用大模型生成测试数据时出错: {e}")
+            # 返回基本测试数据
+            return {"test": "value"}
+    
+    def _generate_boundary_test_data_with_llm(self, path: str, method: str, api_definition: dict, boundary_type: str) -> dict:
+        """
+        使用大模型根据API定义生成边界测试数据
+        
+        Args:
+            path: API路径
+            method: HTTP方法
+            api_definition: API定义
+            boundary_type: 边界类型 (max, min, empty, invalid)
+            
+        Returns:
+            dict: 生成的边界测试数据
+        """
+        # 获取API的参数定义
+        parameters = api_definition.get('parameters', [])
+        request_body = api_definition.get('requestBody', {})
+        
+        # 根据边界类型构建不同的提示词
+        type_description = {
+            "max": "参数的最大值或最大长度",
+            "min": "参数的最小值或最小长度",
+            "empty": "参数为空或空字符串",
+            "invalid": "参数格式错误或无效值"
+        }
+        
+        # 构建提示词
+        prompt = f"""
+        请为以下API生成边界测试数据，边界类型为: {type_description.get(boundary_type, boundary_type)}
+        
+        API路径: {path}
+        HTTP方法: {method}
+        
+        参数定义:
+        {json.dumps(parameters, indent=2, ensure_ascii=False)}
+        
+        请求体定义:
+        {json.dumps(request_body, indent=2, ensure_ascii=False)}
+        
+        请生成一个JSON格式的测试数据，其中包含{type_description.get(boundary_type, boundary_type)}的参数值。
+        只返回JSON数据，不要包含任何解释。
+        """
+        
+        try:
+            # 调用大模型生成测试数据
+            response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "你是一个专业的API测试数据生成助手，请根据API定义生成边界测试数据。"},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3
+            )
+            
+            # 解析响应
+            content = response.choices[0].message.content.strip()
+            
+            # 尝试解析JSON
+            try:
+                test_data = json.loads(content)
+                return test_data
+            except json.JSONDecodeError:
+                # 如果解析失败，尝试提取JSON部分
+                start = content.find('{')
+                end = content.rfind('}') + 1
+                if start != -1 and end != 0:
+                    json_str = content[start:end]
+                    return json.loads(json_str)
+                else:
+                    # 如果仍然失败，返回基本测试数据
+                    return {"test": "value"}
+                    
+        except Exception as e:
+            print(f"使用大模型生成边界测试数据时出错: {e}")
+            # 返回基本测试数据
+            return {"test": "value"}
     
     def _generate_business_flow_test_cases(self, scene: Dict, api_definition: Dict) -> List[Dict]:
         """生成业务流程测试用例"""
         test_cases = []
-        apis = scene.get('apis', [])
         
+        # 处理新格式的场景数据
+        if 'api_call_combo' in scene:
+            # 新格式场景数据，使用api_call_combo
+            api_call_combo = scene.get('api_call_combo', [])
+            apis = []
+            for combo in api_call_combo:
+                api_path = combo.get('api_path', '')
+                method = combo.get('method', 'POST')  # 默认方法
+                call_order = combo.get('call_order', 1)
+                is_necessary = combo.get('is_necessary', True)
+                output_params = combo.get('output_params', [])
+                next_api_mapping = combo.get('next_api_mapping', [])
+                
+                apis.append({
+                    'path': api_path,
+                    'method': method,
+                    'call_order': call_order,
+                    'is_necessary': is_necessary,
+                    'output_params': output_params,
+                    'next_api_mapping': next_api_mapping
+                })
+        else:
+            # 旧格式场景数据，使用apis字段
+            apis = scene.get('apis', [])
+        
+        # 如果没有API信息，但有单个API路径和方法，则创建单个API测试用例
+        if not apis and scene.get('path') and scene.get('method'):
+            apis = [{
+                'path': scene.get('path'),
+                'method': scene.get('method'),
+                'call_order': 1,
+                'is_necessary': True,
+                'output_params': [],
+                'next_api_mapping': []
+            }]
+        
+        # 为每个API生成测试用例
         for i, api in enumerate(apis):
             path = api.get('path', '')
             method = api.get('method', '')
+            call_order = api.get('call_order', i + 1)
+            is_necessary = api.get('is_necessary', True)
+            output_params = api.get('output_params', [])
+            next_api_mapping = api.get('next_api_mapping', [])
+            
+            # 根据API路径和方法生成不同的测试数据
+            test_data = {}
+            expected_results = {"status_code": 200}
+            
+            # 根据不同的API路径生成特定的测试数据
+            if '/im/v1/messages' in path:
+                # 发送消息API的测试数据
+                test_data = {
+                    "receive_id_type": "open_id",
+                    "receive_id": "ou_xxx",
+                    "msg_type": "text",
+                    "content": "{\"text\":\"测试消息\"}"
+                }
+                expected_results = {"status_code": 200, "response_contains": "success"}
+            elif '/auth/v3/app_access_token/internal' in path:
+                # 获取访问令牌API的测试数据
+                test_data = {
+                    "app_id": "cli_xxx",
+                    "app_secret": "xxx"
+                }
+                expected_results = {"status_code": 200, "response_contains": "app_access_token"}
+            elif '/im/v1/chats' in path:
+                # 创建群聊API的测试数据
+                test_data = {
+                    "name": "测试群聊",
+                    "user_id_list": ["ou_xxx", "ou_yyy"]
+                }
+                expected_results = {"status_code": 200, "response_contains": "chat_id"}
             
             # 业务流程中的每个API测试用例
             flow_case = {
-                "name": f"业务流程步骤{i+1} - {method} {path}",
-                "description": f"测试业务流程中的第{i+1}步：{method} {path}",
+                "name": f"业务流程步骤{call_order} - {method} {path}",
+                "description": f"测试业务流程中的第{call_order}步：{method} {path}",
                 "type": "business_flow",
-                "priority": "high",
-                "path": path,
-                "method": method,
-                "headers": {},
-                "params": {},
-                "body": {},
-                "expected_status": 200,
-                "assertions": [
-                    {"type": "status_code", "value": 200},
-                    {"type": "response_time", "value": 5000}
-                ],
-                "flow_step": i + 1,
-                "total_steps": len(apis)
+                "priority": "high" if is_necessary else "medium",
+                "api_path": path,
+                "api_method": method,
+                "test_case_description": f"验证{method} {path}接口在业务流程中的正确性",
+                "test_data": test_data,
+                "expected_results": expected_results,
+                "flow_step": call_order,
+                "total_steps": len(apis),
+                "is_necessary": is_necessary,
+                "output_params": output_params,
+                "next_api_mapping": next_api_mapping
             }
             
+            # 添加参数传递信息
+            if next_api_mapping:
+                param_mappings = []
+                for mapping in next_api_mapping:
+                    next_api_path = mapping.get('next_api_path', '')
+                    param_mapping = mapping.get('param_mapping', [])
+                    if param_mapping:
+                        for pm in param_mapping:
+                            source_param = pm.get('source_param', '')
+                            target_param = pm.get('target_param', '')
+                            target_location = pm.get('target_param_location', 'body')
+                            
+                            param_mappings.append({
+                                "source_param": source_param,
+                                "target_param": target_param,
+                                "target_location": target_location,
+                                "next_api_path": next_api_path
+                            })
+                
+                if param_mappings:
+                    flow_case["param_mappings"] = param_mappings
+            
             test_cases.append(flow_case)
+            
+            # 为每个API生成异常场景测试用例
+            if '/im/v1/messages' in path:
+                # 发送消息API的异常测试用例
+                # 1. Token无效
+                invalid_token_case = {
+                    "name": f"Token无效 - {method} {path}",
+                    "description": f"测试{method} {path}的Token无效场景",
+                    "type": "business_flow",
+                    "priority": "high",
+                    "api_path": path,
+                    "api_method": method,
+                    "test_case_description": "验证Token无效时接口返回正确的错误码",
+                    "test_data": test_data,
+                    "expected_results": {"status_code": 401, "feishu_code": 99991663}
+                }
+                test_cases.append(invalid_token_case)
+                
+                # 2. 参数缺失
+                missing_param_case = {
+                    "name": f"参数缺失 - {method} {path}",
+                    "description": f"测试{method} {path}的参数缺失场景",
+                    "type": "business_flow",
+                    "priority": "high",
+                    "api_path": path,
+                    "api_method": method,
+                    "test_case_description": "验证缺少必要参数时接口返回正确的错误码",
+                    "test_data": {"receive_id_type": "open_id"},  # 缺少receive_id
+                    "expected_results": {"status_code": 400, "feishu_code": 99991400}
+                }
+                test_cases.append(missing_param_case)
+                
+                # 3. 参数非法
+                invalid_param_case = {
+                    "name": f"参数非法 - {method} {path}",
+                    "description": f"测试{method} {path}的参数非法场景",
+                    "type": "business_flow",
+                    "priority": "high",
+                    "api_path": path,
+                    "api_method": method,
+                    "test_case_description": "验证参数非法时接口返回正确的错误码",
+                    "test_data": {
+                        "receive_id_type": "open_id",
+                        "receive_id": "",  # 空的receive_id
+                        "msg_type": "text",
+                        "content": "{\"text\":\"测试消息\"}"
+                    },
+                    "expected_results": {"status_code": 400, "feishu_code": 99991400}
+                }
+                test_cases.append(invalid_param_case)
+                
+                # 4. 内容超长
+                content_too_long_case = {
+                    "name": f"内容超长 - {method} {path}",
+                    "description": f"测试{method} {path}的内容超长场景",
+                    "type": "business_flow",
+                    "priority": "medium",
+                    "api_path": path,
+                    "api_method": method,
+                    "test_case_description": "验证消息内容超长时接口返回正确的错误码",
+                    "test_data": {
+                        "receive_id_type": "open_id",
+                        "receive_id": "ou_xxx",
+                        "msg_type": "text",
+                        "content": "{\"text\":\"" + "a" * 10000 + "\"}"  # 超长内容
+                    },
+                    "expected_results": {"status_code": 400, "feishu_code": 99991400}
+                }
+                test_cases.append(content_too_long_case)
+                
+            elif '/auth/v3/app_access_token/internal' in path:
+                # 获取访问令牌API的异常测试用例
+                # 1. AppSecret错误
+                wrong_secret_case = {
+                    "name": f"AppSecret错误 - {method} {path}",
+                    "description": f"测试{method} {path}的AppSecret错误场景",
+                    "type": "business_flow",
+                    "priority": "high",
+                    "api_path": path,
+                    "api_method": method,
+                    "test_case_description": "验证AppSecret错误时接口返回正确的错误码",
+                    "test_data": {
+                        "app_id": "cli_xxx",
+                        "app_secret": "wrong_secret"
+                    },
+                    "expected_results": {"status_code": 403, "feishu_code": 99991401}
+                }
+                test_cases.append(wrong_secret_case)
+        
+        # 生成完整的业务流程测试用例（包含所有API调用）
+        if len(apis) > 1:
+            complete_flow_case = {
+                "name": f"完整业务流程测试 - {scene.get('name', '未命名场景')}",
+                "description": f"测试完整的业务流程：{scene.get('description', '')}",
+                "type": "complete_business_flow",
+                "priority": "high",
+                "api_path": apis[0].get('path', ''),  # 使用第一个API作为主要API
+                "api_method": apis[0].get('method', ''),  # 使用第一个API的方法
+                "test_case_description": f"测试完整的业务流程：{scene.get('description', '')}",
+                "test_data": {},  # 完整流程的测试数据可能需要更复杂的处理
+                "expected_results": {"status_code": 200, "response_contains": "success"},
+                "api_sequence": apis,
+                "flow_step": 0,
+                "total_steps": len(apis),
+                "is_necessary": True
+            }
+            
+            test_cases.append(complete_flow_case)
         
         return test_cases
     
     def _generate_boundary_test_cases(self, scene: Dict, api_definition: Dict) -> List[Dict]:
         """生成边界值测试用例"""
         test_cases = []
-        path = scene.get('path', '')
-        method = scene.get('method', '')
         
-        # 参数最大值测试
-        max_value_case = {
-            "name": f"参数最大值测试 - {method} {path}",
-            "description": f"测试{method} {path}的参数最大值",
-            "type": "boundary_max",
-            "priority": "medium",
-            "path": path,
-            "method": method,
-            "headers": {},
-            "params": {},
-            "body": {},
-            "expected_status": 200,
-            "assertions": [
-                {"type": "status_code", "value": 200}
-            ]
-        }
+        # 处理新格式的场景数据
+        if 'api_call_combo' in scene:
+            # 新格式场景数据，使用api_call_combo
+            api_call_combo = scene.get('api_call_combo', [])
+            apis = []
+            for combo in api_call_combo:
+                api_path = combo.get('api_path', '')
+                # 从路径中提取HTTP方法
+                method = 'POST'  # 默认方法
+                apis.append({
+                    'path': api_path,
+                    'method': method
+                })
+        else:
+            # 旧格式场景数据，使用path和method字段
+            path = scene.get('path', '')
+            method = scene.get('method', '')
+            apis = [{'path': path, 'method': method}]
         
-        # 参数最小值测试
-        min_value_case = {
-            "name": f"参数最小值测试 - {method} {path}",
-            "description": f"测试{method} {path}的参数最小值",
-            "type": "boundary_min",
-            "priority": "medium",
-            "path": path,
-            "method": method,
-            "headers": {},
-            "params": {},
-            "body": {},
-            "expected_status": 200,
-            "assertions": [
-                {"type": "status_code", "value": 200}
-            ]
-        }
-        
-        # 参数为空测试
-        empty_value_case = {
-            "name": f"参数为空测试 - {method} {path}",
-            "description": f"测试{method} {path}的参数为空",
-            "type": "boundary_empty",
-            "priority": "medium",
-            "path": path,
-            "method": method,
-            "headers": {},
-            "params": {},
-            "body": {},
-            "expected_status": 400,  # 期望返回400错误
-            "assertions": [
-                {"type": "status_code", "value": 400}
-            ]
-        }
-        
-        # 参数格式错误测试
-        invalid_format_case = {
-            "name": f"参数格式错误测试 - {method} {path}",
-            "description": f"测试{method} {path}的参数格式错误",
-            "type": "boundary_invalid",
-            "priority": "medium",
-            "path": path,
-            "method": method,
-            "headers": {},
-            "params": {},
-            "body": {},
-            "expected_status": 400,  # 期望返回400错误
-            "assertions": [
-                {"type": "status_code", "value": 400}
-            ]
-        }
-        
-        test_cases.extend([
-            max_value_case,
-            min_value_case,
-            empty_value_case,
-            invalid_format_case
-        ])
+        for api in apis:
+            path = api.get('path', '')
+            method = api.get('method', '')
+            
+            # 使用大模型生成测试数据
+            base_test_data = self._generate_test_data_with_llm(path, method, api_definition)
+            
+            # 参数最大值测试
+            max_value_test_data = self._generate_boundary_test_data_with_llm(path, method, api_definition, "max")
+            
+            max_value_case = {
+                "name": f"参数最大值测试 - {method} {path}",
+                "description": f"测试{method} {path}的参数最大值",
+                "type": "boundary_max",
+                "priority": "medium",
+                "api_path": path,
+                "api_method": method,
+                "test_case_description": f"验证{method} {path}接口在参数最大值情况下的行为",
+                "test_data": max_value_test_data,
+                "expected_results": {"status_code": 200}
+            }
+            
+            # 参数最小值测试
+            min_value_test_data = self._generate_boundary_test_data_with_llm(path, method, api_definition, "min")
+            
+            min_value_case = {
+                "name": f"参数最小值测试 - {method} {path}",
+                "description": f"测试{method} {path}的参数最小值",
+                "type": "boundary_min",
+                "priority": "medium",
+                "api_path": path,
+                "api_method": method,
+                "test_case_description": f"验证{method} {path}接口在参数最小值情况下的行为",
+                "test_data": min_value_test_data,
+                "expected_results": {"status_code": 200}
+            }
+            
+            # 参数为空测试
+            empty_value_test_data = self._generate_boundary_test_data_with_llm(path, method, api_definition, "empty")
+            
+            empty_value_case = {
+                "name": f"参数为空测试 - {method} {path}",
+                "description": f"测试{method} {path}的参数为空",
+                "type": "boundary_empty",
+                "priority": "medium",
+                "api_path": path,
+                "api_method": method,
+                "test_case_description": f"验证{method} {path}接口在参数为空情况下的行为",
+                "test_data": empty_value_test_data,
+                "expected_results": {"status_code": 400}
+            }
+            
+            # 参数格式错误测试
+            invalid_format_test_data = self._generate_boundary_test_data_with_llm(path, method, api_definition, "invalid")
+            
+            invalid_format_case = {
+                "name": f"参数格式错误测试 - {method} {path}",
+                "description": f"测试{method} {path}的参数格式错误",
+                "type": "boundary_invalid",
+                "priority": "medium",
+                "api_path": path,
+                "api_method": method,
+                "test_case_description": f"验证{method} {path}接口在参数格式错误情况下的行为",
+                "test_data": invalid_format_test_data,
+                "expected_results": {"status_code": 400}
+            }
+            
+            test_cases.extend([
+                max_value_case,
+                min_value_case,
+                empty_value_case,
+                invalid_format_case
+            ])
         
         return test_cases
     
@@ -1054,7 +1604,30 @@ class OpenAPIAgent:
     def _generate_performance_test_cases(self, scene: Dict, api_definition: Dict) -> List[Dict]:
         """生成性能测试用例"""
         test_cases = []
-        apis = scene.get('apis', [])
+        
+        # 处理新格式的场景数据
+        if 'api_call_combo' in scene:
+            # 新格式场景数据，使用api_call_combo
+            api_call_combo = scene.get('api_call_combo', [])
+            apis = []
+            for combo in api_call_combo:
+                api_path = combo.get('api_path', '')
+                # 从路径中提取HTTP方法
+                method = 'POST'  # 默认方法
+                apis.append({
+                    'path': api_path,
+                    'method': method
+                })
+        else:
+            # 旧格式场景数据，使用apis字段
+            apis = scene.get('apis', [])
+        
+        # 如果没有API信息，但有单个API路径和方法，则创建单个API测试用例
+        if not apis and scene.get('path') and scene.get('method'):
+            apis = [{
+                'path': scene.get('path'),
+                'method': scene.get('method')
+            }]
         
         for api in apis:
             path = api.get('path', '')
@@ -1095,11 +1668,12 @@ class OpenAPIAgent:
                 "body": {},
                 "expected_status": 200,
                 "assertions": [
-                    {"type": "status_code", "value": 200}
+                    {"type": "status_code", "value": 200},
+                    {"type": "response_time", "value": 3000}  # 3秒内响应
                 ],
                 "performance_threshold": {
-                    "concurrent_users": 50,
-                    "success_rate": 95  # 95%成功率
+                    "response_time": 3000,  # 3秒
+                    "concurrent_users": 50
                 }
             }
             
@@ -1762,6 +2336,76 @@ class OpenAPIAgent:
                 recommendations.extend(llm_recommendations)
         
         return recommendations
+    
+    def _generate_scenes_from_relations(self, relations_data: Dict) -> List[Dict]:
+        """根据关联关系生成测试场景"""
+        relation_scenes = []
+        
+        try:
+            relation_info = relations_data.get('relation_info', {})
+            key_relation_scenarios = relation_info.get('key_relation_scenarios', [])
+            
+            # 为每个关键关联场景生成测试场景
+            for scenario in key_relation_scenarios:
+                scenario_name = scenario.get('scenario_name', '')
+                api_sequence = scenario.get('api_sequence', [])
+                sequence_detail = scenario.get('sequence_detail', [])
+                description = scenario.get('description', '')
+                
+                # 构建API调用组合
+                api_call_combo = []
+                for api_detail in sequence_detail:
+                    api_path = api_detail.get('api_path', '')
+                    call_order = api_detail.get('call_order', 1)
+                    is_necessary = api_detail.get('is_necessary', True)
+                    output_params = api_detail.get('output_params', [])
+                    next_api_mapping = api_detail.get('next_api_mapping', [])
+                    
+                    # 确定HTTP方法
+                    method = 'POST'  # 默认方法
+                    if api_path.startswith('https://') or api_path.startswith('http://'):
+                        # 外部API，通常为POST
+                        method = 'POST'
+                    else:
+                        # 内部API，根据路径推断方法
+                        if 'auth' in api_path:
+                            method = 'POST'
+                        elif 'create' in api_path:
+                            method = 'POST'
+                        elif 'upload' in api_path:
+                            method = 'POST'
+                        else:
+                            method = 'POST'  # 默认为POST
+                    
+                    api_call_combo.append({
+                        'api_path': api_path,
+                        'method': method,
+                        'call_order': call_order,
+                        'is_necessary': is_necessary,
+                        'output_params': output_params,
+                        'next_api_mapping': next_api_mapping
+                    })
+                
+                # 创建场景对象
+                scene = {
+                    'scene_id': f"relation_{scenario_name.replace(' ', '_')}",
+                    'scene_name': scenario_name,
+                    'scene_description': description,
+                    'priority': 'P1',  # 关联关系场景默认为高优先级
+                    'related_apis': api_sequence,
+                    'api_call_combo': api_call_combo,
+                    'test_focus': ['API依赖关系', '参数传递', '业务流程'],
+                    'exception_scenarios': ['依赖API调用失败', '参数传递错误', '认证失败']
+                }
+                
+                relation_scenes.append(scene)
+            
+            INFO.logger.info(f"根据关联关系生成了 {len(relation_scenes)} 个测试场景")
+            return relation_scenes
+            
+        except Exception as e:
+            ERROR.logger.error(f"根据关联关系生成测试场景失败: {str(e)}")
+            return []
     
     # 公共接口方法
     def parse_openapi(self, openapi_url_or_path: str) -> Dict[str, Any]:
