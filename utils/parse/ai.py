@@ -303,10 +303,10 @@ def generate_openapi_yaml(json_paths, output_yaml_path):
 #     增强：支持场景化条件依赖（如发送消息仅在图片场景下需要调用上传图片接口）
 #     """
 #     api_json_data = read_json_files(json_paths)
-
-#     prompt = f"""请分析以下接口JSON数据，生成接口关联关系文件（仅返回JSON内容，无其他解释）：
+#
+#     prompt = f"""请分析以下接口数据，生成接口关联关系文件（仅返回JSON内容，无其他解释）：
 # {json.dumps(api_json_data, ensure_ascii=False, indent=2)}
-
+#
 # 输出JSON格式要求：
 # {{
 #   "relation_info": {{
@@ -405,7 +405,7 @@ def generate_openapi_yaml(json_paths, output_yaml_path):
 #     ]
 #   }}
 # }}
-
+#
 # 关键要求：
 # 1. 严格区分“全局必调依赖”和“场景化条件依赖”：
 #    - 全局必调：如登录接口（所有发送消息场景都需要token）
@@ -417,7 +417,7 @@ def generate_openapi_yaml(json_paths, output_yaml_path):
 #    - 发送文本消息时，无需调用上传图片接口
 # 4. 若接口无依赖关系，对应字段为空数组，不要省略；
 # 5. 核心业务场景要区分不同子场景（如发送文本/图片消息）的接口调用差异。"""
-
+#
 #     system_prompt = """你是资深的API架构师和测试专家，擅长分析接口之间的关联关系，尤其是场景化条件依赖和参数级的入参/出参传递。
 # 要求：
 # 1. 精准区分“全局必调依赖”（如登录接口）和“场景化条件依赖”（如上传图片仅在发送图片消息时需要）；
@@ -426,24 +426,24 @@ def generate_openapi_yaml(json_paths, output_yaml_path):
 # 4. 仅返回标准JSON格式，无任何额外文字、注释或标记；
 # 5. 确保JSON语法合法，可直接被JSON.parse解析；
 # 6. 若接口无依赖关系，对应字段为空数组，不要省略。"""
-
+#
 #     # 调用API生成关联关系
 #     relation_content = call_bailian_api(prompt, system_prompt)
 #     if not relation_content:
 #         raise Exception("未能生成接口关联关系内容")
-
+#
 #     # 验证JSON合法性
 #     try:
 #         relation_json = json.loads(relation_content)
 #     except json.JSONDecodeError as e:
 #         raise Exception(f"生成的关联关系JSON格式非法：{str(e)}\n内容：{relation_content}")
-
+#
 #     # 写入文件
 #     output_dir = os.path.dirname(output_relation_path)
 #     os.makedirs(output_dir, exist_ok=True)
 #     with open(output_relation_path, "w", encoding="utf-8") as f:
 #         json.dump(relation_json, f, ensure_ascii=False, indent=2)
-
+#
 #     print(f"接口关联关系文件已生成：{output_relation_path}")
 #     return relation_json
 
@@ -547,7 +547,6 @@ def generate_api_relation_file(openapi_file_paths, output_relation_path):
 
     print(f"接口关联关系文件已生成：{output_relation_path}")
     return relation_json
-
 
 def generate_business_scene_file(json_paths, output_scene_path):
     """
@@ -1121,4 +1120,3 @@ if __name__ == "__main__":
     print(f"接口关联关系文件：{relation_output_path}")
 
     print(f"业务场景文件：{scene_output_path}")
-
