@@ -141,7 +141,12 @@ function refreshDashboardData() {
     refreshBtn.disabled = true;
     
     // 调用API获取数据
-    fetch(API_CONFIG.DASHBOARD.REFRESH, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const dashboardEndpoint = endpoints.DASHBOARD || {};
+    const refreshUrl = baseUrl + (dashboardEndpoint.REFRESH || '/api/dashboard/refresh');
+    
+    fetch(refreshUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -185,7 +190,12 @@ function refreshDashboardData() {
 // 更新统计数据
 function updateStatistics() {
     // 调用API获取数据
-    fetch(API_CONFIG.DASHBOARD.STATISTICS, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const dashboardEndpoint = endpoints.DASHBOARD || {};
+    const statisticsUrl = baseUrl + (dashboardEndpoint.STATISTICS || '/api/dashboard/statistics');
+    
+    fetch(statisticsUrl, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -252,7 +262,12 @@ function updateStatistics() {
 // 更新最新测试执行表格
 function updateRecentTestsTable() {
     // 调用API获取数据
-    fetch(API_CONFIG.DASHBOARD.RECENT_TESTS, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const dashboardEndpoint = endpoints.DASHBOARD || {};
+    const recentTestsUrl = baseUrl + (dashboardEndpoint.RECENT_TESTS || '/api/dashboard/recent-tests');
+    
+    fetch(recentTestsUrl, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -412,7 +427,12 @@ function updateRecentTestsTable() {
 // 更新高优先级建议
 function updateHighPrioritySuggestions() {
     // 调用API获取数据
-    fetch(API_CONFIG.DASHBOARD.SUGGESTIONS, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const dashboardEndpoint = endpoints.DASHBOARD || {};
+    const suggestionsUrl = baseUrl + (dashboardEndpoint.SUGGESTIONS || '/api/dashboard/suggestions');
+    
+    fetch(suggestionsUrl, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -584,7 +604,12 @@ function viewTestResult(testId) {
 // 应用建议
 function applySuggestion(suggestionId) {
     // 调用API应用建议
-    fetch(API_CONFIG.DASHBOARD.APPLY_SUGGESTION, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const dashboardEndpoint = endpoints.DASHBOARD || {};
+    const applyUrl = baseUrl + (dashboardEndpoint.APPLY_SUGGESTION || '/api/dashboard/apply-suggestion');
+    
+    fetch(applyUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -612,7 +637,12 @@ function applySuggestion(suggestionId) {
 // 忽略建议
 function ignoreSuggestion(suggestionId) {
     // 调用API忽略建议
-    fetch(API_CONFIG.DASHBOARD.IGNORE_SUGGESTION, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const dashboardEndpoint = endpoints.DASHBOARD || {};
+    const ignoreUrl = baseUrl + (dashboardEndpoint.IGNORE_SUGGESTION || '/api/dashboard/ignore-suggestion');
+    
+    fetch(ignoreUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

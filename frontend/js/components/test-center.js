@@ -19,6 +19,9 @@ if (typeof relations === 'undefined') {
 if (typeof selectedApis === 'undefined') {
     var selectedApis = new Set();
 }
+if (typeof multiApiDocuments === 'undefined') {
+    var multiApiDocuments = [];
+}
 
 // 页面初始化
 document.addEventListener('DOMContentLoaded', function() {
@@ -33,6 +36,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化测试编辑器按钮
     initTestEditorButtons();
+    
+    // 初始化文档标签页
+    initDocumentTabs();
 });
 
 // 初始化测试中心 - 智能测试功能专用
@@ -249,6 +255,15 @@ function initSmartTestTab() {
     if (refreshSceneDocsBtn) {
         refreshSceneDocsBtn.addEventListener('click', loadUploadedDocuments);
     }
+    
+    // 多接口文档刷新按钮
+    const refreshMultiApiDocsBtn = document.getElementById('refreshMultiApiDocsBtn');
+    if (refreshMultiApiDocsBtn) {
+        refreshMultiApiDocsBtn.addEventListener('click', loadMultiApiDocuments);
+    }
+    
+    // 初始化标签页切换事件
+    initDocumentTabs();
 }
 
 // 初始化测试用例标签页 - 智能测试功能专用
@@ -416,7 +431,9 @@ function handleSmartFile(file) {
     formData.append('target_path', '/Users/oss/code/PytestAutoApi/multiuploads/openapi');
     
     // 上传文件到服务器
-    const uploadUrl = API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.DOCS.UPLOAD;
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const uploadUrl = baseUrl + (endpoints.DOCS ? endpoints.DOCS.UPLOAD : '/api/docs/upload');
     
     fetch(uploadUrl, {
         method: 'POST',
@@ -2309,12 +2326,16 @@ function formatFileSize(bytes) {
 // 加载已上传文档列表
 function loadUploadedDocuments() {
     console.log('开始加载已上传文档列表');
-    console.log('API_CONFIG:', API_CONFIG);
-    console.log('API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
-    console.log('API_CONFIG.ENDPOINTS.DOCS.ALL_DOCUMENTS:', API_CONFIG.ENDPOINTS.DOCS.ALL_DOCUMENTS);
+    
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    
+    console.log('API_CONFIG.BASE_URL:', baseUrl);
+    console.log('API_CONFIG.ENDPOINTS.DOCS.ALL_DOCUMENTS:', docsEndpoint.ALL_DOCUMENTS || '/api/docs/all-documents');
     
     // 使用新的API端点 - 获取所有类型的文档列表
-    const apiUrl = API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.DOCS.ALL_DOCUMENTS;
+    const apiUrl = baseUrl + (docsEndpoint.ALL_DOCUMENTS || '/api/docs/all-documents');
     console.log('完整的API URL:', apiUrl);
     
     fetch(apiUrl)
@@ -2554,8 +2575,12 @@ function loadUploadedDocuments() {
 function viewDocument(docType, docId) {
     console.log(`查看${docType}文档详情:`, docId);
     
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    
     // 获取文档内容
-    const endpointTemplate = API_CONFIG.ENDPOINTS.DOCS.GET_DOCUMENT;
+    const endpointTemplate = docsEndpoint.GET_DOCUMENT || '/api/docs/get-document/{doc_type}/{file_id}';
     console.log('原始端点模板:', endpointTemplate);
     
     // 先替换占位符，再构建完整URL
@@ -2563,10 +2588,10 @@ function viewDocument(docType, docId) {
         .replace('{doc_type}', docType)
         .replace('{file_id}', docId);
     
-    const apiUrl = API_CONFIG.BASE_URL + endpoint;
+    const apiUrl = baseUrl + endpoint;
     
     console.log('构建的API URL:', apiUrl);
-    console.log('API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
+    console.log('API_CONFIG.BASE_URL:', baseUrl);
     console.log('docType:', docType);
     console.log('docId:', docId);
     
@@ -2578,7 +2603,7 @@ function viewDocument(docType, docId) {
         const typeEndpoint = endpointTemplate
             .replace('{doc_type}', type)
             .replace('{file_id}', docId);
-        const typeApiUrl = API_CONFIG.BASE_URL + typeEndpoint;
+        const typeApiUrl = baseUrl + typeEndpoint;
         
         const promise = fetch(typeApiUrl)
             .then(response => response.json())
@@ -2761,16 +2786,20 @@ function viewDocument(docType, docId) {
 function editThreeDocuments(docId) {
     console.log(`编辑三个文档:`, docId);
     
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    
     // 获取三种文档类型的内容
     const documentTypes = ['openapi', 'relation', 'scene'];
     const documentPromises = [];
     
     documentTypes.forEach(docType => {
-        const endpoint = API_CONFIG.ENDPOINTS.DOCS.GET_DOCUMENT
+        const endpoint = (docsEndpoint.GET_DOCUMENT || '/api/docs/get-document/{doc_type}/{file_id}')
             .replace('{doc_type}', docType)
             .replace('{file_id}', docId);
         
-        const apiUrl = API_CONFIG.BASE_URL + endpoint;
+        const apiUrl = baseUrl + endpoint;
         
         documentPromises.push(
             fetch(apiUrl)
@@ -2885,6 +2914,10 @@ function editThreeDocuments(docId) {
 function saveThreeDocuments(docId, originalDocs) {
     console.log(`保存三个文档:`, docId);
     
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    
     const documentTypes = ['openapi', 'relation', 'scene'];
     const savePromises = [];
     
@@ -2922,11 +2955,11 @@ function saveThreeDocuments(docId, originalDocs) {
         
         // 只有内容有变化时才保存
         if (content !== originalContent) {
-            const endpoint = API_CONFIG.ENDPOINTS.DOCS.UPDATE_DOCUMENT
+            const endpoint = (docsEndpoint.UPDATE_DOCUMENT || '/api/docs/update-document/{doc_type}/{file_id}')
                 .replace('{doc_type}', docType)
                 .replace('{file_id}', docId);
             
-            const updateUrl = API_CONFIG.BASE_URL + endpoint;
+            const updateUrl = baseUrl + endpoint;
             
             savePromises.push(
                 fetch(updateUrl, {
@@ -2982,12 +3015,16 @@ function editDocument(docType, docId) {
     console.log(`编辑${docType}文档:`, docId);
     
     // 获取文档内容
-    // 先替换占位符，再构建完整URL
-    const endpoint = API_CONFIG.ENDPOINTS.DOCS.GET_DOCUMENT
+    // 安全获取配置并替换占位符，再构建完整URL
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    
+    const endpoint = (docsEndpoint.GET_DOCUMENT || '/api/docs/get-document/{doc_type}/{file_id}')
         .replace('{doc_type}', docType)
         .replace('{file_id}', docId);
     
-    const apiUrl = API_CONFIG.BASE_URL + endpoint;
+    const apiUrl = baseUrl + endpoint;
     
     fetch(apiUrl)
         .then(response => response.json())
@@ -3008,12 +3045,12 @@ function editDocument(docType, docId) {
                         const updatedContent = modalContent.value;
                         
                         // 更新文档内容
-                        // 先替换占位符，再构建完整URL
-                        const updateEndpoint = API_CONFIG.ENDPOINTS.DOCS.UPDATE_DOCUMENT
+                        // 安全获取配置并替换占位符，再构建完整URL
+                        const updateEndpoint = (docsEndpoint.UPDATE_DOCUMENT || '/api/docs/update-document/{doc_type}/{file_id}')
                             .replace('{doc_type}', docType)
                             .replace('{file_id}', docId);
                         
-                        const updateUrl = API_CONFIG.BASE_URL + updateEndpoint;
+                        const updateUrl = baseUrl + updateEndpoint;
                         
                         fetch(updateUrl, {
                             method: 'PUT',
@@ -3062,13 +3099,17 @@ function deleteDocument(docType, docId) {
     console.log(`删除${docType}文档:`, docId);
     
     if (confirm(`确定要删除这个${docType}文档吗？此操作不可恢复。`)) {
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+        const docsEndpoint = endpoints.DOCS || {};
+        
         // 调用删除API
         // 先替换占位符，再构建完整URL
-        const endpoint = API_CONFIG.ENDPOINTS.DOCS.DELETE_DOCUMENT
+        const endpoint = (docsEndpoint.DELETE_DOCUMENT || '/api/docs/delete-document/{doc_type}/{file_id}')
             .replace('{doc_type}', docType)
             .replace('{file_id}', docId);
         
-        const apiUrl = API_CONFIG.BASE_URL + endpoint;
+        const apiUrl = baseUrl + endpoint;
         
         fetch(apiUrl, {
             method: 'DELETE'
@@ -3088,6 +3129,252 @@ function deleteDocument(docType, docId) {
             showSmartTestNotification(`删除${docType}文档失败: ` + error.message, 'error');
         });
     }
+}
+
+// 初始化文档标签页切换功能
+function initDocumentTabs() {
+    // 获取所有标签页按钮和内容区域 - 使用正确的ID
+    const openApiTab = document.getElementById('openapi-docs-tab');
+    const multiApiTab = document.getElementById('multiapi-docs-tab');
+    
+    const openApiContent = document.getElementById('openapi-docs-content');
+    const multiApiContent = document.getElementById('multiapi-docs-content');
+    
+    // 如果元素不存在，直接返回
+    if (!openApiTab || !multiApiTab || !openApiContent || !multiApiContent) {
+        return;
+    }
+    
+    // 设置默认显示OpenAPI文档标签页
+    openApiTab.classList.add('active');
+    openApiContent.classList.add('active', 'show');
+    multiApiContent.classList.remove('active', 'show');
+    
+    // 添加标签页切换事件监听
+    openApiTab.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // 切换标签页状态
+        openApiTab.classList.add('active');
+        multiApiTab.classList.remove('active');
+        
+        // 切换内容显示
+        openApiContent.classList.add('active', 'show');
+        multiApiContent.classList.remove('active', 'show');
+    });
+    
+    multiApiTab.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // 切换标签页状态
+        multiApiTab.classList.add('active');
+        openApiTab.classList.remove('active');
+        
+        // 切换内容显示
+        multiApiContent.classList.add('active', 'show');
+        openApiContent.classList.remove('active', 'show');
+        
+        // 加载多接口文档数据
+        loadMultiApiDocuments();
+    });
+}
+
+// 加载多接口文档列表
+function loadMultiApiDocuments() {
+    console.log('开始加载多接口文档列表');
+    
+    // 显示加载状态
+    const multiApiTableBody = document.getElementById('multiApiDocsTableBody');
+    const noMultiApiDocsMessage = document.getElementById('noMultiApiDocsMessage');
+    
+    if (multiApiTableBody) {
+        multiApiTableBody.innerHTML = '<tr><td colspan="4" class="text-center"><div class="spinner-border spinner-border-sm me-2" role="status"></div>正在加载多接口文档...</td></tr>';
+    }
+    
+    // 使用直接拼接URL的方式，避免undefined问题
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const apiUrl = baseUrl + '/api/multiapi/documents';
+    console.log('多接口文档API URL:', apiUrl);
+    
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            console.log('获取多接口文档列表响应:', data);
+            
+            // 清空加载状态
+            if (multiApiTableBody) {
+                multiApiTableBody.innerHTML = '';
+            }
+            
+            // 处理响应数据
+            const documents = data.data || [];
+            
+            if (documents.length === 0) {
+                // 显示无文档消息
+                if (noMultiApiDocsMessage) {
+                    noMultiApiDocsMessage.style.display = 'block';
+                }
+                console.log('没有多接口文档');
+            } else {
+                // 隐藏无文档消息
+                if (noMultiApiDocsMessage) {
+                    noMultiApiDocsMessage.style.display = 'none';
+                }
+                
+                // 保存到全局变量
+                multiApiDocuments = documents;
+                
+                // 添加文档到表格
+                documents.forEach(doc => {
+                    console.log('多接口文档数据:', doc);
+                    const row = document.createElement('tr');
+                    
+                    // 文档ID
+                    const idCell = document.createElement('td');
+                    idCell.textContent = doc.document_id || '未知ID';
+                    row.appendChild(idCell);
+                    
+                    // 文档名称
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = doc.document_name || '未知名称';
+                    row.appendChild(nameCell);
+                    
+                    // 接口数量
+                    const apiCountCell = document.createElement('td');
+                    apiCountCell.textContent = doc.api_count || 0;
+                    row.appendChild(apiCountCell);
+                    
+                    // 操作
+                    const actionsCell = document.createElement('td');
+                    
+                    const viewBtn = document.createElement('button');
+                    viewBtn.className = 'btn btn-sm btn-outline-primary me-1';
+                    viewBtn.innerHTML = '<i class="fas fa-eye"></i> 查看';
+                    viewBtn.addEventListener('click', () => {
+                        viewMultiApiDocument(doc.document_id);
+                    });
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn btn-sm btn-outline-danger';
+                    deleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
+                    deleteBtn.addEventListener('click', () => {
+                        deleteMultiApiDocument(doc.document_id);
+                    });
+                    
+                    actionsCell.appendChild(viewBtn);
+                    actionsCell.appendChild(deleteBtn);
+                    row.appendChild(actionsCell);
+                    
+                    multiApiTableBody.appendChild(row);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('加载多接口文档失败:', error);
+            
+            // 显示错误信息
+            if (multiApiTableBody) {
+                multiApiTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">加载多接口文档失败: ' + error.message + '</td></tr>';
+            }
+        });
+}
+
+// 查看多接口文档详情
+function viewMultiApiDocument(documentId) {
+    console.log('查看多接口文档详情:', documentId);
+    
+    // 查找文档数据
+    const document = multiApiDocuments.find(doc => doc.document_id === documentId);
+    if (!document) {
+        showSmartTestNotification('未找到指定的多接口文档', 'error');
+        return;
+    }
+    
+    // 显示文档详情模态框
+    const modal = document.getElementById('multiApiDocDetailModal');
+    if (!modal) {
+        console.error('未找到多接口文档详情模态框');
+        return;
+    }
+    
+    // 填充文档基本信息
+    const docIdElement = document.getElementById('multiApiDocId');
+    const docNameElement = document.getElementById('multiApiDocName');
+    const docApiCountElement = document.getElementById('multiApiDocApiCount');
+    const docUploadTimeElement = document.getElementById('multiApiDocUploadTime');
+    
+    if (docIdElement) docIdElement.textContent = document.document_id || '未知ID';
+    if (docNameElement) docNameElement.textContent = document.document_name || '未知名称';
+    if (docApiCountElement) docApiCountElement.textContent = document.api_count || 0;
+    if (docUploadTimeElement) {
+        const uploadDate = new Date(document.upload_time);
+        docUploadTimeElement.textContent = uploadDate.toLocaleString();
+    }
+    
+    // 填充接口列表
+    const apiListElement = document.getElementById('multiApiDocApiList');
+    if (apiListElement && document.apis) {
+        apiListElement.innerHTML = '';
+        
+        document.apis.forEach(api => {
+            const apiItem = document.createElement('div');
+            apiItem.className = 'card mb-2';
+            
+            const apiHeader = document.createElement('div');
+            apiHeader.className = 'card-header d-flex justify-content-between align-items-center';
+            apiHeader.innerHTML = `
+                <span><strong>${api.method || 'GET'}</strong> ${api.path || api.url || '/'}</span>
+                <span class="badge bg-primary">${api.status || '200'}</span>
+            `;
+            
+            const apiBody = document.createElement('div');
+            apiBody.className = 'card-body';
+            apiBody.innerHTML = `
+                <p class="mb-1"><strong>描述:</strong> ${api.description || '无描述'}</p>
+                <p class="mb-1"><strong>参数:</strong> ${api.parameters ? JSON.stringify(api.parameters) : '无参数'}</p>
+                <p class="mb-0"><strong>响应:</strong> ${api.responses ? JSON.stringify(api.responses) : '无响应定义'}</p>
+            `;
+            
+            apiItem.appendChild(apiHeader);
+            apiItem.appendChild(apiBody);
+            apiListElement.appendChild(apiItem);
+        });
+    }
+    
+    // 显示模态框
+    const modalInstance = new bootstrap.Modal(modal);
+    modalInstance.show();
+}
+
+// 删除多接口文档
+function deleteMultiApiDocument(documentId) {
+    if (!confirm('确定要删除这个多接口文档吗？此操作不可恢复。')) {
+        return;
+    }
+    
+    console.log('删除多接口文档:', documentId);
+    
+    // 调用删除API
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const apiUrl = baseUrl + '/api/multiapi/documents/' + documentId;
+    
+    fetch(apiUrl, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSmartTestNotification('多接口文档删除成功', 'success');
+            // 刷新文档列表
+            loadMultiApiDocuments();
+        } else {
+            showSmartTestNotification('删除多接口文档失败: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('删除多接口文档失败:', error);
+        showSmartTestNotification('删除多接口文档失败: ' + error.message, 'error');
+    });
 }
 
 // 生成选中的测试用例

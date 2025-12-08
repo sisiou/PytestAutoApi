@@ -73,7 +73,12 @@ function initTrendChart() {
     const ctx = document.getElementById('coverageTrendChart').getContext('2d');
     
     // 调用API获取趋势数据
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.TRENDS) + '?period=week', {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const coverageEndpoint = endpoints.COVERAGE || {};
+    const trendsUrl = baseUrl + (coverageEndpoint.TRENDS || '/api/coverage/trends') + '?period=week';
+    
+    fetch(trendsUrl, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -260,7 +265,12 @@ function initHeatmap() {
     const heatmapContainer = document.getElementById('coverageHeatmap');
     
     // 调用API获取热力图数据
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.HEATMAP), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const coverageEndpoint = endpoints.COVERAGE || {};
+    const heatmapUrl = baseUrl + (coverageEndpoint.HEATMAP || '/api/coverage/heatmap');
+    
+    fetch(heatmapUrl, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -400,7 +410,12 @@ function loadCoverageData() {
     showLoading();
     
     // 从API获取覆盖度数据
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.LIST), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const coverageEndpoint = endpoints.COVERAGE || {};
+    const listUrl = baseUrl + (coverageEndpoint.LIST || '/api/coverage/list');
+    
+    fetch(listUrl, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -714,7 +729,12 @@ function refreshData() {
     refreshBtn.disabled = true;
     
     // 调用API刷新数据
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.REFRESH), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const coverageEndpoint = endpoints.COVERAGE || {};
+    const refreshUrl = baseUrl + (coverageEndpoint.REFRESH || '/api/coverage/refresh');
+    
+    fetch(refreshUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -778,7 +798,12 @@ function generateReport() {
     const dateRange = document.getElementById('dateRange').value;
     
     // 调用API生成报告
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.GENERATE), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const coverageEndpoint = endpoints.COVERAGE || {};
+    const generateUrl = baseUrl + (coverageEndpoint.GENERATE || '/api/coverage/generate');
+    
+    fetch(generateUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -836,7 +861,12 @@ function exportReport() {
     const dateRange = document.getElementById('exportDateRange').value;
     
     // 调用API导出报告
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.EXPORT), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const coverageEndpoint = endpoints.COVERAGE || {};
+    const exportUrl = baseUrl + (coverageEndpoint.EXPORT || '/api/coverage/export');
+    
+    fetch(exportUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -890,7 +920,12 @@ function exportReport() {
 // 更新趋势图
 function updateTrendChart(period) {
     // 调用API获取趋势数据
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.TRENDS) + `?period=${period}`, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const coverageEndpoint = endpoints.COVERAGE || {};
+    const trendsUrl = baseUrl + (coverageEndpoint.TRENDS || '/api/coverage/trends') + `?period=${period}`;
+    
+    fetch(trendsUrl, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -988,7 +1023,12 @@ function generateTestForUncovered(button) {
     const descriptionElement = listItem.querySelector('.uncovered-description').textContent.trim();
     
     // 调用API生成测试
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.COVERAGE.GENERATE_TEST), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const coverageEndpoint = endpoints.COVERAGE || {};
+    const generateTestUrl = baseUrl + (coverageEndpoint.GENERATE_TEST || '/api/coverage/generate-test');
+    
+    fetch(generateTestUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

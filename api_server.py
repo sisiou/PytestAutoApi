@@ -59,6 +59,7 @@ CORS(app)  # 启用跨域支持
 # 配置
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB最大文件大小
 app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['MULTI_UPLOAD_FOLDER'] = 'multiuploads'
 app.config['RESULTS_FOLDER'] = 'results'
 app.config['TEST_CASES_FOLDER'] = 'test_cases'
 
@@ -3247,6 +3248,248 @@ def get_ai_files():
     except Exception as e:
         logger.error(f"获取AI文件失败: {str(e)}")
         return jsonify({'error': '获取AI文件失败', 'message': str(e)}), 500
+
+@app.route('/api/multiapi/documents', methods=['GET'])
+def list_multiapi_documents():
+    """获取multiopenapi目录下的所有多接口文档列表"""
+    try:
+        # 定义要扫描的目录
+        dir_path = os.path.join(app.config['MULTI_UPLOAD_FOLDER'], 'openapi')
+        documents = []
+        
+        # 确保目录存在
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path, exist_ok=True)
+            return jsonify({
+                'success': True,
+                'data': {
+                    'documents': [],
+                    'count': 0
+                }
+            })
+        
+        # 遍历目录中的文件
+        for filename in os.listdir(dir_path):
+            file_extension = os.path.splitext(filename)[1].lower()
+            if file_extension in ['.yaml', '.yml', '.json']:
+                file_path = os.path.join(dir_path, filename)
+                
+                # 获取文件信息
+                stat = os.stat(file_path)
+                
+                # 提取文件ID
+                file_id = filename
+                if filename.startswith('multiopenapi_'):
+                    file_id = filename[len('multiopenapi_'):]  # 去掉类型前缀
+                
+                # 去掉文件扩展名
+                if '.' in file_id:
+                    file_id = file_id.rsplit('.', 1)[0]
+                
+                # 尝试解析文件内容
+                content_preview = ""
+                api_count = 0
+                
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        if file_extension == '.json':
+                            content = json.load(f)
+                            content_preview = json.dumps(content, ensure_ascii=False, indent=2)
+                            
+                            # 计算API数量
+                            if 'paths' in content:
+                                for path, path_item in content['paths'].items():
+                                    for method in path_item:
+                                        if method.upper() in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
+                                            api_count += 1
+                        elif file_extension in ['.yaml', '.yml']:
+                            content = yaml.safe_load(f)
+                            content_preview = yaml.dump(content, allow_unicode=True, indent=2)
+                            
+                            # 计算API数量
+                            if 'paths' in content:
+                                for path, path_item in content['paths'].items():
+                                    for method in path_item:
+                                        if method.upper() in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
+                                            api_count += 1
+                except Exception as e:
+                    logger.warning(f"解析多接口文档失败 {filename}: {str(e)}")
+                    content_preview = f"解析失败: {str(e)}"
+                
+                documents.append({
+                    'file_id': file_id,
+                    'file_name': filename,
+                    'file_size': stat.st_size,
+                    'upload_time': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    'api_count': api_count,
+                    'content_preview': content_preview[:500] + ('...' if len(content_preview) > 500 else ''),
+                    'status': 'uploaded',
+                    'editable': True
+                })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'documents': documents,
+                'count': len(documents)
+            }
+        })
+    
+    except Exception as e:
+        logger.error(f"获取多接口文档列表失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '获取多接口文档列表失败',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/multiapi/document/<file_id>', methods=['GET'])
+def get_multiapi_document(file_id):
+    """获取指定多接口文档的完整内容"""
+    try:
+        # 构建文件路径
+        doc_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'multiopenapi')
+        if not os.path.exists(doc_dir):
+            return jsonify({
+                'success': False,
+                'error': '多接口文档目录不存在'
+            }), 404
+        
+        # 查找文件
+        file_path = None
+        file_name = None
+        
+        # 首先尝试直接匹配完整文件名（包含前缀和扩展名）
+        for filename in os.listdir(doc_dir):
+            # 检查完整文件名（去掉扩展名）是否匹配file_id
+            filename_without_ext = filename.rsplit('.', 1)[0] if '.' in filename else filename
+            if filename_without_ext == file_id:
+                file_path = os.path.join(doc_dir, filename)
+                file_name = filename
+                break
+        
+        # 如果没有找到，尝试匹配去掉前缀和扩展名后的文件ID
+        if not file_path:
+            for filename in os.listdir(doc_dir):
+                # 尝试匹配文件ID
+                potential_id = filename
+                if filename.startswith('multiopenapi_'):
+                    potential_id = filename[len('multiopenapi_'):]
+                
+                if '.' in potential_id:
+                    potential_id = potential_id.rsplit('.', 1)[0]
+                
+                if potential_id == file_id:
+                    file_path = os.path.join(doc_dir, filename)
+                    file_name = filename
+                    break
+        
+        if not file_path or not os.path.exists(file_path):
+            return jsonify({
+                'success': False,
+                'error': '多接口文档文件不存在'
+            }), 404
+        
+        # 读取文件内容
+        file_extension = os.path.splitext(file_name)[1].lower()
+        content = ""
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            if file_extension == '.json':
+                try:
+                    json_content = json.load(f)
+                    content = json.dumps(json_content, ensure_ascii=False, indent=2)
+                except:
+                    content = f.read()
+            elif file_extension in ['.yaml', '.yml']:
+                try:
+                    yaml_content = yaml.safe_load(f)
+                    content = yaml.dump(yaml_content, allow_unicode=True, indent=2)
+                except:
+                    content = f.read()
+            else:
+                content = f.read()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'file_id': file_id,
+                'file_name': file_name,
+                'content': content,
+                'file_extension': file_extension
+            }
+        })
+    
+    except Exception as e:
+        logger.error(f"获取多接口文档内容失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '获取多接口文档内容失败',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/multiapi/document/<file_id>', methods=['DELETE'])
+def delete_multiapi_document(file_id):
+    """删除指定的多接口文档"""
+    try:
+        # 构建文件路径
+        doc_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'multiopenapi')
+        if not os.path.exists(doc_dir):
+            return jsonify({
+                'success': False,
+                'error': '多接口文档目录不存在'
+            }), 404
+        
+        # 查找文件
+        file_path = None
+        file_name = None
+        
+        # 首先尝试直接匹配完整文件名（包含前缀和扩展名）
+        for filename in os.listdir(doc_dir):
+            # 检查完整文件名（去掉扩展名）是否匹配file_id
+            filename_without_ext = filename.rsplit('.', 1)[0] if '.' in filename else filename
+            if filename_without_ext == file_id:
+                file_path = os.path.join(doc_dir, filename)
+                file_name = filename
+                break
+        
+        # 如果没有找到，尝试匹配去掉前缀和扩展名后的文件ID
+        if not file_path:
+            for filename in os.listdir(doc_dir):
+                # 尝试匹配文件ID
+                potential_id = filename
+                if filename.startswith('multiopenapi_'):
+                    potential_id = filename[len('multiopenapi_'):]
+                
+                if '.' in potential_id:
+                    potential_id = potential_id.rsplit('.', 1)[0]
+                
+                if potential_id == file_id:
+                    file_path = os.path.join(doc_dir, filename)
+                    file_name = filename
+                    break
+        
+        if not file_path or not os.path.exists(file_path):
+            return jsonify({
+                'success': False,
+                'error': '多接口文档文件不存在'
+            }), 404
+        
+        # 删除文件
+        os.remove(file_path)
+        
+        return jsonify({
+            'success': True,
+            'message': f'多接口文档 {file_name} 已成功删除'
+        })
+    
+    except Exception as e:
+        logger.error(f"删除多接口文档失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '删除多接口文档失败',
+            'message': str(e)
+        }), 500
 
 # 9. 静态文件服务
 @app.route('/')

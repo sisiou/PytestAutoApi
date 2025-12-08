@@ -165,7 +165,12 @@ function handleFileUpload(file) {
     formData.append('file', file);
     
     // 上传文件
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.UPLOAD), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    const uploadUrl = baseUrl + (docsEndpoint.UPLOAD || '/api/docs/upload');
+    
+    fetch(uploadUrl, {
         method: 'POST',
         body: formData
     })
@@ -194,7 +199,12 @@ function refreshApiList() {
     console.log('刷新API列表');
     
     // 发送请求到后端获取最新的API列表
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.LIST), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    const listUrl = baseUrl + (docsEndpoint.LIST || '/api/docs/list');
+    
+    fetch(listUrl, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -317,7 +327,12 @@ function hideProcessingStatus() {
 function parseDocument(fileId) {
     showProcessingStatus();
     
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.PARSE) + `/${fileId}`, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    const parseUrl = baseUrl + (docsEndpoint.PARSE || '/api/docs/parse') + `/${fileId}`;
+    
+    fetch(parseUrl, {
         method: 'POST'
     })
     .then(response => {
@@ -579,7 +594,12 @@ async function generateTestCases(fileId) {
     try {
         showProcessingStatus();
         
-        const response = await fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.GENERATE_TEST_CASES) + `/${fileId}`, {
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+        const docsEndpoint = endpoints.DOCS || {};
+        const generateUrl = baseUrl + (docsEndpoint.GENERATE_TEST_CASES || '/api/docs/generate-test-cases') + `/${fileId}`;
+        
+        const response = await fetch(generateUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -617,7 +637,12 @@ async function executeTests(fileId) {
     try {
         showProcessingStatus();
         
-        const response = await fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.EXECUTE_TESTS) + `/${fileId}`, {
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+        const docsEndpoint = endpoints.DOCS || {};
+        const executeUrl = baseUrl + (docsEndpoint.EXECUTE_TESTS || '/api/docs/execute-tests') + `/${fileId}`;
+        
+        const response = await fetch(executeUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -655,7 +680,12 @@ async function analyzeResults(fileId) {
     try {
         showProcessingStatus();
         
-        const response = await fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.ANALYZE_RESULTS) + `/${fileId}`, {
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+        const docsEndpoint = endpoints.DOCS || {};
+        const analyzeUrl = baseUrl + (docsEndpoint.ANALYZE_RESULTS || '/api/docs/analyze-results') + `/${fileId}`;
+        
+        const response = await fetch(analyzeUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -693,7 +723,12 @@ async function analyzeTestResults(fileId) {
     try {
         showProcessingStatus();
         
-        const response = await fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.ANALYZE_RESULTS) + `/${fileId}`, {
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+        const docsEndpoint = endpoints.DOCS || {};
+        const analyzeUrl = baseUrl + (docsEndpoint.ANALYZE_RESULTS || '/api/docs/analyze-results') + `/${fileId}`;
+        
+        const response = await fetch(analyzeUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -731,7 +766,12 @@ async function executeFullWorkflow(fileId) {
     try {
         showProcessingStatus();
         
-        const response = await fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.FULL_WORKFLOW) + `/${fileId}`, {
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+        const docsEndpoint = endpoints.DOCS || {};
+        const workflowUrl = baseUrl + (docsEndpoint.FULL_WORKFLOW || '/api/docs/full-workflow') + `/${fileId}`;
+        
+        const response = await fetch(workflowUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -816,7 +856,12 @@ function deleteFile(fileId) {
         return;
     }
     
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.DELETE) + `/${fileId}`, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    const deleteUrl = baseUrl + (docsEndpoint.DELETE || '/api/docs/delete') + `/${fileId}`;
+    
+    fetch(deleteUrl, {
         method: 'DELETE'
     })
     .then(response => {
@@ -844,7 +889,12 @@ function deleteFile(fileId) {
 
 // 加载已上传的文件列表
 function loadUploadedFiles() {
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.UPLOADED_LIST), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    const listUrl = baseUrl + (docsEndpoint.UPLOADED_LIST || '/api/docs/uploaded-list');
+    
+    fetch(listUrl, {
         method: 'GET'
     })
     .then(response => {
@@ -1144,7 +1194,12 @@ function handleFeishuUrl(url) {
     }
     
     // 调用后端API处理飞书URL
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.FETCH_FEISHU), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    const feishuUrl = baseUrl + (docsEndpoint.FETCH_FEISHU || '/api/docs/fetch-feishu');
+    
+    fetch(feishuUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

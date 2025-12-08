@@ -135,7 +135,12 @@ function loadTestCases() {
     showLoadingState();
     
     // 从后端API获取测试用例列表
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.TEST_CASES.LIST), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const testCasesEndpoint = endpoints.TEST_CASES || {};
+    const listUrl = baseUrl + (testCasesEndpoint.LIST || '/api/test-cases/list');
+    
+    fetch(listUrl, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -178,408 +183,6 @@ function loadTestCases() {
     .finally(() => {
         hideLoadingState();
     });
-}
-
-// 获取模拟测试用例数据
-function getMockTestCases() {
-    return [
-        {
-            id: 1,
-            name: '用户登录 - 正常情况',
-            description: '测试用户使用正确的用户名和密码登录',
-            api: '用户登录API',
-            apiId: 'api_1',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:22',
-            duration: '0.32s',
-            tags: ['登录', '正常流程']
-        },
-        {
-            id: 2,
-            name: '用户登录 - 错误密码',
-            description: '测试用户使用错误的密码登录',
-            api: '用户登录API',
-            apiId: 'api_1',
-            type: 'exception',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:23',
-            duration: '0.28s',
-            tags: ['登录', '异常处理']
-        },
-        {
-            id: 3,
-            name: '用户登录 - 不存在的用户',
-            description: '测试使用不存在的用户名登录',
-            api: '用户登录API',
-            apiId: 'api_1',
-            type: 'exception',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:24',
-            duration: '0.31s',
-            tags: ['登录', '异常处理']
-        },
-        {
-            id: 4,
-            name: '获取用户信息',
-            description: '测试获取已登录用户的详细信息',
-            api: '用户信息API',
-            apiId: 'api_2',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:25',
-            duration: '0.45s',
-            tags: ['用户信息', '正常流程']
-        },
-        {
-            id: 5,
-            name: '获取用户信息 - 未登录',
-            description: '测试未登录状态下获取用户信息',
-            api: '用户信息API',
-            apiId: 'api_2',
-            type: 'exception',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:26',
-            duration: '0.29s',
-            tags: ['用户信息', '异常处理']
-        },
-        {
-            id: 6,
-            name: '创建订单 - 正常情况',
-            description: '测试创建订单的完整流程',
-            api: '订单管理API',
-            apiId: 'api_3',
-            type: 'scenario',
-            status: 'failed',
-            lastRun: '2025-06-18 14:30:27',
-            duration: '1.23s',
-            tags: ['订单', '场景测试']
-        },
-        {
-            id: 7,
-            name: '创建订单 - 库存不足',
-            description: '测试商品库存不足时创建订单',
-            api: '订单管理API',
-            apiId: 'api_3',
-            type: 'boundary',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:28',
-            duration: '0.67s',
-            tags: ['订单', '边界测试']
-        },
-        {
-            id: 8,
-            name: '创建订单 - 无效商品ID',
-            description: '测试使用无效商品ID创建订单',
-            api: '订单管理API',
-            apiId: 'api_3',
-            type: 'exception',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:29',
-            duration: '0.34s',
-            tags: ['订单', '异常处理']
-        },
-        {
-            id: 9,
-            name: '查询订单列表',
-            description: '测试查询用户的订单列表',
-            api: '订单查询API',
-            apiId: 'api_4',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:30',
-            duration: '0.56s',
-            tags: ['订单', '查询']
-        },
-        {
-            id: 10,
-            name: '查询订单详情',
-            description: '测试查询特定订单的详细信息',
-            api: '订单查询API',
-            apiId: 'api_4',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:31',
-            duration: '0.41s',
-            tags: ['订单', '查询']
-        },
-        {
-            id: 11,
-            name: '查询订单详情 - 不存在的订单ID',
-            description: '测试查询不存在的订单详情',
-            api: '订单查询API',
-            apiId: 'api_4',
-            type: 'exception',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:32',
-            duration: '0.28s',
-            tags: ['订单', '异常处理']
-        },
-        {
-            id: 12,
-            name: '取消订单 - 正常情况',
-            description: '测试取消未发货的订单',
-            api: '订单管理API',
-            apiId: 'api_3',
-            type: 'scenario',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:33',
-            duration: '0.89s',
-            tags: ['订单', '场景测试']
-        },
-        {
-            id: 13,
-            name: '取消订单 - 已发货订单',
-            description: '测试取消已发货的订单',
-            api: '订单管理API',
-            apiId: 'api_3',
-            type: 'boundary',
-            status: 'failed',
-            lastRun: '2025-06-18 14:30:34',
-            duration: '0.76s',
-            tags: ['订单', '边界测试']
-        },
-        {
-            id: 14,
-            name: '添加商品到购物车',
-            description: '测试添加商品到购物车的功能',
-            api: '购物车API',
-            apiId: 'api_5',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:35',
-            duration: '0.52s',
-            tags: ['购物车', '正常流程']
-        },
-        {
-            id: 15,
-            name: '添加商品到购物车 - 库存不足',
-            description: '测试添加库存不足的商品到购物车',
-            api: '购物车API',
-            apiId: 'api_5',
-            type: 'boundary',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:36',
-            duration: '0.48s',
-            tags: ['购物车', '边界测试']
-        },
-        {
-            id: 16,
-            name: '修改购物车商品数量',
-            description: '测试修改购物车中商品的数量',
-            api: '购物车API',
-            apiId: 'api_5',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:37',
-            duration: '0.43s',
-            tags: ['购物车', '正常流程']
-        },
-        {
-            id: 17,
-            name: '修改购物车商品数量 - 超出库存',
-            description: '测试将购物车商品数量修改为超出库存的值',
-            api: '购物车API',
-            apiId: 'api_5',
-            type: 'boundary',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:38',
-            duration: '0.46s',
-            tags: ['购物车', '边界测试']
-        },
-        {
-            id: 18,
-            name: '删除购物车商品',
-            description: '测试从购物车中删除商品',
-            api: '购物车API',
-            apiId: 'api_5',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:39',
-            duration: '0.38s',
-            tags: ['购物车', '正常流程']
-        },
-        {
-            id: 19,
-            name: '清空购物车',
-            description: '测试清空用户购物车的功能',
-            api: '购物车API',
-            apiId: 'api_5',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:40',
-            duration: '0.41s',
-            tags: ['购物车', '正常流程']
-        },
-        {
-            id: 20,
-            name: '获取商品列表',
-            description: '测试获取商品列表的功能',
-            api: '商品API',
-            apiId: 'api_6',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:41',
-            duration: '0.63s',
-            tags: ['商品', '查询']
-        },
-        {
-            id: 21,
-            name: '获取商品详情',
-            description: '测试获取特定商品的详细信息',
-            api: '商品API',
-            apiId: 'api_6',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:42',
-            duration: '0.51s',
-            tags: ['商品', '查询']
-        },
-        {
-            id: 22,
-            name: '搜索商品',
-            description: '测试根据关键词搜索商品',
-            api: '商品API',
-            apiId: 'api_6',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:43',
-            duration: '0.72s',
-            tags: ['商品', '搜索']
-        },
-        {
-            id: 23,
-            name: '商品分类浏览',
-            description: '测试按分类浏览商品',
-            api: '商品API',
-            apiId: 'api_6',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:44',
-            duration: '0.68s',
-            tags: ['商品', '分类']
-        },
-        {
-            id: 24,
-            name: '用户注册 - 正常情况',
-            description: '测试用户使用有效信息注册',
-            api: '用户注册API',
-            apiId: 'api_7',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:45',
-            duration: '0.87s',
-            tags: ['注册', '正常流程']
-        },
-        {
-            id: 25,
-            name: '用户注册 - 重复用户名',
-            description: '测试使用已存在的用户名注册',
-            api: '用户注册API',
-            apiId: 'api_7',
-            type: 'exception',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:46',
-            duration: '0.54s',
-            tags: ['注册', '异常处理']
-        },
-        {
-            id: 26,
-            name: '用户注册 - 无效邮箱',
-            description: '测试使用无效邮箱格式注册',
-            api: '用户注册API',
-            apiId: 'api_7',
-            type: 'exception',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:47',
-            duration: '0.49s',
-            tags: ['注册', '异常处理']
-        },
-        {
-            id: 27,
-            name: '用户注册 - 弱密码',
-            description: '测试使用弱密码注册',
-            api: '用户注册API',
-            apiId: 'api_7',
-            type: 'boundary',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:48',
-            duration: '0.53s',
-            tags: ['注册', '边界测试']
-        },
-        {
-            id: 28,
-            name: '修改用户信息',
-            description: '测试修改用户的基本信息',
-            api: '用户信息API',
-            apiId: 'api_2',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:49',
-            duration: '0.61s',
-            tags: ['用户信息', '修改']
-        },
-        {
-            id: 29,
-            name: '修改密码',
-            description: '测试修改用户密码的功能',
-            api: '用户密码API',
-            apiId: 'api_8',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:50',
-            duration: '0.78s',
-            tags: ['密码', '修改']
-        },
-        {
-            id: 30,
-            name: '修改密码 - 错误原密码',
-            description: '测试使用错误的原密码修改密码',
-            api: '用户密码API',
-            apiId: 'api_8',
-            type: 'exception',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:51',
-            duration: '0.56s',
-            tags: ['密码', '异常处理']
-        },
-        {
-            id: 31,
-            name: '重置密码',
-            description: '测试通过邮箱重置密码',
-            api: '用户密码API',
-            apiId: 'api_8',
-            type: 'scenario',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:52',
-            duration: '1.12s',
-            tags: ['密码', '重置']
-        },
-        {
-            id: 32,
-            name: '获取支付方式',
-            description: '测试获取可用的支付方式列表',
-            api: '支付API',
-            apiId: 'api_9',
-            type: 'basic',
-            status: 'passed',
-            lastRun: '2025-06-18 14:30:53',
-            duration: '0.47s',
-            tags: ['支付', '查询']
-        },
-        {
-            id: 33,
-            name: '创建支付',
-            description: '测试创建订单支付',
-            api: '支付API',
-            apiId: 'api_9',
-            type: 'scenario',
-            status: 'failed',
-            lastRun: '2025-06-18 14:30:54',
-            duration: '1.34s',
-            tags: ['支付', '场景测试']
-        }
-    ];
 }
 
 // 更新统计数据
@@ -826,7 +429,12 @@ function filterTestCases() {
 // 显示测试用例详情
 function showTestCaseDetail(testCaseId) {
     // 从后端API获取测试用例详情
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.TEST_CASES.GET) + `/${testCaseId}`, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const testCasesEndpoint = endpoints.TEST_CASES || {};
+    const getUrl = baseUrl + (testCasesEndpoint.GET || '/api/test-cases/get') + `/${testCaseId}`;
+    
+    fetch(getUrl, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -1067,7 +675,12 @@ function showRunModal(testCaseId) {
     };
     
     // 发送运行请求
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.TEST_CASES.RUN), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const testCasesEndpoint = endpoints.TEST_CASES || {};
+    const runUrl = baseUrl + (testCasesEndpoint.RUN || '/api/test-cases/run');
+    
+    fetch(runUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1161,7 +774,12 @@ function generateTestCases() {
     showLoadingState();
     
     // 调用后端API生成测试用例
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.TEST_CASES.GENERATE), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const testCasesEndpoint = endpoints.TEST_CASES || {};
+    const generateUrl = baseUrl + (testCasesEndpoint.GENERATE || '/api/test-cases/generate');
+    
+    fetch(generateUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1288,7 +906,12 @@ function loadAPIDocList() {
     apiDocSelect.innerHTML = '<option value="">请选择接口文档</option>';
     
     // 从后端API获取API文档列表
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.LIST), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    const listUrl = baseUrl + (docsEndpoint.LIST || '/api/docs/list');
+    
+    fetch(listUrl, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'

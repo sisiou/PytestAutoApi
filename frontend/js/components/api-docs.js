@@ -1187,7 +1187,12 @@ function parseApiDocument(url, docType) {
     showSmartTestNotification(`正在解析${docType}...`, 'info');
     
     // 调用后端API解析接口
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.PARSE_URL), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    const parseUrl = baseUrl + (docsEndpoint.PARSE_URL || '/api/docs/parse-url');
+    
+    fetch(parseUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1514,7 +1519,12 @@ function hideProcessingStatus() {
 function parseDocument(fileId) {
     console.log('解析文档:', fileId);
     
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.PARSE) + `/${fileId}`, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    const parseUrl = baseUrl + (docsEndpoint.PARSE || '/api/docs/parse') + `/${fileId}`;
+    
+    fetch(parseUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1658,7 +1668,12 @@ function deleteFile(fileId) {
         return;
     }
     
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.DELETE) + `/${fileId}`, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    const deleteUrl = baseUrl + (docsEndpoint.DELETE || '/api/docs/delete') + `/${fileId}`;
+    
+    fetch(deleteUrl, {
         method: 'DELETE'
     })
     .then(response => {
@@ -1687,7 +1702,12 @@ function deleteFile(fileId) {
 // 加载已上传的文件列表
 function loadUploadedFiles() {
     console.log('开始加载已上传文件列表...');
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.OPENAPI_LIST), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const docsEndpoint = endpoints.DOCS || {};
+    const listUrl = baseUrl + (docsEndpoint.OPENAPI_LIST || '/api/docs/openapi/list');
+    
+    fetch(listUrl, {
         method: 'GET'
     })
     .then(response => {
@@ -2030,7 +2050,12 @@ function saveScene() {
     };
     
     // 发送到后端
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.SCENES.CREATE), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const scenesEndpoint = endpoints.SCENES || {};
+    const createUrl = baseUrl + (scenesEndpoint.CREATE || '/api/scenes/create');
+    
+    fetch(createUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -2108,7 +2133,12 @@ function saveRelation() {
     };
     
     // 发送到后端
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.RELATIONS.CREATE), {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const relationsEndpoint = endpoints.RELATIONS || {};
+    const createUrl = baseUrl + (relationsEndpoint.CREATE || '/api/relations/create');
+    
+    fetch(createUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -2181,7 +2211,12 @@ function deleteScene(sceneId) {
         return;
     }
     
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.SCENES.DELETE) + `/${sceneId}`, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const scenesEndpoint = endpoints.SCENES || {};
+    const deleteUrl = baseUrl + (scenesEndpoint.DELETE || '/api/scenes/delete') + `/${sceneId}`;
+    
+    fetch(deleteUrl, {
         method: 'DELETE'
     })
     .then(response => {
@@ -2236,7 +2271,12 @@ function deleteRelation(relationId) {
         return;
     }
     
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.RELATIONS.DELETE) + `/${relationId}`, {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+    const relationsEndpoint = endpoints.RELATIONS || {};
+    const deleteUrl = baseUrl + (relationsEndpoint.DELETE || '/api/relations/delete') + `/${relationId}`;
+    
+    fetch(deleteUrl, {
         method: 'DELETE'
     })
     .then(response => {

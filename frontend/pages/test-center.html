@@ -708,34 +708,157 @@
                                 <!-- 文档类型选择标签页 -->
                                 <div class="row mb-4">
                                     <div class="col-12">
-                                        <!-- OpenAPI文档列表 -->
-                                        <div class="card">
-                                            <div class="card-header d-flex justify-content-between align-items-center">
-                                                <h5 class="card-title mb-0">已解析文档</h5>
-                                                <div>
-                                                    <button class="btn btn-sm btn-outline-primary" id="refreshOpenApiDocsBtn">
-                                                        <i class="fas fa-sync-alt me-1"></i>刷新
-                                                    </button>
+                                        <!-- 文档标签导航 -->
+                                        <ul class="nav nav-tabs mb-3" id="documentTabsNav" role="tablist">
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link active" id="openapi-docs-tab" data-bs-toggle="tab" data-bs-target="#openapi-docs-content" type="button" role="tab" aria-controls="openapi-docs-content" aria-selected="true">
+                                                    <i class="fas fa-file-code me-2"></i>OpenAPI文档
+                                                </button>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link" id="multiapi-docs-tab" data-bs-toggle="tab" data-bs-target="#multiapi-docs-content" type="button" role="tab" aria-controls="multiapi-docs-content" aria-selected="false">
+                                                    <i class="fas fa-layer-group me-2"></i>多接口文档
+                                                </button>
+                                            </li>
+                                        </ul>
+                                        
+                                        <!-- 标签页内容 -->
+                                        <div class="tab-content" id="documentTabsContent">
+                                            <!-- OpenAPI文档列表 -->
+                                            <div class="tab-pane fade show active" id="openapi-docs-content" role="tabpanel" aria-labelledby="openapi-docs-tab">
+                                                <div class="card">
+                                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                                        <h5 class="card-title mb-0">已解析文档</h5>
+                                                        <div>
+                                                            <button class="btn btn-sm btn-outline-primary" id="refreshOpenApiDocsBtn">
+                                                                <i class="fas fa-sync-alt me-1"></i>刷新
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="table-responsive">
+                                                            <table class="table table-hover">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>文档ID</th>
+                                                                        <th>上传时间</th>
+                                                                        <th>操作</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody id="openApiDocsTableBody">
+                                                                    <!-- OpenAPI文档列表将通过JavaScript动态生成 -->
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <div id="noOpenApiDocsMessage" class="text-center py-4" style="display: none;">
+                                                            <i class="fas fa-file-code fa-3x text-muted mb-3"></i>
+                                                            <p class="text-muted">暂无OpenAPI文档</p>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="card-body">
-                                                <div class="table-responsive">
-                                                    <table class="table table-hover">
-                                                        <thead>
-                                                            <tr>
-                                                                <th>文档ID</th>
-                                                                <th>上传时间</th>
-                                                                <th>操作</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody id="openApiDocsTableBody">
-                                                            <!-- OpenAPI文档列表将通过JavaScript动态生成 -->
-                                                        </tbody>
-                                                    </table>
+                                            
+                                            <!-- 多接口文档列表 -->
+                                            <div class="tab-pane fade" id="multiapi-docs-content" role="tabpanel" aria-labelledby="multiapi-docs-tab">
+                                                <div class="card">
+                                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                                        <h5 class="card-title mb-0">多接口文档解析</h5>
+                                                        <div>
+                                                            <button class="btn btn-sm btn-outline-primary" id="refreshMultiApiDocsBtn">
+                                                                <i class="fas fa-sync-alt me-1"></i>刷新
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="table-responsive">
+                                                            <table class="table table-hover">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>文档ID</th>
+                                                                        <th>文档名称</th>
+                                                                        <th>接口数量</th>
+                                                                        <th>上传时间</th>
+                                                                        <th>操作</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody id="multiApiDocsTableBody">
+                                                                    <!-- 多接口文档列表将通过JavaScript动态生成 -->
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <div id="noMultiApiDocsMessage" class="text-center py-4" style="display: none;">
+                                                            <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
+                                                            <p class="text-muted">暂无多接口文档</p>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div id="noOpenApiDocsMessage" class="text-center py-4" style="display: none;">
-                                                    <i class="fas fa-file-code fa-3x text-muted mb-3"></i>
-                                                    <p class="text-muted">暂无OpenAPI文档</p>
+                                                
+                                                <!-- 多接口文档详情展示区域 -->
+                                                <div class="card mt-4" id="multiApiDocDetails" style="display: none;">
+                                                    <div class="card-header">
+                                                        <h5 class="card-title mb-0">文档详情</h5>
+                                                        <button type="button" class="btn-close float-end" id="closeMultiApiDetails"></button>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row mb-3">
+                                                            <div class="col-md-6">
+                                                                <h6>基本信息</h6>
+                                                                <table class="table table-sm">
+                                                                    <tbody>
+                                                                        <tr>
+                                                                            <td><strong>文档ID:</strong></td>
+                                                                            <td id="multiApiDocId"></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td><strong>文档名称:</strong></td>
+                                                                            <td id="multiApiDocName"></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td><strong>上传时间:</strong></td>
+                                                                            <td id="multiApiDocUploadTime"></td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <h6>统计信息</h6>
+                                                                <table class="table table-sm">
+                                                                    <tbody>
+                                                                        <tr>
+                                                                            <td><strong>接口总数:</strong></td>
+                                                                            <td id="multiApiDocEndpointCount"></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td><strong>HTTP方法:</strong></td>
+                                                                            <td id="multiApiDocMethods"></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td><strong>数据模型:</strong></td>
+                                                                            <td id="multiApiDocSchemas"></td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- 接口列表 -->
+                                                        <h6 class="mb-3">接口列表</h6>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>方法</th>
+                                                                        <th>路径</th>
+                                                                        <th>描述</th>
+                                                                        <th>操作</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody id="multiApiEndpointsList">
+                                                                    <!-- 接口列表将通过JavaScript动态生成 -->
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

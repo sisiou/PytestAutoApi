@@ -557,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     status: 'pending',
                     request: {
                         method: api.method,
-                        url: `${API_CONFIG.baseURL}${api.path}`,
+                        url: `${(window.API_CONFIG ? window.API_CONFIG.baseURL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000')}${api.path}`,
                         headers: {
                             'Content-Type': 'application/json'
                         },
@@ -579,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     status: 'pending',
                     request: {
                         method: api.method,
-                        url: `${API_CONFIG.baseURL}${api.path}`,
+                        url: `${(window.API_CONFIG ? window.API_CONFIG.baseURL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000')}${api.path}`,
                         headers: {
                             'Content-Type': 'application/json'
                         },
