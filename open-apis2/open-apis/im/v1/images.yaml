@@ -1,0 +1,29 @@
+case_common:
+  allureEpic: 即时通讯图片上传API
+  allureFeature: 上传图片
+  allureStory: 上传图片
+01_open-apis_im_v1_images:
+  host: https://open.feishu.cn/open-apis
+  url: /im/v1/images
+  method: post
+  detail: 测试上传图片
+  headers:
+    Content-Type: multipart/form-data
+    Authorization: Bearer t-g104c8jV2GK2JXTTYX3XOBCHYNDHWJPDBKT27NBU
+  requestType: FILE
+  is_run:
+  data:
+    file:
+      image: sendImage.png
+    data:
+      image_type: message
+  dependence_case: false
+  dependence_case_data:
+  current_request_set_cache:
+  - type: response
+    jsonpath: $.data.image_key
+    name: redis:image_key
+  assert:
+    status_code: 200
+  sql:
+
