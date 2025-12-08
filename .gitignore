@@ -95,5 +95,8 @@ test_cases/*_test_analysis.md
 test_cases/test_*.py
 !test_cases/sendMessage.yaml
 test_cases/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
+# 例外：保留smart_auto目录下的test_case_generator_tool.py和test_executor_tool.py
+!utils/smart_auto/test_case_generator_tool.py
+!utils/smart_auto/test_executor_tool.py
 uploads/
 multiuploads/
