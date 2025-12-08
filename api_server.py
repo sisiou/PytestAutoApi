@@ -39,6 +39,8 @@ from utils.parse.ai import (
             _normalize_url,
             _create_file_key_from_url
         )
+from utils.parse.split_openai import integrate_with_upload_api
+from utils.parse.relation_to_group import integrate_with_group_api
 import tempfile
 import traceback
 # 配置日志
@@ -244,6 +246,46 @@ def upload_document():
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             
         file.save(file_path)
+
+        base_output_path = os.path.join(os.getcwd(), "multiuploads", 'split_openapi')
+        output_dir, count = integrate_with_upload_api(file_path, base_output_path)
+        print(f"输出目录: {output_dir}, 生成文件数量: {count}")
+
+        # ========== 2. 收集拆分后的所有YAML文件路径 ==========
+        # 遍历拆分后的文件夹，获取所有.yaml文件路径
+        openapi_file_paths = []
+        if output_dir and os.path.exists(output_dir):
+            for file_name in os.listdir(output_dir):
+                if file_name.lower().endswith('.yaml') or file_name.lower().endswith('.yml'):
+                    openapi_file_paths.append(os.path.join(output_dir, file_name))
+
+        # 校验：确保有拆分后的文件
+        if not openapi_file_paths:
+            return jsonify({
+                'success': False,
+                'error': '未生成拆分后的OpenAPI文件，无法生成关联关系',
+                'message': '拆分接口返回空文件列表'
+            }), 400
+
+        # ========== 3. 生成关联关系文件（传入正确的文件路径列表） ==========
+        relation_path = os.path.join(base_output_path, "relation.json")  # 增加file_id避免覆盖
+        try:
+            relation_data = generate_api_relation_file(openapi_file_paths, relation_path)
+        except Exception as e:
+            logger.error(f"生成关联关系文件失败: {str(e)}")
+            return jsonify({
+                'success': False,
+                'error': '生成接口关联关系失败',
+                'message': str(e)
+            }), 500
+
+        # ========== 4. 按关联关系分组文件（确保函数参数正确） ==========
+        try:
+            integrate_with_group_api(relation_path, output_dir, output_dir)
+        except Exception as e:
+            logger.warning(f"文件分组失败（非致命错误）: {str(e)}")
+            # 分组失败不阻断整体流程，仅日志告警
+                
         
         # 返回文件信息
         return jsonify({
