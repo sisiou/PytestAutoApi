@@ -1,1 +1,78 @@
-{"uid":"4b4757e66a1912dae1a509f688f20b0f","name":"categories","children":[]}
+{
+  "uid" : "4b4757e66a1912dae1a509f688f20b0f",
+  "name" : "categories",
+  "children" : [ {
+    "name" : "Product defects",
+    "children" : [ {
+      "name" : "AssertionError: 飞书接口调用失败:\n[错误码 190005] 应用请求频率超限\n排查建议: 当前请求过于频繁，已达到API限流阈值。建议：1) 降低请求频率，在测试用例之间添加适当的延迟；2) 检查是否有其他进程同时调用相同接口；3) 等待一段时间后重试\n原始错误信息: app rate limited",
+      "children" : [ {
+        "name" : "test_calendars[TC_CAL_PARAM_007 - color参数-有效范围值]",
+        "uid" : "40029c8fbe7382ea",
+        "parentUid" : "efe45fe21c4bf3ead065312247e966b5",
+        "status" : "failed",
+        "time" : {
+          "start" : 1765205182191,
+          "stop" : 1765205182403,
+          "duration" : 212
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ "{'url': 'https://open.feishu.cn/open-apis/calendar/v4/calendars', 'method': 'POST', 'detail': 'TC_CAL_PARAM_007 - color参数-有效范围值', 'assert_data': {'status_code': 200}, 'headers': {'Content-Type': 'application/json', 'Authorization': 'Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB'}, 'requestType': 'JSON', 'is_run': None, 'data': {'summary': '测试日历', 'description': '使用开放接口创建日历', 'permissions': 'private', 'color': -1, 'summary_alias': '日历备注名'}, 'dependence_case': False, 'dependence_case_data': None, 'sql': None, 'setup_sql': None, 'status_code': None, 'teardown_sql': None, 'teardown': None, 'current_request_set_cache': None, 'sleep': None}" ]
+      }, {
+        "name" : "test_calendars[TC_CAL_BUS_001 - 创建日历使用默认值]",
+        "uid" : "57ed3effc9a3dea2",
+        "parentUid" : "efe45fe21c4bf3ead065312247e966b5",
+        "status" : "failed",
+        "time" : {
+          "start" : 1765205183062,
+          "stop" : 1765205183257,
+          "duration" : 195
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ "{'url': 'https://open.feishu.cn/open-apis/calendar/v4/calendars', 'method': 'POST', 'detail': 'TC_CAL_BUS_001 - 创建日历使用默认值', 'assert_data': {'status_code': 200}, 'headers': {'Content-Type': 'application/json', 'Authorization': 'Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB'}, 'requestType': 'JSON', 'is_run': None, 'data': {}, 'dependence_case': False, 'dependence_case_data': None, 'sql': None, 'setup_sql': None, 'status_code': None, 'teardown_sql': None, 'teardown': None, 'current_request_set_cache': None, 'sleep': None}" ]
+      }, {
+        "name" : "test_calendars[TC_CAL_COMB_001 - 组合1：应用身份+完整参数]",
+        "uid" : "faf76e173fc2d71a",
+        "parentUid" : "efe45fe21c4bf3ead065312247e966b5",
+        "status" : "failed",
+        "time" : {
+          "start" : 1765205183269,
+          "stop" : 1765205183509,
+          "duration" : 240
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ "{'url': 'https://open.feishu.cn/open-apis/calendar/v4/calendars', 'method': 'POST', 'detail': 'TC_CAL_COMB_001 - 组合1：应用身份+完整参数', 'assert_data': {'status_code': 200}, 'headers': {'Content-Type': 'application/json', 'Authorization': 'Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB'}, 'requestType': 'JSON', 'is_run': None, 'data': {'summary': '测试', 'description': '描述', 'permissions': 'private', 'color': -1, 'summary_alias': '别名'}, 'dependence_case': False, 'dependence_case_data': None, 'sql': None, 'setup_sql': None, 'status_code': None, 'teardown_sql': None, 'teardown': None, 'current_request_set_cache': None, 'sleep': None}" ]
+      }, {
+        "name" : "test_calendars[TC_CAL_COMB_003 - 组合3：应用身份+边界值组合]",
+        "uid" : "ee8c2c409040e614",
+        "parentUid" : "efe45fe21c4bf3ead065312247e966b5",
+        "status" : "failed",
+        "time" : {
+          "start" : 1765205183523,
+          "stop" : 1765205183811,
+          "duration" : 288
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ "{'url': 'https://open.feishu.cn/open-apis/calendar/v4/calendars', 'method': 'POST', 'detail': 'TC_CAL_COMB_003 - 组合3：应用身份+边界值组合', 'assert_data': {'status_code': 200}, 'headers': {'Content-Type': 'application/json', 'Authorization': 'Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB'}, 'requestType': 'JSON', 'is_run': None, 'data': {'summary': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 'description': 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD', 'permissions': 'public', 'color': 0, 'summary_alias': 'SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS'}, 'dependence_case': False, 'dependence_case_data': None, 'sql': None, 'setup_sql': None, 'status_code': None, 'teardown_sql': None, 'teardown': None, 'current_request_set_cache': None, 'sleep': None}" ]
+      }, {
+        "name" : "test_calendars[TC_CAL_LIMIT_001 - Content-Type错误（实际接口接受）]",
+        "uid" : "7a4f428a0ce7bdca",
+        "parentUid" : "efe45fe21c4bf3ead065312247e966b5",
+        "status" : "failed",
+        "time" : {
+          "start" : 1765205183828,
+          "stop" : 1765205184062,
+          "duration" : 234
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ "{'url': 'https://open.feishu.cn/open-apis/calendar/v4/calendars', 'method': 'POST', 'detail': 'TC_CAL_LIMIT_001 - Content-Type错误（实际接口接受）', 'assert_data': {'status_code': 200}, 'headers': {'Content-Type': 'text/plain', 'Authorization': 'Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB'}, 'requestType': 'JSON', 'is_run': None, 'data': {'summary': '测试日历', 'description': '使用开放接口创建日历', 'permissions': 'private', 'color': -1, 'summary_alias': '日历备注名'}, 'dependence_case': False, 'dependence_case_data': None, 'sql': None, 'setup_sql': None, 'status_code': None, 'teardown_sql': None, 'teardown': None, 'current_request_set_cache': None, 'sleep': None}" ]
+      } ],
+      "uid" : "efe45fe21c4bf3ead065312247e966b5"
+    } ],
+    "uid" : "8fb3a91ba5aaf9de24cc8a92edc82b5d"
+  } ]
+}

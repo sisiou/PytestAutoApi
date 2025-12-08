@@ -9,7 +9,7 @@ case_common:
   detail: 测试上传图片
   headers:
     Content-Type: multipart/form-data
-    Authorization: Bearer t-g104c8jV2GK2JXTTYX3XOBCHYNDHWJPDBKT27NBU
+    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
   requestType: FILE
   is_run:
   data:

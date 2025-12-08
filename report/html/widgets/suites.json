@@ -1,1 +1,26 @@
-{"total":0,"items":[]}
+{
+  "total" : 2,
+  "items" : [ {
+    "uid" : "3a796c065731882b54913caaacc2fd01",
+    "name" : "test_case.open-apis.calendar.v4",
+    "statistic" : {
+      "failed" : 5,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 10,
+      "unknown" : 0,
+      "total" : 15
+    }
+  }, {
+    "uid" : "6f7f1e312af5d72fa68948c83487789f",
+    "name" : "test_case.open-apis.im.v1",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 17,
+      "unknown" : 0,
+      "total" : 17
+    }
+  } ]
+}

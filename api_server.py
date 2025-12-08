@@ -6,6 +6,7 @@
 提供RESTful API接口支持前端交互
 """
 import sys
+import os
 import json
 import time
 import logging
@@ -3728,6 +3729,8 @@ def run_all_feishu_tests():
         env = os.environ.copy()
         env['PYTHONIOENCODING'] = 'utf-8'  # 强制 Python 使用 UTF-8 编码
         env['PYTHONUTF8'] = '1'  # Python 3.7+ 支持，强制 UTF-8
+        # 标记为非交互模式，防止子进程内启动 allure serve 等阻塞操作
+        env['NON_INTERACTIVE'] = '1'
         
         # 使用 UTF-8 编码，并设置 errors='replace' 来处理编码错误
         # 设置 stdin=subprocess.DEVNULL 防止脚本等待输入而阻塞
@@ -3858,6 +3861,13 @@ def run_all_feishu_tests():
                 'port': allure_port if 'allure_port' in locals() else None,
                 'pid': allure_process.pid if allure_process else None
             }
+        # 读取 Allure 报告摘要数据
+        summary, summary_path = _find_allure_summary(project_root)
+        if summary:
+            response_data['allure_summary'] = {'path': summary_path, 'data': summary}
+            metrics = _extract_allure_metrics(summary)
+            if metrics:
+                response_data['allure_metrics'] = metrics
         # ========== 新增代码结束 ==========
         
         if return_code == 0:
@@ -4084,6 +4094,13 @@ def generate_and_test_feishu():
                 'port': allure_port if 'allure_port' in locals() else None,
                 'pid': allure_process.pid if allure_process else None
             }
+        # 读取 Allure 报告摘要数据
+        summary, summary_path = _find_allure_summary(project_root)
+        if summary:
+            response_data['allure_summary'] = {'path': summary_path, 'data': summary}
+            metrics = _extract_allure_metrics(summary)
+            if metrics:
+                response_data['allure_metrics'] = metrics
         # ========== 修改代码结束 ==========
         
         if return_code == 0:
@@ -4129,6 +4146,50 @@ def generate_and_test_feishu():
 # ========== 新增辅助函数 ==========
 import socket
 import threading
+
+def _find_allure_summary(project_root: Path):
+    """
+    查找 Allure 已生成报告的 summary.json，并返回 (数据, 路径)。
+    """
+    candidates = [
+        project_root / "report" / "html" / "widgets" / "summary.json",
+        project_root / "report" / "html" / "data" / "summary.json",
+        project_root / "allure-report" / "widgets" / "summary.json",
+        project_root / "allure-report" / "data" / "summary.json",
+    ]
+    for path in candidates:
+        try:
+            if path.exists():
+                with path.open("r", encoding="utf-8") as f:
+                    return json.load(f), str(path)
+        except Exception as e:
+            logger.debug(f"读取 Allure summary 失败 {path}: {e}")
+    return None, None
+
+def _extract_allure_metrics(summary: dict):
+    """从 Allure summary 中提取常用统计指标"""
+    if not summary:
+        return None
+    stats = summary.get("statistic", {}) or {}
+    total = stats.get("total")
+    passed = stats.get("passed")
+    failed = stats.get("failed")
+    broken = stats.get("broken")
+    skipped = stats.get("skipped")
+    unknown = stats.get("unknown")
+    time_info = summary.get("time", {}) or {}
+    duration = time_info.get("duration")
+    duration_human = time_info.get("durationHumanReadable")
+    return {
+        "total": total,
+        "passed": passed,
+        "failed": failed,
+        "broken": broken,
+        "skipped": skipped,
+        "unknown": unknown,
+        "duration_ms": duration,
+        "duration_human": duration_human,
+    }
 
 def find_available_port(start_port=9999, max_attempts=10):
     """查找可用的端口"""

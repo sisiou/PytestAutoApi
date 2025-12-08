@@ -16,11 +16,7 @@ def write_case_process():
     from utils.logging_tool.log_control import WARNING
 
     # 循环拿到所有存放用例的文件路径
-<<<<<<< HEAD
     for i in get_all_files(file_path=ensure_path_sep("/data"), yaml_data_switch=True):
-=======
-    for i in get_all_files(file_path=ensure_path_sep("\\data"), yaml_data_switch=True):
->>>>>>> 35d068a (feat: Add Feishu API test generators and automation features)
         # 循环读取文件中的数据
         case_process = CaseData(i).case_process(case_id_switch=True)
         if case_process is not None:

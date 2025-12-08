@@ -12,11 +12,7 @@ from utils.read_files_tools.regular_control import regular
 from utils.requests_tool.teardown_control import TearDownHandler
 
 
-<<<<<<< HEAD
-case_id = ['01_open-apis_im_v1_messages']
-=======
 case_id = ['01_open-apis_im_v1_messages', '02_open-apis_im_v1_messages', '03_open-apis_im_v1_messages', '04_open-apis_im_v1_messages', '05_open-apis_im_v1_messages', '06_open-apis_im_v1_messages', '07_open-apis_im_v1_messages', '08_open-apis_im_v1_messages', '09_open-apis_im_v1_messages', '10_open-apis_im_v1_messages', '12_open-apis_im_v1_messages', '13_open-apis_im_v1_messages', '14_open-apis_im_v1_messages', '15_open-apis_im_v1_messages', '16_open-apis_im_v1_messages', '17_open-apis_im_v1_messages', '18_open-apis_im_v1_messages']
->>>>>>> 35d068a (feat: Add Feishu API test generators and automation features)
 TestData = GetTestCase.case_data(case_id)
 re_data = regular(str(TestData))
 

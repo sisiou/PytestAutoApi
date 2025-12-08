@@ -9,13 +9,13 @@ case_common:
   detail: 测试发送消息
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8jV2GK2JXTTYX3XOBCHYNDHWJPDBKT27NBU
+    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
   requestType: json
   is_run:
   data:
     receive_id: ou_0d83637fb561cdc1e0562991339c713b
     msg_type: image
-    uuid: d0c991fe-a4eb-4266-88ba-167f1521a8ac
+    uuid: 09662319-9568-42bc-a928-7d0c5a9b6d58
     content: '{"image_key":"$cache{redis:image_key}"}'
   dependence_case: true
   dependence_case_data:

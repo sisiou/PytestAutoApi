@@ -1,0 +1,129 @@
+"Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
+"passed","Mon Dec 08 22:46:19 CST 2025","Mon Dec 08 22:46:19 CST 2025","163","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_AUTH_003 - Token格式错误]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:30 CST 2025","Mon Dec 08 22:46:31 CST 2025","476","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_COMBINE_001 - user_id+文本消息+无uuid]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:20 CST 2025","Mon Dec 08 22:46:20 CST 2025","418","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_PARAM_003 - description参数-正常长度]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:20 CST 2025","Mon Dec 08 22:46:21 CST 2025","452","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_PARAM_005 - permissions参数-有效枚举值-private]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:29 CST 2025","Mon Dec 08 22:46:29 CST 2025","491","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_LIMIT_001 - 消息去重-相同UUID重复发送（第一次）]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:21 CST 2025","Mon Dec 08 22:46:21 CST 2025","410","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_PARAM_005 - permissions参数-有效枚举值-public]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:28 CST 2025","Mon Dec 08 22:46:29 CST 2025","505","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_CONTENT_004 - 消息类型与内容不匹配]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:24 CST 2025","Mon Dec 08 22:46:25 CST 2025","196","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_PARAM_003 - receive_id_type值非法]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:19 CST 2025","Mon Dec 08 22:46:19 CST 2025","260","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_PARAM_002 - summary参数-超过最大长度]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:26 CST 2025","Mon Dec 08 22:46:27 CST 2025","780","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_CONTENT_002 - 文本消息内容超长（边界值）]","
+        :param :
+        :return:
+        "
+"failed","Mon Dec 08 22:46:23 CST 2025","Mon Dec 08 22:46:24 CST 2025","234","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_LIMIT_001 - Content-Type错误（实际接口接受）]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:27 CST 2025","Mon Dec 08 22:46:27 CST 2025","732","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_CONTENT_003 - 卡片消息-正常内容]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:25 CST 2025","Mon Dec 08 22:46:26 CST 2025","498","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_CONTENT_001 - 文本消息-正常内容]","
+        :param :
+        :return:
+        "
+"failed","Mon Dec 08 22:46:22 CST 2025","Mon Dec 08 22:46:22 CST 2025","212","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_PARAM_007 - color参数-有效范围值]","
+        :param :
+        :return:
+        "
+"failed","Mon Dec 08 22:46:23 CST 2025","Mon Dec 08 22:46:23 CST 2025","195","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_BUS_001 - 创建日历使用默认值]","
+        :param :
+        :return:
+        "
+"failed","Mon Dec 08 22:46:23 CST 2025","Mon Dec 08 22:46:23 CST 2025","240","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_COMB_001 - 组合1：应用身份+完整参数]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:21 CST 2025","Mon Dec 08 22:46:21 CST 2025","403","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_PARAM_005 - permissions参数-有效枚举值-show_only_free_busy]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:29 CST 2025","Mon Dec 08 22:46:30 CST 2025","602","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_LIMIT_001 - 消息去重-相同UUID重复发送（第二次）]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:25 CST 2025","Mon Dec 08 22:46:25 CST 2025","232","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_PARAM_005 - content非JSON格式]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:27 CST 2025","Mon Dec 08 22:46:28 CST 2025","1050","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_CONTENT_003 - 卡片消息内容超长（边界值）]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:24 CST 2025","Mon Dec 08 22:46:24 CST 2025","234","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_AUTH_001 - Token无效或过期]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:24 CST 2025","Mon Dec 08 22:46:24 CST 2025","244","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_PARAM_001 - receive_id缺失]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:25 CST 2025","Mon Dec 08 22:46:25 CST 2025","223","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_RECEIVER_002 - 用户id不存在]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:21 CST 2025","Mon Dec 08 22:46:22 CST 2025","228","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_PARAM_006 - permissions参数-无效枚举值]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:31 CST 2025","Mon Dec 08 22:46:31 CST 2025","345","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_COMBINE_002 - open_id+卡片消息+有uuid]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:30 CST 2025","Mon Dec 08 22:46:30 CST 2025","157","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_LIMIT_002 - UUID长度超过50字符限制（边界值）]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:24 CST 2025","Mon Dec 08 22:46:24 CST 2025","298","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_PARAM_002 - receive_id为空字符串]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:18 CST 2025","Mon Dec 08 22:46:19 CST 2025","400","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_AUTH_001 - 应用身份创建日历]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:25 CST 2025","Mon Dec 08 22:46:25 CST 2025","308","test_case.open-apis.im.v1","test_messages","TestMessages","","","test_messages[TC_PARAM_004 - msg_type值非法]","
+        :param :
+        :return:
+        "
+"failed","Mon Dec 08 22:46:23 CST 2025","Mon Dec 08 22:46:23 CST 2025","288","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_COMB_003 - 组合3：应用身份+边界值组合]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:20 CST 2025","Mon Dec 08 22:46:20 CST 2025","213","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_PARAM_004 - description参数-超过最大长度]","
+        :param :
+        :return:
+        "
+"passed","Mon Dec 08 22:46:19 CST 2025","Mon Dec 08 22:46:19 CST 2025","398","test_case.open-apis.calendar.v4","test_calendars","TestCalendars","","","test_calendars[TC_CAL_PARAM_001 - summary参数-正常长度]","
+        :param :
+        :return:
+        "

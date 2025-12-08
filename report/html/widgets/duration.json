@@ -1,1 +1,321 @@
-[]
+[ {
+  "uid" : "fe1ec8947620ec62",
+  "name" : "test_calendars[TC_CAL_AUTH_003 - Token格式错误]",
+  "time" : {
+    "start" : 1765205179167,
+    "stop" : 1765205179330,
+    "duration" : 163
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "bf085e8440a769b6",
+  "name" : "test_messages[TC_COMBINE_001 - user_id+文本消息+无uuid]",
+  "time" : {
+    "start" : 1765205190704,
+    "stop" : 1765205191180,
+    "duration" : 476
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "b440ef5fe2514bb",
+  "name" : "test_calendars[TC_CAL_PARAM_003 - description参数-正常长度]",
+  "time" : {
+    "start" : 1765205180013,
+    "stop" : 1765205180431,
+    "duration" : 418
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "2ce19b68555d633a",
+  "name" : "test_calendars[TC_CAL_PARAM_005 - permissions参数-有效枚举值-private]",
+  "time" : {
+    "start" : 1765205180668,
+    "stop" : 1765205181120,
+    "duration" : 452
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "27760c5a26688525",
+  "name" : "test_messages[TC_LIMIT_001 - 消息去重-相同UUID重复发送（第一次）]",
+  "time" : {
+    "start" : 1765205189434,
+    "stop" : 1765205189925,
+    "duration" : 491
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "c378cfa1b5bcad52",
+  "name" : "test_calendars[TC_CAL_PARAM_005 - permissions参数-有效枚举值-public]",
+  "time" : {
+    "start" : 1765205181539,
+    "stop" : 1765205181949,
+    "duration" : 410
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "d9cc5be0e31f21c9",
+  "name" : "test_messages[TC_CONTENT_004 - 消息类型与内容不匹配]",
+  "time" : {
+    "start" : 1765205188922,
+    "stop" : 1765205189427,
+    "duration" : 505
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "346715732cc295e9",
+  "name" : "test_messages[TC_PARAM_003 - receive_id_type值非法]",
+  "time" : {
+    "start" : 1765205184855,
+    "stop" : 1765205185051,
+    "duration" : 196
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "cbf261194825da48",
+  "name" : "test_calendars[TC_CAL_PARAM_002 - summary参数-超过最大长度]",
+  "time" : {
+    "start" : 1765205179737,
+    "stop" : 1765205179997,
+    "duration" : 260
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "7246b2908e9fd995",
+  "name" : "test_messages[TC_CONTENT_002 - 文本消息内容超长（边界值）]",
+  "time" : {
+    "start" : 1765205186346,
+    "stop" : 1765205187126,
+    "duration" : 780
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "7a4f428a0ce7bdca",
+  "name" : "test_calendars[TC_CAL_LIMIT_001 - Content-Type错误（实际接口接受）]",
+  "time" : {
+    "start" : 1765205183828,
+    "stop" : 1765205184062,
+    "duration" : 234
+  },
+  "status" : "failed",
+  "severity" : "normal"
+}, {
+  "uid" : "fdf7a4ba7dda2bf0",
+  "name" : "test_messages[TC_CONTENT_003 - 卡片消息-正常内容]",
+  "time" : {
+    "start" : 1765205187126,
+    "stop" : 1765205187858,
+    "duration" : 732
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "b2c5d3898289114f",
+  "name" : "test_messages[TC_CONTENT_001 - 文本消息-正常内容]",
+  "time" : {
+    "start" : 1765205185848,
+    "stop" : 1765205186346,
+    "duration" : 498
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "40029c8fbe7382ea",
+  "name" : "test_calendars[TC_CAL_PARAM_007 - color参数-有效范围值]",
+  "time" : {
+    "start" : 1765205182191,
+    "stop" : 1765205182403,
+    "duration" : 212
+  },
+  "status" : "failed",
+  "severity" : "normal"
+}, {
+  "uid" : "57ed3effc9a3dea2",
+  "name" : "test_calendars[TC_CAL_BUS_001 - 创建日历使用默认值]",
+  "time" : {
+    "start" : 1765205183062,
+    "stop" : 1765205183257,
+    "duration" : 195
+  },
+  "status" : "failed",
+  "severity" : "normal"
+}, {
+  "uid" : "faf76e173fc2d71a",
+  "name" : "test_calendars[TC_CAL_COMB_001 - 组合1：应用身份+完整参数]",
+  "time" : {
+    "start" : 1765205183269,
+    "stop" : 1765205183509,
+    "duration" : 240
+  },
+  "status" : "failed",
+  "severity" : "normal"
+}, {
+  "uid" : "911e85e8e7ef44cc",
+  "name" : "test_calendars[TC_CAL_PARAM_005 - permissions参数-有效枚举值-show_only_free_busy]",
+  "time" : {
+    "start" : 1765205181136,
+    "stop" : 1765205181539,
+    "duration" : 403
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "435c2ec1510a52d2",
+  "name" : "test_messages[TC_LIMIT_001 - 消息去重-相同UUID重复发送（第二次）]",
+  "time" : {
+    "start" : 1765205189933,
+    "stop" : 1765205190535,
+    "duration" : 602
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "cdab739ff43fdb56",
+  "name" : "test_messages[TC_PARAM_005 - content非JSON格式]",
+  "time" : {
+    "start" : 1765205185380,
+    "stop" : 1765205185612,
+    "duration" : 232
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "92ee903c6906162a",
+  "name" : "test_messages[TC_CONTENT_003 - 卡片消息内容超长（边界值）]",
+  "time" : {
+    "start" : 1765205187866,
+    "stop" : 1765205188916,
+    "duration" : 1050
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "cc6418b032f90aad",
+  "name" : "test_messages[TC_AUTH_001 - Token无效或过期]",
+  "time" : {
+    "start" : 1765205184078,
+    "stop" : 1765205184312,
+    "duration" : 234
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "35538384479cc624",
+  "name" : "test_messages[TC_PARAM_001 - receive_id缺失]",
+  "time" : {
+    "start" : 1765205184313,
+    "stop" : 1765205184557,
+    "duration" : 244
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "3f068462bf82f42f",
+  "name" : "test_messages[TC_RECEIVER_002 - 用户id不存在]",
+  "time" : {
+    "start" : 1765205185615,
+    "stop" : 1765205185838,
+    "duration" : 223
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "8a20c8720a2385fe",
+  "name" : "test_calendars[TC_CAL_PARAM_006 - permissions参数-无效枚举值]",
+  "time" : {
+    "start" : 1765205181954,
+    "stop" : 1765205182182,
+    "duration" : 228
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "87c1faf977f3f20e",
+  "name" : "test_messages[TC_COMBINE_002 - open_id+卡片消息+有uuid]",
+  "time" : {
+    "start" : 1765205191192,
+    "stop" : 1765205191537,
+    "duration" : 345
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "f80687c4056da61f",
+  "name" : "test_messages[TC_LIMIT_002 - UUID长度超过50字符限制（边界值）]",
+  "time" : {
+    "start" : 1765205190541,
+    "stop" : 1765205190698,
+    "duration" : 157
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "733237a7b39488c",
+  "name" : "test_messages[TC_PARAM_002 - receive_id为空字符串]",
+  "time" : {
+    "start" : 1765205184557,
+    "stop" : 1765205184855,
+    "duration" : 298
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "91e6c7418cb02da1",
+  "name" : "test_calendars[TC_CAL_AUTH_001 - 应用身份创建日历]",
+  "time" : {
+    "start" : 1765205178759,
+    "stop" : 1765205179159,
+    "duration" : 400
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "8af8e5dda357afa2",
+  "name" : "test_messages[TC_PARAM_004 - msg_type值非法]",
+  "time" : {
+    "start" : 1765205185066,
+    "stop" : 1765205185374,
+    "duration" : 308
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "ee8c2c409040e614",
+  "name" : "test_calendars[TC_CAL_COMB_003 - 组合3：应用身份+边界值组合]",
+  "time" : {
+    "start" : 1765205183523,
+    "stop" : 1765205183811,
+    "duration" : 288
+  },
+  "status" : "failed",
+  "severity" : "normal"
+}, {
+  "uid" : "68c8567c1518176d",
+  "name" : "test_calendars[TC_CAL_PARAM_004 - description参数-超过最大长度]",
+  "time" : {
+    "start" : 1765205180439,
+    "stop" : 1765205180652,
+    "duration" : 213
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "7e9ab44b623575b8",
+  "name" : "test_calendars[TC_CAL_PARAM_001 - summary参数-正常长度]",
+  "time" : {
+    "start" : 1765205179339,
+    "stop" : 1765205179737,
+    "duration" : 398
+  },
+  "status" : "passed",
+  "severity" : "normal"
+} ]
