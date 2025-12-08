@@ -291,3 +291,84 @@
         min-width: auto;
     }
 }
+
+/* 文件列表样式 */
+#uploadedFileList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+}
+
+.file-item:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.file-icon-small {
+    margin-right: 1rem;
+    color: #6c757d;
+    font-size: 1.5rem;
+}
+
+.file-info {
+    flex-grow: 1;
+}
+
+.file-name {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.file-size {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.file-status {
+    margin-right: 1rem;
+    font-size: 0.875rem;
+}
+
+.file-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* 文档上传区域样式 */
+.drag-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.375rem;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 1rem;
+}
+
+.drag-upload-area:hover,
+.drag-upload-area.dragover {
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.drag-upload-area i {
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.upload-progress {
+    margin-top: 1rem;
+}
+
+.upload-error {
+    margin-top: 1rem;
+}

@@ -1573,12 +1573,21 @@ function addToUploadedFiles(file, data) {
 
 // 更新文件列表显示
 function updateFileListDisplay() {
+    console.log('updateFileListDisplay函数被调用');
     const fileList = document.getElementById('uploadedFileList');
+    console.log('uploadedFileList元素:', fileList);
     
-    if (!fileList) return;
+    if (!fileList) {
+        console.error('找不到uploadedFileList元素');
+        return;
+    }
+    
+    console.log('uploadedFiles数组:', uploadedFiles);
+    console.log('uploadedFiles数组长度:', uploadedFiles.length);
     
     if (uploadedFiles.length === 0) {
         fileList.innerHTML = '<p class="text-muted">暂无已上传文件</p>';
+        console.log('显示"暂无已上传文件"');
         return;
     }
     
@@ -1616,6 +1625,7 @@ function updateFileListDisplay() {
         `;
         
         fileList.appendChild(fileItem);
+        console.log('添加文件项:', file.name);
     });
 }
 
@@ -1676,7 +1686,8 @@ function deleteFile(fileId) {
 
 // 加载已上传的文件列表
 function loadUploadedFiles() {
-    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.UPLOADED_LIST), {
+    console.log('开始加载已上传文件列表...');
+    fetch(ApiConfig.buildUrl(ApiConfig.API_CONFIG.ENDPOINTS.DOCS.OPENAPI_LIST), {
         method: 'GET'
     })
     .then(response => {
@@ -1688,20 +1699,33 @@ function loadUploadedFiles() {
     .then(data => {
         console.log('已上传文件列表:', data);
         
-        if (data && data.documents && data.documents.length > 0) {
+        if (data && data.data && data.data.length > 0) {
             // 将后端返回的文档格式转换为前端期望的格式
-            uploadedFiles = data.documents.map(doc => ({
+            uploadedFiles = data.data.map(doc => ({
                 id: doc.file_id,
-                name: doc.filename,
-                size: doc.size,
+                name: doc.file_name,
+                size: doc.file_size,
                 uploadTime: doc.upload_time,
                 status: doc.status
             }));
-            updateFileListDisplay();
+            console.log('转换后的文件列表:', uploadedFiles);
+        } else {
+            // 如果没有文件，设置为空数组
+            uploadedFiles = [];
+            console.log('没有找到已上传的文件');
         }
+        
+        // 无论是否有数据，都要更新显示
+        console.log('调用updateFileListDisplay函数');
+        updateFileListDisplay();
     })
     .catch(error => {
         console.error('加载文件列表失败:', error);
+        // 加载失败时也要更新显示，显示错误信息
+        const fileList = document.getElementById('uploadedFileList');
+        if (fileList) {
+            fileList.innerHTML = '<p class="text-danger">加载文件列表失败，请刷新页面重试</p>';
+        }
     });
 }
 

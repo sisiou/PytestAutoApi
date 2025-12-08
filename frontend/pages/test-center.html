@@ -14,6 +14,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/yaml/yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
     <link href="../css/main.css?v=20251205" rel="stylesheet">
     <style>
         /* 通用样式 */
@@ -275,6 +278,89 @@
         .CodeMirror {
             height: 300px;
             font-size: 14px;
+            position: relative;
+            z-index: 1100; /* 增加z-index值，确保在模态框内容之上 */
+        }
+        
+        .CodeMirror-scroll {
+            position: relative;
+            z-index: 1100; /* 增加z-index值，确保在模态框内容之上 */
+            overflow: auto;
+        }
+        
+        .code-editor {
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            overflow: hidden;
+            position: relative;
+            z-index: 1100; /* 增加z-index值，确保在模态框内容之上 */
+        }
+        
+        /* 模态框内的编辑器样式 */
+        .modal .code-editor {
+            z-index: 1100;
+        }
+        
+        .modal .CodeMirror {
+            z-index: 1100;
+        }
+        
+        .modal .CodeMirror-scroll {
+            z-index: 1100;
+        }
+        
+        /* 统一所有编辑器的行号样式 */
+        .CodeMirror-linenumber {
+            background-color: #f5f5f5;
+            color: #999;
+            padding: 0 5px;
+            min-width: 35px;
+            text-align: right;
+            /* 移除右边框，只保留gutters的边框 */
+            box-sizing: border-box;
+        }
+        
+        .CodeMirror-gutters {
+            background-color: #f5f5f5;
+            border-right: 1px solid #ddd;
+            width: 50px; /* 适当的宽度，确保有足够的空间容纳行号 */
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 3;
+        }
+        
+        /* 修复代码内容被行号遮挡的问题 - 使用更彻底的方法 */
+        .CodeMirror {
+            position: relative;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .CodeMirror-scroll {
+            overflow-x: auto !important;
+            overflow-y: auto;
+            position: relative;
+            /* 不使用margin-left，而是通过CodeMirror-sizer来控制 */
+        }
+        
+        /* 确保代码内容不会被遮挡 - 这是关键 */
+        .CodeMirror-sizer {
+            margin-left: 50px !important; /* 与gutters宽度相同 */
+            border-left: 0 !important;
+            padding-right: 0 !important;
+            min-width: 100% !important; /* 确保内容宽度能够展开 */
+        }
+        
+        .CodeMirror-lines {
+            padding: 0.5em 0; /* 只保留上下内边距 */
+        }
+        
+        .CodeMirror-code {
+            position: relative;
+            padding-left: 0; /* 确保代码内容没有额外的左内边距 */
+            white-space: pre !important; /* 防止代码自动换行 */
         }
         
         /* 测试执行日志样式 */
@@ -619,17 +705,15 @@
                                     </div>
                                 </div>
                                 
-                                <!-- 已上传文档列表 -->
-                                <div class="row">
+                                <!-- 文档类型选择标签页 -->
+                                <div class="row mb-4">
                                     <div class="col-12">
+                                        <!-- OpenAPI文档列表 -->
                                         <div class="card">
                                             <div class="card-header d-flex justify-content-between align-items-center">
-                                                <h5 class="card-title mb-0">已上传文档</h5>
+                                                <h5 class="card-title mb-0">已解析文档</h5>
                                                 <div>
-                                                    <button class="btn btn-sm btn-outline-danger me-2" id="testApiBtn">
-                                                        <i class="fas fa-bug me-1"></i>测试API
-                                                    </button>
-                                                    <button class="btn btn-sm btn-outline-primary" id="refreshDocsBtn">
+                                                    <button class="btn btn-sm btn-outline-primary" id="refreshOpenApiDocsBtn">
                                                         <i class="fas fa-sync-alt me-1"></i>刷新
                                                     </button>
                                                 </div>
@@ -639,21 +723,19 @@
                                                     <table class="table table-hover">
                                                         <thead>
                                                             <tr>
-                                                                <th>文档名称</th>
-                                                                <th>API数量</th>
+                                                                <th>文档ID</th>
                                                                 <th>上传时间</th>
-                                                                <th>状态</th>
                                                                 <th>操作</th>
                                                             </tr>
                                                         </thead>
-                                                        <tbody id="apiDocsTableBody">
-                                                            <!-- 文档列表将通过JavaScript动态生成 -->
+                                                        <tbody id="openApiDocsTableBody">
+                                                            <!-- OpenAPI文档列表将通过JavaScript动态生成 -->
                                                         </tbody>
                                                     </table>
                                                 </div>
-                                                <div id="noApiDocsMessage" class="text-center py-4" style="display: none;">
+                                                <div id="noOpenApiDocsMessage" class="text-center py-4" style="display: none;">
                                                     <i class="fas fa-file-code fa-3x text-muted mb-3"></i>
-                                                    <p class="text-muted">暂无接口文档，请上传OpenAPI 3.0.0文档</p>
+                                                    <p class="text-muted">暂无OpenAPI文档</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -1554,10 +1636,6 @@
                                         <td id="docDetailId"></td>
                                     </tr>
                                     <tr>
-                                        <td><strong>文档名称:</strong></td>
-                                        <td id="docDetailName"></td>
-                                    </tr>
-                                    <tr>
                                         <td><strong>创建时间:</strong></td>
                                         <td id="docDetailCreatedAt"></td>
                                     </tr>
@@ -1576,52 +1654,56 @@
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-12">
-                            <!-- 添加选项卡导航 -->
-                            <ul class="nav nav-tabs mb-3" id="documentDetailsTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="openapi-tab" data-bs-toggle="tab" data-bs-target="#openapi-content" type="button" role="tab" aria-controls="openapi-content" aria-selected="true">OpenAPI文档</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="relation-tab" data-bs-toggle="tab" data-bs-target="#relation-content" type="button" role="tab" aria-controls="relation-content" aria-selected="false">API关联关系</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="scene-tab" data-bs-toggle="tab" data-bs-target="#scene-content" type="button" role="tab" aria-controls="scene-content" aria-selected="false">业务场景</button>
-                                </li>
-                            </ul>
-                            
-                            <!-- 选项卡内容 -->
-                            <div class="tab-content" id="documentDetailsTabsContent">
-                                <!-- OpenAPI文档内容 -->
-                                <div class="tab-pane fade show active" id="openapi-content" role="tabpanel" aria-labelledby="openapi-tab">
-                                    <h6>OpenAPI文档内容</h6>
-                                    <div class="code-editor">
-                                        <textarea id="openApiSpecEditor" style="min-height: 300px;"></textarea>
-                                    </div>
-                                </div>
-                                
-                                <!-- API关联关系内容 -->
-                                <div class="tab-pane fade" id="relation-content" role="tabpanel" aria-labelledby="relation-tab">
-                                    <h6>API关联关系</h6>
-                                    <div id="relationContent">
-                                        <div class="text-center py-4">
-                                            <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
-                                            <p class="text-muted">暂无API关联关系数据</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- 业务场景内容 -->
-                                <div class="tab-pane fade" id="scene-content" role="tabpanel" aria-labelledby="scene-tab">
-                                    <h6>业务场景</h6>
-                                    <div id="sceneContent">
-                                        <div class="text-center py-4">
-                                            <i class="fas fa-theater-masks fa-3x text-muted mb-3"></i>
-                                            <p class="text-muted">暂无业务场景数据</p>
-                                        </div>
-                                    </div>
-                                </div>
+                    <!-- 文档内容选项卡 -->
+                    <ul class="nav nav-tabs mb-3" id="documentTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="openapi-tab" data-bs-toggle="tab" data-bs-target="#openapi-content" type="button" role="tab" aria-controls="openapi-content" aria-selected="true">
+                                <i class="fas fa-file-code me-2"></i>OpenAPI文档
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="relation-tab" data-bs-toggle="tab" data-bs-target="#relation-content" type="button" role="tab" aria-controls="relation-content" aria-selected="false">
+                                <i class="fas fa-project-diagram me-2"></i>API关联关系
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="scene-tab" data-bs-toggle="tab" data-bs-target="#scene-content" type="button" role="tab" aria-controls="scene-content" aria-selected="false">
+                                <i class="fas fa-theater-masks me-2"></i>业务场景
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="documentTabsContent">
+                        <!-- OpenAPI文档内容 -->
+                        <div class="tab-pane fade show active" id="openapi-content" role="tabpanel" aria-labelledby="openapi-tab">
+                            <div class="mb-3">
+                                <h6>文档名称</h6>
+                                <div id="openapiDocName" class="form-control-plaintext fw-bold text-primary"></div>
+                            </div>
+                            <div class="code-editor">
+                                <textarea id="openApiSpecEditor" style="min-height: 300px;"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- API关联关系内容 -->
+                        <div class="tab-pane fade" id="relation-content" role="tabpanel" aria-labelledby="relation-tab">
+                            <div class="mb-3">
+                                <h6>文档名称</h6>
+                                <div id="relationDocName" class="form-control-plaintext fw-bold text-success"></div>
+                            </div>
+                            <div class="code-editor">
+                                <textarea id="relationSpecEditor" style="min-height: 300px;"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- 业务场景内容 -->
+                        <div class="tab-pane fade" id="scene-content" role="tabpanel" aria-labelledby="scene-tab">
+                            <div class="mb-3">
+                                <h6>文档名称</h6>
+                                <div id="sceneDocName" class="form-control-plaintext fw-bold text-info"></div>
+                            </div>
+                            <div class="code-editor">
+                                <textarea id="sceneSpecEditor" style="min-height: 300px;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -1629,6 +1711,124 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
                     <button type="button" class="btn btn-primary" id="generateTestCasesBtn">生成测试用例</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文档查看模态框 -->
+    <div class="modal fade" id="documentViewModal" tabindex="-1" aria-labelledby="documentViewModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="documentViewModalTitle">文档内容</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <pre id="documentViewContent" style="white-space: pre-wrap; max-height: 500px; overflow-y: auto;"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文档编辑模态框 -->
+    <div class="modal fade" id="documentEditModal" tabindex="-1" aria-labelledby="documentEditModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="documentEditModalTitle">编辑文档</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="documentEditContent" class="form-control" rows="20" style="font-family: monospace;"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelDocumentEditBtn" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveDocumentBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 三文档编辑模态框 -->
+    <div class="modal fade" id="threeDocEditModal" tabindex="-1" aria-labelledby="threeDocEditModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="threeDocEditModalTitle">编辑文档</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 文档信息 -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">文档ID:</label>
+                            <div id="editDocId" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">创建时间:</label>
+                            <div id="editDocCreatedTime" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">API数量:</label>
+                            <div id="editDocApiCount" class="form-control-plaintext"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 文档内容选项卡 -->
+                    <ul class="nav nav-tabs" id="editDocumentTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="edit-openapi-tab" data-bs-toggle="tab" data-bs-target="#edit-openapi-content" type="button" role="tab" aria-controls="edit-openapi-content" aria-selected="true">OpenAPI文档</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="edit-relation-tab" data-bs-toggle="tab" data-bs-target="#edit-relation-content" type="button" role="tab" aria-controls="edit-relation-content" aria-selected="false">API关联关系</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="edit-scene-tab" data-bs-toggle="tab" data-bs-target="#edit-scene-content" type="button" role="tab" aria-controls="edit-scene-content" aria-selected="false">业务场景</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content mt-3" id="editDocumentTabsContent">
+                        <!-- OpenAPI文档内容 -->
+                        <div class="tab-pane fade show active" id="edit-openapi-content" role="tabpanel" aria-labelledby="edit-openapi-tab">
+                            <div class="mb-3">
+                                <h6>文档名称</h6>
+                                <div id="editOpenapiDocName" class="form-control-plaintext fw-bold text-primary"></div>
+                            </div>
+                            <div class="code-editor">
+                                <textarea id="editOpenApiSpecEditor" style="min-height: 300px;"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- 内容 -->
+                        <div class="tab-pane fade" id="edit-relation-content" role="tabpanel" aria-labelledby="edit-relation-tab">
+                            <div class="mb-3">
+                                <h6>文档名称</h6>
+                                <div id="editRelationDocName" class="form-control-plaintext fw-bold text-success"></div>
+                            </div>
+                            <div class="code-editor">
+                                <textarea id="editRelationSpecEditor" style="min-height: 300px;"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- 业务场景内容 -->
+                        <div class="tab-pane fade" id="edit-scene-content" role="tabpanel" aria-labelledby="edit-scene-tab">
+                            <div class="mb-3">
+                                <h6>文档名称</h6>
+                                <div id="editSceneDocName" class="form-control-plaintext fw-bold text-info"></div>
+                            </div>
+                            <div class="code-editor">
+                                <textarea id="editSceneSpecEditor" style="min-height: 300px;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelThreeDocEditBtn" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveThreeDocumentsBtn">保存所有文档</button>
                 </div>
             </div>
         </div>
@@ -1651,5 +1851,888 @@
     <!-- 自定义JS -->
     <script src="../js/main.js"></script>
     <script src="../js/components/test-center.js"></script>
+    
+    <!-- 内联脚本：确保编辑器正确初始化 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成，准备设置编辑器初始化事件');
+            
+            // 将初始化OpenAPI编辑器的函数暴露到全局作用域
+            window.initOpenApiEditor = function() {
+                console.log('初始化OpenAPI编辑器');
+                
+                // 确保CodeMirror已加载
+                if (typeof CodeMirror === 'undefined') {
+                    console.error('CodeMirror未加载');
+                    return;
+                }
+                
+                const openApiEditor = document.getElementById('openApiSpecEditor');
+                if (openApiEditor) {
+                    console.log('找到OpenAPI编辑器元素:', openApiEditor);
+                    console.log('OpenAPI编辑器内容:', openApiEditor.value ? '有内容' : '无内容');
+                    console.log('OpenAPI编辑器下一个兄弟元素:', openApiEditor.nextElementSibling);
+                    
+                    // 保存编辑器的值
+                    const editorValue = openApiEditor.value;
+                    
+                    // 如果已经初始化了CodeMirror，先销毁它
+                    if (openApiEditor.nextElementSibling && openApiEditor.nextElementSibling.classList.contains('CodeMirror')) {
+                        const wrapper = openApiEditor.nextElementSibling;
+                        wrapper.parentNode.replaceChild(openApiEditor, wrapper);
+                    }
+                    
+                    // 确保编辑器的值没有被重置
+                    openApiEditor.value = editorValue;
+                    
+                    // 检测内容类型
+                    let editorMode = 'yaml/json';
+                    const content = editorValue && editorValue.trim();
+                    if (content && content.startsWith('openapi:')) {
+                        editorMode = 'yaml';
+                    }
+                    
+                    try {
+                        const cm = CodeMirror.fromTextArea(openApiEditor, {
+                            mode: editorMode === 'yaml' ? 'yaml' : 'json',
+                            theme: 'default',
+                            lineNumbers: true,
+                            readOnly: true,
+                            lineWrapping: false,  // 禁用自动换行，启用水平滚动
+                            scrollbarStyle: 'native',  // 使用原生滚动条
+                            autoCloseBrackets: true,
+                            matchBrackets: true
+                        });
+                        
+                        // 设置编辑器的z-index，确保在模态框中正确显示
+                        cm.getWrapperElement().style.zIndex = '1050';
+                        
+                        console.log('OpenAPI编辑器初始化完成', cm);
+                        return cm;
+                    } catch (error) {
+                        console.error('OpenAPI编辑器初始化失败:', error);
+                        // 尝试使用简单模式
+                        try {
+                            const cm = CodeMirror.fromTextArea(openApiEditor, {
+                                mode: 'text/plain',
+                                theme: 'default',
+                                lineNumbers: true,
+                                readOnly: true,
+                                lineWrapping: false,  // 禁用自动换行，启用水平滚动
+                                scrollbarStyle: 'native'  // 使用原生滚动条
+                            });
+                            
+                            // 设置编辑器的z-index，确保在模态框中正确显示
+                            cm.getWrapperElement().style.zIndex = '1050';
+                            
+                            console.log('OpenAPI编辑器使用简单模式初始化完成', cm);
+                            return cm;
+                        } catch (fallbackError) {
+                            console.error('OpenAPI编辑器简单模式初始化也失败:', fallbackError);
+                        }
+                    }
+                } else {
+                    console.error('未找到OpenAPI编辑器元素');
+                }
+            };
+            // 将初始化关联关系编辑器的函数暴露到全局作用域
+            window.initRelationEditor = function() {
+                console.log('初始化关联关系编辑器');
+                
+                // 确保CodeMirror已加载
+                if (typeof CodeMirror === 'undefined') {
+                    console.error('CodeMirror未加载');
+                    return;
+                }
+                
+                const relationEditor = document.getElementById('relationSpecEditor');
+                if (relationEditor) {
+                    console.log('找到关联关系编辑器元素:', relationEditor);
+                    console.log('关联关系编辑器内容:', relationEditor.value ? '有内容' : '无内容');
+                    console.log('关联关系编辑器内容长度:', relationEditor.value ? relationEditor.value.length : 0);
+                    console.log('关联关系编辑器下一个兄弟元素:', relationEditor.nextElementSibling);
+                    
+                    // 保存编辑器的值
+                    const editorValue = relationEditor.value;
+                    
+                    // 如果已经初始化了CodeMirror，先销毁它
+                    if (relationEditor.nextElementSibling && relationEditor.nextElementSibling.classList.contains('CodeMirror')) {
+                        const wrapper = relationEditor.nextElementSibling;
+                        wrapper.parentNode.replaceChild(relationEditor, wrapper);
+                    }
+                    
+                    // 确保编辑器的值没有被重置
+                    relationEditor.value = editorValue;
+                    
+                    // 再次确认编辑器的值
+                    console.log('设置后的关联关系编辑器内容:', relationEditor.value ? '有内容' : '无内容');
+                    console.log('设置后的关联关系编辑器内容长度:', relationEditor.value ? relationEditor.value.length : 0);
+                    
+                    // 如果内容为空，尝试从全局变量恢复
+                    if (!relationEditor.value || relationEditor.value.trim() === '') {
+                        console.error('关联关系编辑器内容为空！');
+                        console.error('原始editorValue:', editorValue);
+                        console.error('relationSpecEditor.value:', relationEditor.value);
+                        
+                        // 尝试从全局变量恢复内容
+                        if (window.relationEditorContent && window.relationEditorContent.length > 0) {
+                            relationEditor.value = window.relationEditorContent;
+                            console.error('从全局变量恢复关联关系编辑器内容，长度:', window.relationEditorContent.length);
+                        } else {
+                            // 尝试重新设置值
+                            relationEditor.value = editorValue;
+                            console.error('重新设置后的relationSpecEditor.value:', relationEditor.value);
+                        }
+                    }
+                    
+                    // 检测内容类型
+                    let editorMode = 'yaml/json';
+                    const content = editorValue && editorValue.trim();
+                    if (content && content.startsWith('relation:')) {
+                        editorMode = 'json';
+                    }
+                    
+                    try {
+                        const cm = CodeMirror.fromTextArea(relationEditor, {
+                            mode: editorMode === 'yaml' ? 'yaml' : 'json',
+                            theme: 'default',
+                            lineNumbers: true,
+                            readOnly: true,
+                            lineWrapping: false,  // 禁用自动换行，启用水平滚动
+                            scrollbarStyle: 'native',  // 使用原生滚动条
+                            autoCloseBrackets: true,
+                            matchBrackets: true
+                        });
+                        
+                        // 设置编辑器的z-index，确保在模态框中正确显示
+                        cm.getWrapperElement().style.zIndex = '1050';
+                        
+                        // 确保编辑器内容正确设置
+                        if (window.relationEditorContent && window.relationEditorContent.length > 0) {
+                            cm.setValue(window.relationEditorContent);
+                            console.log('CodeMirror初始化后，从全局变量设置关联关系编辑器内容，长度:', window.relationEditorContent.length);
+                        } else if (relationEditor.value && relationEditor.value.trim() !== '') {
+                            cm.setValue(relationEditor.value);
+                            console.log('CodeMirror初始化后，从textarea设置关联关系编辑器内容，长度:', relationEditor.value.length);
+                        }
+                        
+                        console.log('关联关系编辑器初始化完成', cm);
+                        return cm;
+                    } catch (error) {
+                        console.error('关联关系编辑器初始化失败:', error);
+                        // 尝试使用简单模式
+                        try {
+                            const cm = CodeMirror.fromTextArea(relationEditor, {
+                                mode: 'text/plain',
+                                theme: 'default',
+                                lineNumbers: true,
+                                readOnly: true,
+                                lineWrapping: false,  // 禁用自动换行，启用水平滚动
+                                scrollbarStyle: 'native'  // 使用原生滚动条
+                            });
+                            
+                            // 设置编辑器的z-index，确保在模态框中正确显示
+                            cm.getWrapperElement().style.zIndex = '1050';
+                            
+                            console.log('关联关系编辑器使用简单模式初始化完成', cm);
+                            return cm;
+                        } catch (fallbackError) {
+                            console.error('关联关系编辑器简单模式初始化也失败:', fallbackError);
+                        }
+                    }
+                } else {
+                    console.error('未找到关联关系编辑器元素');
+                }
+            };
+
+            // 将初始化场景编辑器的函数暴露到全局作用域
+            window.initSceneEditor = function() {
+                console.log('初始化场景编辑器');
+                
+                // 确保CodeMirror已加载
+                if (typeof CodeMirror === 'undefined') {
+                    console.error('CodeMirror未加载');
+                    return;
+                }
+                
+                const sceneSpecEditor = document.getElementById('sceneSpecEditor');
+                if (sceneSpecEditor) {
+                    console.log('找到场景编辑器元素:', sceneSpecEditor);
+                    console.log('场景编辑器内容:', sceneSpecEditor.value ? '有内容' : '无内容');
+                    console.log('场景编辑器内容长度:', sceneSpecEditor.value ? sceneSpecEditor.value.length : 0);
+                    console.log('场景编辑器下一个兄弟元素:', sceneSpecEditor.nextElementSibling);
+                    
+                    // 保存编辑器的值
+                    const editorValue = sceneSpecEditor.value;
+                    
+                    // 如果已经初始化了CodeMirror，先销毁它
+                    if (sceneSpecEditor.nextElementSibling && sceneSpecEditor.nextElementSibling.classList.contains('CodeMirror')) {
+                        const wrapper = sceneSpecEditor.nextElementSibling;
+                        wrapper.parentNode.replaceChild(sceneSpecEditor, wrapper);
+                    }
+                    
+                    // 确保编辑器的值没有被重置
+                    sceneSpecEditor.value = editorValue;
+                    
+                    // 再次确认编辑器的值
+                    console.log('设置后的场景编辑器内容:', sceneSpecEditor.value ? '有内容' : '无内容');
+                    console.log('设置后的场景编辑器内容长度:', sceneSpecEditor.value ? sceneSpecEditor.value.length : 0);
+                    
+                    // 如果内容为空，尝试从全局变量恢复
+                    if (!sceneSpecEditor.value || sceneSpecEditor.value.trim() === '') {
+                        console.error('场景编辑器内容为空！');
+                        console.error('原始editorValue:', editorValue);
+                        console.error('sceneSpecEditor.value:', sceneSpecEditor.value);
+                        
+                        // 尝试从全局变量恢复内容
+                        if (window.sceneEditorContent && window.sceneEditorContent.length > 0) {
+                            sceneSpecEditor.value = window.sceneEditorContent;
+                            console.error('从全局变量恢复场景编辑器内容，长度:', window.sceneEditorContent.length);
+                        } else {
+                            // 尝试重新设置值
+                            sceneSpecEditor.value = editorValue;
+                            console.error('重新设置后的sceneSpecEditor.value:', sceneSpecEditor.value);
+                        }
+                    }
+                    
+                    // 检测内容类型
+                    let editorMode = 'yaml/json';
+                    const content = editorValue && editorValue.trim();
+                    if (content && content.startsWith('scene:')) {
+                        editorMode = 'json';
+                    }
+                    
+                    try {
+                        const cm = CodeMirror.fromTextArea(sceneSpecEditor, {
+                            mode: editorMode === 'yaml' ? 'yaml' : 'json',
+                            theme: 'default',
+                            lineNumbers: true,
+                            readOnly: true,
+                            lineWrapping: false,  // 禁用自动换行，启用水平滚动
+                            scrollbarStyle: 'native',  // 使用原生滚动条
+                            autoCloseBrackets: true,
+                            matchBrackets: true
+                        });
+                        
+                        // 设置编辑器的z-index，确保在模态框中正确显示
+                        cm.getWrapperElement().style.zIndex = '1050';
+                        
+                        // 确保编辑器内容正确设置
+                        if (window.sceneEditorContent && window.sceneEditorContent.length > 0) {
+                            cm.setValue(window.sceneEditorContent);
+                            console.log('CodeMirror初始化后，从全局变量设置场景编辑器内容，长度:', window.sceneEditorContent.length);
+                        } else if (sceneSpecEditor.value && sceneSpecEditor.value.trim() !== '') {
+                            cm.setValue(sceneSpecEditor.value);
+                            console.log('CodeMirror初始化后，从textarea设置场景编辑器内容，长度:', sceneSpecEditor.value.length);
+                        }
+                        
+                        console.log('场景编辑器初始化完成', cm);
+                        return cm;
+                    } catch (error) {
+                        console.error('场景编辑器初始化失败:', error);
+                        // 尝试使用简单模式
+                        try {
+                            const cm = CodeMirror.fromTextArea(sceneSpecEditor, {
+                                mode: 'text/plain',
+                                theme: 'default',
+                                lineNumbers: true,
+                                readOnly: true,
+                                lineWrapping: false,  // 禁用自动换行，启用水平滚动
+                                scrollbarStyle: 'native'  // 使用原生滚动条
+                            });
+                            
+                            // 设置编辑器的z-index，确保在模态框中正确显示
+                            cm.getWrapperElement().style.zIndex = '1050';
+                            
+                            console.log('场景编辑器使用简单模式初始化完成', cm);
+                            return cm;
+                        } catch (fallbackError) {
+                            console.error('场景编辑器简单模式初始化也失败:', fallbackError);
+                        }
+                    }
+                } else {
+                    console.error('未找到场景编辑器元素，尝试重新获取...');
+                    // 尝试再次获取元素
+                    setTimeout(function() {
+                        const retryEditor = document.getElementById('sceneSpecEditor');
+                        if (retryEditor) {
+                            console.log('重试成功，找到场景编辑器元素');
+                            window.initSceneEditor();
+                        } else {
+                            console.error('重试失败，仍然未找到场景编辑器元素');
+                        }
+                    }, 500);
+                }
+            };
+            
+            // 初始化三文档编辑器
+            window.initEditOpenApiEditor = function() {
+                const editor = document.getElementById('editOpenApiSpecEditor');
+                if (!editor) return;
+                
+                // 如果已经存在编辑器实例，先销毁
+                if (editor.CodeMirror) {
+                    editor.CodeMirror.toTextArea();
+                }
+                
+                // 创建新的编辑器实例
+                const cm = CodeMirror.fromTextArea(editor, {
+                    mode: 'yaml',  // 使用YAML模式而不是JSON模式
+                    theme: 'default',
+                    lineNumbers: true,
+                    lineWrapping: false,  // 禁用自动换行，启用水平滚动
+                    autoCloseBrackets: true,
+                    matchBrackets: true,
+                    indentUnit: 2,  // YAML通常使用2空格缩进
+                    tabSize: 2,
+                    indentWithTabs: false,
+                    scrollbarStyle: 'native',  // 使用原生滚动条
+                    extraKeys: {
+                        "Ctrl-S": function() {
+                            // 触发保存按钮点击
+                            document.getElementById('saveThreeDocumentsBtn').click();
+                        },
+                        "Cmd-S": function() {
+                            // 触发保存按钮点击
+                            document.getElementById('saveThreeDocumentsBtn').click();
+                        }
+                    }
+                });
+                
+                // 将编辑器实例存储到全局变量
+                window.editOpenApiSpecEditor = cm;
+                
+                // 设置编辑器高度
+                cm.setSize(null, 400);
+                
+                // 设置z-index确保编辑器在最上层
+                setTimeout(() => {
+                    const cmElement = cm.getWrapperElement();
+                    if (cmElement) {
+                        cmElement.style.zIndex = '1100'; // 增加z-index值，确保在模态框内容之上
+                        // 同时设置父元素的z-index
+                        const parentElement = cmElement.parentElement;
+                        if (parentElement) {
+                            parentElement.style.zIndex = '1099';
+                        }
+                    }
+                }, 100);
+                
+                // 设置编辑器内容
+                setTimeout(() => {
+                    if (window.threeDocContents && window.threeDocContents.openapi) {
+                        cm.setValue(window.threeDocContents.openapi);
+                        console.log('设置OpenAPI编辑器内容成功，长度:', window.threeDocContents.openapi.length);
+                    } else {
+                        console.log('OpenAPI内容为空或未定义');
+                    }
+                }, 50);
+            };
+            
+            window.initEditRelationEditor = function() {
+                const editor = document.getElementById('editRelationSpecEditor');
+                if (!editor) return;
+                
+                // 如果已经存在编辑器实例，先销毁
+                if (editor.CodeMirror) {
+                    editor.CodeMirror.toTextArea();
+                }
+                
+                // 创建新的编辑器实例，使用JSON模式
+                const cm = CodeMirror.fromTextArea(editor, {
+                    mode: 'javascript',  // 使用JavaScript模式（支持JSON）
+                    theme: 'default',
+                    lineNumbers: true,
+                    lineWrapping: false,  // 禁用自动换行，启用水平滚动
+                    autoCloseBrackets: true,
+                    matchBrackets: true,
+                    indentUnit: 4,  // JSON通常使用4空格缩进
+                    tabSize: 4,
+                    indentWithTabs: false,
+                    scrollbarStyle: 'native',  // 使用原生滚动条
+                    extraKeys: {
+                        "Ctrl-S": function() {
+                            // 触发保存按钮点击
+                            document.getElementById('saveThreeDocumentsBtn').click();
+                        },
+                        "Cmd-S": function() {
+                            // 触发保存按钮点击
+                            document.getElementById('saveThreeDocumentsBtn').click();
+                        }
+                    }
+                });
+                
+                // 将编辑器实例存储到全局变量
+                window.editRelationSpecEditor = cm;
+                
+                // 设置编辑器高度
+                cm.setSize(null, 400);
+                
+                // 设置z-index确保编辑器在最上层
+                setTimeout(() => {
+                    const cmElement = cm.getWrapperElement();
+                    if (cmElement) {
+                        cmElement.style.zIndex = '1100'; // 增加z-index值，确保在模态框内容之上
+                        // 同时设置父元素的z-index
+                        const parentElement = cmElement.parentElement;
+                        if (parentElement) {
+                            parentElement.style.zIndex = '1099';
+                        }
+                    }
+                }, 100);
+                
+                // 设置编辑器内容
+                setTimeout(() => {
+                    console.log('尝试设置关联关系编辑器内容');
+                    console.log('window.threeDocContents:', window.threeDocContents);
+                    if (window.threeDocContents && window.threeDocContents.relation) {
+                        try {
+                            // 尝试将YAML转换为JSON
+                            let content = window.threeDocContents.relation;
+                            // 如果内容看起来像YAML（包含冒号和换行），尝试转换为JSON
+                            if (content.includes(':') && !content.trim().startsWith('{')) {
+                                try {
+                                    const yamlObj = jsyaml.load(content);
+                                    content = JSON.stringify(yamlObj, null, 4);
+                                    console.log('已将YAML转换为JSON格式');
+                                } catch (e) {
+                                    console.log('YAML转JSON失败，使用原始内容:', e);
+                                }
+                            }
+                            cm.setValue(content);
+                            console.log('设置关联关系编辑器内容成功，长度:', content.length);
+                        } catch (e) {
+                            console.error('设置关联关系编辑器内容失败:', e);
+                            cm.setValue(window.threeDocContents.relation);
+                        }
+                    } else {
+                        console.log('关联关系内容为空或未定义');
+                    }
+                }, 50);
+            };
+            
+            window.initEditSceneEditor = function() {
+                const editor = document.getElementById('editSceneSpecEditor');
+                if (!editor) return;
+                
+                // 如果已经存在编辑器实例，先销毁
+                if (editor.CodeMirror) {
+                    editor.CodeMirror.toTextArea();
+                }
+                
+                // 创建新的编辑器实例，使用JSON模式
+                const cm = CodeMirror.fromTextArea(editor, {
+                    mode: 'javascript',  // 使用JavaScript模式（支持JSON）
+                    theme: 'default',
+                    lineNumbers: true,
+                    lineWrapping: false,  // 禁用自动换行，启用水平滚动
+                    autoCloseBrackets: true,
+                    matchBrackets: true,
+                    indentUnit: 4,  // JSON通常使用4空格缩进
+                    tabSize: 4,
+                    indentWithTabs: false,
+                    scrollbarStyle: 'native',  // 使用原生滚动条
+                    extraKeys: {
+                        "Ctrl-S": function() {
+                            // 触发保存按钮点击
+                            document.getElementById('saveThreeDocumentsBtn').click();
+                        },
+                        "Cmd-S": function() {
+                            // 触发保存按钮点击
+                            document.getElementById('saveThreeDocumentsBtn').click();
+                        }
+                    }
+                });
+                
+                // 将编辑器实例存储到全局变量
+                window.editSceneSpecEditor = cm;
+                
+                // 设置编辑器高度
+                cm.setSize(null, 400);
+                
+                // 设置z-index确保编辑器在最上层
+                setTimeout(() => {
+                    const cmElement = cm.getWrapperElement();
+                    if (cmElement) {
+                        cmElement.style.zIndex = '1100'; // 增加z-index值，确保在模态框内容之上
+                        // 同时设置父元素的z-index
+                        const parentElement = cmElement.parentElement;
+                        if (parentElement) {
+                            parentElement.style.zIndex = '1099';
+                        }
+                    }
+                }, 100);
+                
+                // 设置编辑器内容
+                setTimeout(() => {
+                    console.log('尝试设置业务场景编辑器内容');
+                    console.log('window.threeDocContents:', window.threeDocContents);
+                    if (window.threeDocContents && window.threeDocContents.scene) {
+                        try {
+                            // 尝试将YAML转换为JSON
+                            let content = window.threeDocContents.scene;
+                            // 如果内容看起来像YAML（包含冒号和换行），尝试转换为JSON
+                            if (content.includes(':') && !content.trim().startsWith('{')) {
+                                try {
+                                    const yamlObj = jsyaml.load(content);
+                                    content = JSON.stringify(yamlObj, null, 4);
+                                    console.log('已将YAML转换为JSON格式');
+                                } catch (e) {
+                                    console.log('YAML转JSON失败，使用原始内容:', e);
+                                }
+                            }
+                            cm.setValue(content);
+                            console.log('设置业务场景编辑器内容成功，长度:', content.length);
+                        } catch (e) {
+                            console.error('设置业务场景编辑器内容失败:', e);
+                            cm.setValue(window.threeDocContents.scene);
+                        }
+                    } else {
+                        console.log('业务场景内容为空或未定义');
+                    }
+                }, 50);
+            };
+            
+            // 监听三文档编辑模态框显示事件
+            const threeDocEditModal = document.getElementById('threeDocEditModal');
+            if (threeDocEditModal) {
+                // 移除之前可能存在的事件监听器，避免重复绑定
+                threeDocEditModal.removeEventListener('shown.bs.modal', window.initThreeDocEditors);
+                
+                // 创建新的初始化函数
+                window.initThreeDocEditors = function() {
+                    console.log('三文档编辑模态框已显示，准备初始化编辑器');
+                    console.log('当前window.threeDocContents:', window.threeDocContents);
+                    
+                    // 延迟初始化，确保DOM已完全渲染
+                    setTimeout(function() {
+                        // 初始化所有编辑器
+                        if (typeof window.initEditOpenApiEditor === 'function') {
+                            window.initEditOpenApiEditor();
+                        }
+                        
+                        if (typeof window.initEditRelationEditor === 'function') {
+                            window.initEditRelationEditor();
+                        }
+                        
+                        if (typeof window.initEditSceneEditor === 'function') {
+                            window.initEditSceneEditor();
+                        }
+                        
+                        // 确保内容已正确设置
+                        setTimeout(() => {
+                            // 再次检查并设置内容，以防之前的设置失败
+                            if (window.threeDocContents) {
+                                // 设置OpenAPI内容
+                                if (window.threeDocContents.openapi && window.editOpenApiSpecEditor) {
+                                    window.editOpenApiSpecEditor.setValue(window.threeDocContents.openapi);
+                                    console.log('再次设置OpenAPI编辑器内容成功，长度:', window.threeDocContents.openapi.length);
+                                }
+                                
+                                // 设置关联关系内容
+                                if (window.threeDocContents.relation && window.editRelationSpecEditor) {
+                                    window.editRelationSpecEditor.setValue(window.threeDocContents.relation);
+                                    console.log('再次设置关联关系编辑器内容成功，长度:', window.threeDocContents.relation.length);
+                                }
+                                
+                                // 设置业务场景内容
+                                if (window.threeDocContents.scene && window.editSceneSpecEditor) {
+                                    window.editSceneSpecEditor.setValue(window.threeDocContents.scene);
+                                    console.log('再次设置业务场景编辑器内容成功，长度:', window.threeDocContents.scene.length);
+                                }
+                            } else {
+                                console.log('window.threeDocContents未定义');
+                            }
+                        }, 200);
+                    }, 300);
+                };
+                
+                // 添加新的事件监听器，使用once选项确保事件只触发一次
+                threeDocEditModal.addEventListener('shown.bs.modal', window.initThreeDocEditors, { once: true });
+                
+                // 监听选项卡切换事件
+                const editOpenApiTab = document.getElementById('editOpenapi-tab');
+                const editRelationTab = document.getElementById('edit-relation-tab');
+                const editSceneTab = document.getElementById('edit-scene-tab');
+                
+                if (editOpenApiTab) {
+                    editOpenApiTab.addEventListener('shown.bs.tab', function() {
+                        console.log('编辑OpenAPI选项卡已激活');
+                        // 确保编辑器已初始化
+                        if (!window.editOpenApiSpecEditor) {
+                            setTimeout(function() {
+                                if (typeof window.initEditOpenApiEditor === 'function') {
+                                    window.initEditOpenApiEditor();
+                                    // 初始化后立即设置内容
+                                    if (window.threeDocContents && window.threeDocContents.openapi) {
+                                        window.editOpenApiSpecEditor.setValue(window.threeDocContents.openapi);
+                                        window.editOpenApiSpecEditor.refresh();
+                                        console.log('选项卡切换时设置OpenAPI编辑器内容成功，长度:', window.threeDocContents.openapi.length);
+                                    }
+                                }
+                            }, 100);
+                        } else {
+                            // 如果编辑器已初始化，设置内容并刷新
+                            if (window.threeDocContents && window.threeDocContents.openapi) {
+                                window.editOpenApiSpecEditor.setValue(window.threeDocContents.openapi);
+                                window.editOpenApiSpecEditor.refresh();
+                                console.log('选项卡切换时设置OpenAPI编辑器内容成功，长度:', window.threeDocContents.openapi.length);
+                            }
+                        }
+                    });
+                }
+                
+                if (editRelationTab) {
+                    editRelationTab.addEventListener('shown.bs.tab', function() {
+                        console.log('编辑关联关系选项卡已激活');
+                        // 确保编辑器已初始化
+                        if (!window.editRelationSpecEditor) {
+                            setTimeout(function() {
+                                if (typeof window.initEditRelationEditor === 'function') {
+                                    window.initEditRelationEditor();
+                                    // 初始化后立即设置内容
+                                    if (window.threeDocContents && window.threeDocContents.relation) {
+                                        try {
+                                            // 尝试将YAML转换为JSON
+                                            let content = window.threeDocContents.relation;
+                                            // 如果内容看起来像YAML（包含冒号和换行），尝试转换为JSON
+                                            if (content.includes(':') && !content.trim().startsWith('{')) {
+                                                try {
+                                                    const yamlObj = jsyaml.load(content);
+                                                    content = JSON.stringify(yamlObj, null, 4);
+                                                    console.log('已将YAML转换为JSON格式');
+                                                } catch (e) {
+                                                    console.log('YAML转JSON失败，使用原始内容:', e);
+                                                }
+                                            }
+                                            window.editRelationSpecEditor.setValue(content);
+                                            window.editRelationSpecEditor.refresh();
+                                            console.log('选项卡切换时设置关联关系编辑器内容成功，长度:', content.length);
+                                        } catch (e) {
+                                            console.error('选项卡切换时设置关联关系编辑器内容失败:', e);
+                                            window.editRelationSpecEditor.setValue(window.threeDocContents.relation);
+                                            window.editRelationSpecEditor.refresh();
+                                        }
+                                    }
+                                }
+                            }, 100);
+                        } else {
+                            // 如果编辑器已初始化，设置内容并刷新
+                            if (window.threeDocContents && window.threeDocContents.relation) {
+                                try {
+                                    // 尝试将YAML转换为JSON
+                                    let content = window.threeDocContents.relation;
+                                    // 如果内容看起来像YAML（包含冒号和换行），尝试转换为JSON
+                                    if (content.includes(':') && !content.trim().startsWith('{')) {
+                                        try {
+                                            const yamlObj = jsyaml.load(content);
+                                            content = JSON.stringify(yamlObj, null, 4);
+                                            console.log('已将YAML转换为JSON格式');
+                                        } catch (e) {
+                                            console.log('YAML转JSON失败，使用原始内容:', e);
+                                        }
+                                    }
+                                    window.editRelationSpecEditor.setValue(content);
+                                    window.editRelationSpecEditor.refresh();
+                                    console.log('选项卡切换时设置关联关系编辑器内容成功，长度:', content.length);
+                                } catch (e) {
+                                    console.error('选项卡切换时设置关联关系编辑器内容失败:', e);
+                                    window.editRelationSpecEditor.setValue(window.threeDocContents.relation);
+                                    window.editRelationSpecEditor.refresh();
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                if (editSceneTab) {
+                    editSceneTab.addEventListener('shown.bs.tab', function() {
+                        console.log('编辑业务场景选项卡已激活');
+                        // 确保编辑器已初始化
+                        if (!window.editSceneSpecEditor) {
+                            setTimeout(function() {
+                                if (typeof window.initEditSceneEditor === 'function') {
+                                    window.initEditSceneEditor();
+                                    // 初始化后立即设置内容
+                                    if (window.threeDocContents && window.threeDocContents.scene) {
+                                        try {
+                                            // 尝试将YAML转换为JSON
+                                            let content = window.threeDocContents.scene;
+                                            // 如果内容看起来像YAML（包含冒号和换行），尝试转换为JSON
+                                            if (content.includes(':') && !content.trim().startsWith('{')) {
+                                                try {
+                                                    const yamlObj = jsyaml.load(content);
+                                                    content = JSON.stringify(yamlObj, null, 4);
+                                                    console.log('已将YAML转换为JSON格式');
+                                                } catch (e) {
+                                                    console.log('YAML转JSON失败，使用原始内容:', e);
+                                                }
+                                            }
+                                            window.editSceneSpecEditor.setValue(content);
+                                            window.editSceneSpecEditor.refresh();
+                                            console.log('选项卡切换时设置业务场景编辑器内容成功，长度:', content.length);
+                                        } catch (e) {
+                                            console.error('选项卡切换时设置业务场景编辑器内容失败:', e);
+                                            window.editSceneSpecEditor.setValue(window.threeDocContents.scene);
+                                            window.editSceneSpecEditor.refresh();
+                                        }
+                                    }
+                                }
+                            }, 100);
+                        } else {
+                            // 如果编辑器已初始化，设置内容并刷新
+                            if (window.threeDocContents && window.threeDocContents.scene) {
+                                window.editSceneSpecEditor.setValue(window.threeDocContents.scene);
+                                window.editSceneSpecEditor.refresh();
+                                console.log('选项卡切换时设置业务场景编辑器内容成功，长度:', window.threeDocContents.scene.length);
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // 存储文档内容的全局变量
+            window.threeDocContents = {
+                openapi: '',
+                relation: '',
+                scene: ''
+            };
+            
+            // 存储文档编辑模态框的原始内容
+            window.documentEditOriginalContent = '';
+            
+            // 监听文档编辑模态框显示事件，保存原始内容
+            const documentEditModal = document.getElementById('documentEditModal');
+            if (documentEditModal) {
+                documentEditModal.addEventListener('shown.bs.modal', function() {
+                    const textarea = document.getElementById('documentEditContent');
+                    if (textarea) {
+                        window.documentEditOriginalContent = textarea.value;
+                        console.log('已保存文档编辑原始内容');
+                    }
+                });
+                
+                // 添加取消按钮事件监听器
+                const cancelDocumentEditBtn = document.getElementById('cancelDocumentEditBtn');
+                if (cancelDocumentEditBtn) {
+                    cancelDocumentEditBtn.addEventListener('click', function() {
+                        const textarea = document.getElementById('documentEditContent');
+                        if (textarea && window.documentEditOriginalContent) {
+                            textarea.value = window.documentEditOriginalContent;
+                            console.log('已重置文档编辑内容为原始内容');
+                        }
+                    });
+                }
+            }
+            
+            // 监听三文档编辑模态框显示事件，保存原始内容
+            const threeDocEditModalForCancel = document.getElementById('threeDocEditModal');
+            if (threeDocEditModalForCancel) {
+                threeDocEditModalForCancel.addEventListener('shown.bs.modal', function() {
+                    // 延迟保存，确保编辑器已初始化
+                    setTimeout(function() {
+                        // 保存三个编辑器的原始内容
+                        if (window.editOpenApiSpecEditor && typeof window.editOpenApiSpecEditor.getValue === 'function') {
+                            window.threeDocContents.openapi = window.editOpenApiSpecEditor.getValue();
+                        }
+                        if (window.editRelationSpecEditor && typeof window.editRelationSpecEditor.getValue === 'function') {
+                            window.threeDocContents.relation = window.editRelationSpecEditor.getValue();
+                        }
+                        if (window.editSceneSpecEditor && typeof window.editSceneSpecEditor.getValue === 'function') {
+                            window.threeDocContents.scene = window.editSceneSpecEditor.getValue();
+                        }
+                        console.log('已保存三文档编辑原始内容');
+                    }, 500);
+                });
+                
+                // 添加取消按钮事件监听器
+                const cancelThreeDocEditBtn = document.getElementById('cancelThreeDocEditBtn');
+                if (cancelThreeDocEditBtn) {
+                    cancelThreeDocEditBtn.addEventListener('click', function() {
+                        // 恢复三个编辑器的原始内容
+                        if (window.editOpenApiSpecEditor && window.threeDocContents.openapi) {
+                            window.editOpenApiSpecEditor.setValue(window.threeDocContents.openapi);
+                            window.editOpenApiSpecEditor.refresh();
+                        }
+                        if (window.editRelationSpecEditor && window.threeDocContents.relation) {
+                            window.editRelationSpecEditor.setValue(window.threeDocContents.relation);
+                            window.editRelationSpecEditor.refresh();
+                        }
+                        if (window.editSceneSpecEditor && window.threeDocContents.scene) {
+                            window.editSceneSpecEditor.setValue(window.threeDocContents.scene);
+                            window.editSceneSpecEditor.refresh();
+                        }
+                        console.log('已重置三文档编辑内容为原始内容');
+                    });
+                }
+            }
+            
+            // 监听文档详情模态框显示事件
+            const documentDetailsModal = document.getElementById('documentDetailsModal');
+            if (documentDetailsModal) {
+                
+                // 添加新的事件监听器
+                documentDetailsModal.addEventListener('shown.bs.modal', function() {
+                    console.log('文档详情模态框已显示，准备初始化编辑器');
+                    
+                    // 延迟初始化，确保DOM已完全渲染
+                    setTimeout(function() {
+                        // 初始化所有编辑器，无论选项卡是否激活
+                        if (typeof window.initOpenApiEditor === 'function') {
+                            window.initOpenApiEditor();
+                        }
+                        
+                        if (typeof window.initRelationEditor === 'function') {
+                            window.initRelationEditor();
+                        }
+                        
+                        if (typeof window.initSceneEditor === 'function') {
+                            window.initSceneEditor();
+                        }
+                    }, 300);
+                });
+                
+                // 监听选项卡切换事件
+                const openApiTab = document.getElementById('openapi-tab');
+                const relationTab = document.getElementById('relation-tab');
+                const sceneTab = document.getElementById('scene-tab');
+                
+                if (openApiTab) {
+                    openApiTab.addEventListener('shown.bs.tab', function() {
+                        console.log('OpenAPI选项卡已激活');
+                        setTimeout(function() {
+                            if (typeof window.initOpenApiEditor === 'function') {
+                                window.initOpenApiEditor();
+                            }
+                        }, 100);
+                    });
+                }
+                
+                if (relationTab) {
+                    relationTab.addEventListener('shown.bs.tab', function() {
+                        console.log('关联关系选项卡已激活');
+                        setTimeout(function() {
+                            if (typeof window.initRelationEditor === 'function') {
+                                window.initRelationEditor();
+                            }
+                        }, 100);
+                    });
+                }
+                
+                if (sceneTab) {
+                    sceneTab.addEventListener('shown.bs.tab', function() {
+                        console.log('业务场景选项卡已激活');
+                        // 增加延迟，确保DOM已完全渲染
+                        setTimeout(function() {
+                            if (typeof window.initSceneEditor === 'function') {
+                                window.initSceneEditor();
+                            }
+                        }, 300);
+                    });
+                }
+            }
+            
+        });
+    </script>
 </body>
 </html>

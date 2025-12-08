@@ -27,6 +27,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 直接调用智能测试功能的初始化
     initSmartTestTab();
     loadSmartTestSavedData();
+    
+    // 加载已上传文档列表
+    loadUploadedDocuments();
 });
 
 // 初始化测试中心 - 智能测试功能专用
@@ -191,6 +194,29 @@ function initSmartTestTab() {
     
     // 拖拽上传 - 使用正确的容器ID
     setupDragAndDrop('uploadContainer');
+    
+    // 刷新按钮事件监听
+    const refreshDocsBtn = document.getElementById('refreshDocsBtn');
+    if (refreshDocsBtn) {
+        refreshDocsBtn.addEventListener('click', loadUploadedDocuments);
+    }
+    
+    const refreshOpenApiDocsBtn = document.getElementById('refreshOpenApiDocsBtn');
+    if (refreshOpenApiDocsBtn) {
+        refreshOpenApiDocsBtn.addEventListener('click', loadUploadedDocuments);
+    }
+    
+    // 关联关系文档刷新按钮
+    const refreshRelationDocsBtn = document.getElementById('refreshRelationDocsBtn');
+    if (refreshRelationDocsBtn) {
+        refreshRelationDocsBtn.addEventListener('click', loadUploadedDocuments);
+    }
+    
+    // 业务场景文档刷新按钮
+    const refreshSceneDocsBtn = document.getElementById('refreshSceneDocsBtn');
+    if (refreshSceneDocsBtn) {
+        refreshSceneDocsBtn.addEventListener('click', loadUploadedDocuments);
+    }
 }
 
 // 初始化测试用例标签页 - 智能测试功能专用
@@ -2200,6 +2226,791 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+
+// 加载已上传文档列表
+function loadUploadedDocuments() {
+    console.log('开始加载已上传文档列表');
+    console.log('API_CONFIG:', API_CONFIG);
+    console.log('API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
+    console.log('API_CONFIG.ENDPOINTS.DOCS.ALL_DOCUMENTS:', API_CONFIG.ENDPOINTS.DOCS.ALL_DOCUMENTS);
+    
+    // 使用新的API端点 - 获取所有类型的文档列表
+    const apiUrl = API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.DOCS.ALL_DOCUMENTS;
+    console.log('完整的API URL:', apiUrl);
+    
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            console.log('获取文档列表响应:', data);
+            
+            // API返回格式为 {success: true, data: {openapi: {...}, relation: {...}, scene: {...}}, total_count: N}
+            const allDocuments = data.data || {};
+            console.log('所有文档列表:', allDocuments);
+            
+            // 处理OpenAPI文档
+            const openapiDocs = allDocuments.openapi ? allDocuments.openapi.documents : [];
+            const openapiTableBody = document.getElementById('openApiDocsTableBody');
+            const noOpenApiDocsMessage = document.getElementById('noOpenApiDocsMessage');
+            
+            if (openapiTableBody) {
+                // 清空现有内容
+                openapiTableBody.innerHTML = '';
+                
+                if (openapiDocs.length === 0) {
+                    // 显示无文档消息
+                    if (noOpenApiDocsMessage) {
+                        noOpenApiDocsMessage.style.display = 'block';
+                    }
+                    console.log('没有OpenAPI文档');
+                } else {
+                    // 隐藏无文档消息
+                    if (noOpenApiDocsMessage) {
+                        noOpenApiDocsMessage.style.display = 'none';
+                    }
+                    
+                    // 添加文档到表格
+                    openapiDocs.forEach(doc => {
+                        console.log('OpenAPI文档数据:', doc);
+                        const row = document.createElement('tr');
+                        
+                        // 文档ID
+                        const idCell = document.createElement('td');
+                        idCell.textContent = doc.file_id || '未知ID';
+                        row.appendChild(idCell);
+                        
+                        // 上传时间
+                        const uploadTimeCell = document.createElement('td');
+                        const uploadDate = new Date(doc.upload_time);
+                        uploadTimeCell.textContent = uploadDate.toLocaleString();
+                        row.appendChild(uploadTimeCell);
+                        
+                        // 操作
+                        const actionsCell = document.createElement('td');
+                        const viewBtn = document.createElement('button');
+                        viewBtn.className = 'btn btn-sm btn-outline-primary me-1';
+                        viewBtn.innerHTML = '<i class="fas fa-eye"></i> 查看';
+                        viewBtn.addEventListener('click', () => {
+                            console.log('点击查看按钮，文档类型: openapi, 文档ID:', doc.file_id);
+                            console.log('完整文档对象:', doc);
+                            viewDocument('openapi', doc.file_id);
+                        });
+                        
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'btn btn-sm btn-outline-warning me-1';
+                        editBtn.innerHTML = '<i class="fas fa-edit"></i> 编辑';
+                        editBtn.addEventListener('click', () => editThreeDocuments(doc.file_id));
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'btn btn-sm btn-outline-danger';
+                        deleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
+                        deleteBtn.addEventListener('click', () => deleteDocument('openapi', doc.file_id));
+                        
+                        actionsCell.appendChild(viewBtn);
+                        actionsCell.appendChild(editBtn);
+                        actionsCell.appendChild(deleteBtn);
+                        row.appendChild(actionsCell);
+                        
+                        openapiTableBody.appendChild(row);
+                    });
+                }
+            }
+            
+            // 处理关系文档
+            const relationDocs = allDocuments.relation ? allDocuments.relation.documents : [];
+            const relationTableBody = document.getElementById('relationDocsTableBody');
+            const noRelationDocsMessage = document.getElementById('noRelationDocsMessage');
+            
+            if (relationTableBody) {
+                // 清空现有内容
+                relationTableBody.innerHTML = '';
+                
+                if (relationDocs.length === 0) {
+                    // 显示无文档消息
+                    if (noRelationDocsMessage) {
+                        noRelationDocsMessage.style.display = 'block';
+                    }
+                    console.log('没有关系文档');
+                } else {
+                    // 隐藏无文档消息
+                    if (noRelationDocsMessage) {
+                        noRelationDocsMessage.style.display = 'none';
+                    }
+                    
+                    // 添加文档到表格
+                    relationDocs.forEach(doc => {
+                        console.log('关联关系文档数据:', doc);
+                        const row = document.createElement('tr');
+                        
+                        // 文档名称
+                        const nameCell = document.createElement('td');
+                        nameCell.textContent = doc.file_name || '未知文件';
+                        row.appendChild(nameCell);
+                        
+                        // 项目数量
+                        const itemCountCell = document.createElement('td');
+                        itemCountCell.textContent = doc.item_count || 0;
+                        row.appendChild(itemCountCell);
+                        
+                        // 上传时间
+                        const uploadTimeCell = document.createElement('td');
+                        const uploadDate = new Date(doc.upload_time);
+                        uploadTimeCell.textContent = uploadDate.toLocaleString();
+                        row.appendChild(uploadTimeCell);
+                        
+                        // 操作
+                        const actionsCell = document.createElement('td');
+                        const viewBtn = document.createElement('button');
+                        viewBtn.className = 'btn btn-sm btn-outline-primary me-1';
+                        viewBtn.innerHTML = '<i class="fas fa-eye"></i> 查看';
+                        viewBtn.addEventListener('click', () => {
+                            console.log('点击查看按钮，文档类型: relation, 文档ID:', doc.file_id);
+                            console.log('完整文档对象:', doc);
+                            viewDocument('relation', doc.file_id);
+                        });
+                        
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'btn btn-sm btn-outline-warning me-1';
+                        editBtn.innerHTML = '<i class="fas fa-edit"></i> 编辑';
+                        editBtn.addEventListener('click', () => editThreeDocuments(doc.file_id));
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'btn btn-sm btn-outline-danger';
+                        deleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
+                        deleteBtn.addEventListener('click', () => deleteDocument('relation', doc.file_id));
+                        
+                        actionsCell.appendChild(viewBtn);
+                        actionsCell.appendChild(editBtn);
+                        actionsCell.appendChild(deleteBtn);
+                        row.appendChild(actionsCell);
+                        
+                        relationTableBody.appendChild(row);
+                    });
+                }
+            }
+            
+            // 处理场景文档
+            const sceneDocs = allDocuments.scene ? allDocuments.scene.documents : [];
+            const sceneTableBody = document.getElementById('sceneDocsTableBody');
+            const noSceneDocsMessage = document.getElementById('noSceneDocsMessage');
+            
+            if (sceneTableBody) {
+                // 清空现有内容
+                sceneTableBody.innerHTML = '';
+                
+                if (sceneDocs.length === 0) {
+                    // 显示无文档消息
+                    if (noSceneDocsMessage) {
+                        noSceneDocsMessage.style.display = 'block';
+                    }
+                    console.log('没有场景文档');
+                } else {
+                    // 隐藏无文档消息
+                    if (noSceneDocsMessage) {
+                        noSceneDocsMessage.style.display = 'none';
+                    }
+                    
+                    // 添加文档到表格
+                    sceneDocs.forEach(doc => {
+                        console.log('场景文档数据:', doc);
+                        const row = document.createElement('tr');
+                        
+                        // 文档名称
+                        const nameCell = document.createElement('td');
+                        nameCell.textContent = doc.file_name || '未知文件';
+                        row.appendChild(nameCell);
+                        
+                        // 项目数量
+                        const itemCountCell = document.createElement('td');
+                        itemCountCell.textContent = doc.item_count || 0;
+                        row.appendChild(itemCountCell);
+                        
+                        // 上传时间
+                        const uploadTimeCell = document.createElement('td');
+                        const uploadDate = new Date(doc.upload_time);
+                        uploadTimeCell.textContent = uploadDate.toLocaleString();
+                        row.appendChild(uploadTimeCell);
+                        
+                        // 操作
+                        const actionsCell = document.createElement('td');
+                        const viewBtn = document.createElement('button');
+                        viewBtn.className = 'btn btn-sm btn-outline-primary me-1';
+                        viewBtn.innerHTML = '<i class="fas fa-eye"></i> 查看';
+                        viewBtn.addEventListener('click', () => {
+                            console.log('点击查看按钮，文档类型: scene, 文档ID:', doc.file_id);
+                            console.log('完整文档对象:', doc);
+                            viewDocument('scene', doc.file_id);
+                        });
+                        
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'btn btn-sm btn-outline-warning me-1';
+                        editBtn.innerHTML = '<i class="fas fa-edit"></i> 编辑';
+                        editBtn.addEventListener('click', () => editThreeDocuments(doc.file_id));
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'btn btn-sm btn-outline-danger';
+                        deleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
+                        deleteBtn.addEventListener('click', () => deleteDocument('scene', doc.file_id));
+                        
+                        actionsCell.appendChild(viewBtn);
+                        actionsCell.appendChild(editBtn);
+                        actionsCell.appendChild(deleteBtn);
+                        row.appendChild(actionsCell);
+                        
+                        sceneTableBody.appendChild(row);
+                    });
+                }
+            }
+            
+            console.log(`已加载 ${openapiDocs.length} 个OpenAPI文档, ${relationDocs.length} 个关系文档, ${sceneDocs.length} 个场景文档`);
+        })
+        .catch(error => {
+            console.error('加载文档列表失败:', error);
+            showSmartTestNotification('加载文档列表失败: ' + error.message, 'error');
+        });
+}
+
+
+
+// 查看文档详情
+function viewDocument(docType, docId) {
+    console.log(`查看${docType}文档详情:`, docId);
+    
+    // 获取文档内容
+    const endpointTemplate = API_CONFIG.ENDPOINTS.DOCS.GET_DOCUMENT;
+    console.log('原始端点模板:', endpointTemplate);
+    
+    // 先替换占位符，再构建完整URL
+    const endpoint = endpointTemplate
+        .replace('{doc_type}', docType)
+        .replace('{file_id}', docId);
+    
+    const apiUrl = API_CONFIG.BASE_URL + endpoint;
+    
+    console.log('构建的API URL:', apiUrl);
+    console.log('API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
+    console.log('docType:', docType);
+    console.log('docId:', docId);
+    
+    // 创建一个Promise数组，用于获取所有三种类型的文档
+    const documentPromises = [];
+    const docTypes = ['openapi', 'relation', 'scene'];
+    
+    docTypes.forEach(type => {
+        const typeEndpoint = endpointTemplate
+            .replace('{doc_type}', type)
+            .replace('{file_id}', docId);
+        const typeApiUrl = API_CONFIG.BASE_URL + typeEndpoint;
+        
+        const promise = fetch(typeApiUrl)
+            .then(response => response.json())
+            .then(data => {
+                return { type, data };
+            })
+            .catch(error => {
+                console.error(`获取${type}文档内容失败:`, error);
+                return { type, error };
+            });
+        
+        documentPromises.push(promise);
+    });
+    
+    // 等待所有文档请求完成
+    Promise.all(documentPromises)
+        .then(results => {
+            // 使用第一个成功获取的文档来填充基本信息
+            const firstSuccess = results.find(result => result.data && result.data.success);
+            if (!firstSuccess) {
+                throw new Error('无法获取任何文档信息');
+            }
+            
+            const data = firstSuccess.data;
+            
+            // 填充文档详情模态框
+            document.getElementById('docDetailId').textContent = data.data.file_id;
+            
+            document.getElementById('docDetailCreatedAt').textContent = new Date().toLocaleString(); // API没有返回创建时间，使用当前时间
+            document.getElementById('docDetailApiCount').textContent = data.data.api_count || 0;
+            
+            // 填充API端点列表
+            const endpointsList = document.getElementById('docEndpointsList');
+            endpointsList.innerHTML = '';
+            
+            if (data.data.endpoints && data.data.endpoints.length > 0) {
+                data.data.endpoints.forEach(endpoint => {
+                    const endpointItem = document.createElement('div');
+                    endpointItem.className = 'list-group-item list-group-item-action';
+                    endpointItem.innerHTML = `
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${endpoint.method} ${endpoint.path}</h6>
+                            <small>${endpoint.operation_id || ''}</small>
+                        </div>
+                        <p class="mb-1">${endpoint.summary || endpoint.description || ''}</p>
+                    `;
+                    endpointsList.appendChild(endpointItem);
+                });
+            } else {
+                endpointsList.innerHTML = '<div class="list-group-item">无API端点数据</div>';
+            }
+            
+            // 处理所有文档类型的内容
+            results.forEach(result => {
+                const { type, data, error } = result;
+                
+                if (error) {
+                    console.error(`处理${type}文档时出错:`, error);
+                    return;
+                }
+                
+                if (!data || !data.success) {
+                    console.warn(`${type}文档获取失败或无数据`);
+                    return;
+                }
+                
+                // 设置文档名称到对应的显示区域
+                let docNameElement = null;
+                
+                if (type === 'openapi') {
+                    docNameElement = document.getElementById('openapiDocName');
+                } else if (type === 'relation') {
+                    docNameElement = document.getElementById('relationDocName');
+                } else if (type === 'scene') {
+                    docNameElement = document.getElementById('sceneDocName');
+                }
+                
+                if (docNameElement) {
+                    docNameElement.textContent = data.data.file_name || data.data.file_id;
+                }
+                
+                try {
+                    // 尝试解析为JSON，如果失败则直接显示原始内容
+                    let formattedContent;
+                    try {
+                        formattedContent = JSON.stringify(JSON.parse(data.data.content), null, 2);
+                        console.log(`${type}文档JSON解析成功`);
+                    } catch (e) {
+                        // 如果不是JSON格式，直接显示原始内容
+                        formattedContent = data.data.content;
+                        console.log(`${type}文档不是JSON格式，直接显示原始内容:`, e);
+                    }
+                    
+                    // 根据文档类型设置到对应的编辑器
+                    if (type === 'openapi') {
+                        const openApiEditor = document.getElementById('openApiSpecEditor');
+                        if (openApiEditor) {
+                            openApiEditor.value = formattedContent;
+                            window.openApiEditorContent = formattedContent;
+                            console.log('OpenAPI文档内容已设置到编辑器，长度:', formattedContent.length);
+                        }
+                    } else if (type === 'relation') {
+                        const relationEditor = document.getElementById('relationSpecEditor');
+                        if (relationEditor) {
+                            relationEditor.value = formattedContent;
+                            window.relationEditorContent = formattedContent;
+                            console.log('关联关系文档内容已设置到编辑器，长度:', formattedContent.length);
+                        }
+                    } else if (type === 'scene') {
+                        const sceneEditor = document.getElementById('sceneSpecEditor');
+                        if (sceneEditor) {
+                            sceneEditor.value = formattedContent;
+                            window.sceneEditorContent = formattedContent;
+                            console.log('业务场景文档内容已设置到编辑器，长度:', formattedContent.length);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`处理${type}文档内容时出错:`, error);
+                    
+                    // 出错时直接设置原始内容
+                    if (type === 'openapi') {
+                        const openApiEditor = document.getElementById('openApiSpecEditor');
+                        if (openApiEditor) {
+                            openApiEditor.value = data.data.content;
+                            window.openApiEditorContent = data.data.content;
+                        }
+                    } else if (type === 'relation') {
+                        const relationEditor = document.getElementById('relationSpecEditor');
+                        if (relationEditor) {
+                            relationEditor.value = data.data.content;
+                            window.relationEditorContent = data.data.content;
+                        }
+                    } else if (type === 'scene') {
+                        const sceneEditor = document.getElementById('sceneSpecEditor');
+                        if (sceneEditor) {
+                            sceneEditor.value = data.data.content;
+                            window.sceneEditorContent = data.data.content;
+                        }
+                    }
+                }
+            });
+            
+            // 显示文档详情模态框
+            const modal = new bootstrap.Modal(document.getElementById('documentDetailsModal'));
+            modal.show();
+            
+            // 延迟切换到对应的选项卡，确保模态框已完全显示
+            setTimeout(() => {
+                // 根据原始请求的文档类型切换到对应的选项卡
+                if (docType === 'openapi') {
+                    document.getElementById('openapi-tab').click();
+                } else if (docType === 'relation') {
+                    document.getElementById('relation-tab').click();
+                } else if (docType === 'scene') {
+                    document.getElementById('scene-tab').click();
+                }
+                
+                // 确保编辑器在选项卡切换后正确初始化
+                setTimeout(() => {
+                    // 初始化所有编辑器
+                    if (typeof initOpenApiEditor === 'function') {
+                        initOpenApiEditor();
+                    }
+                    if (typeof initRelationEditor === 'function') {
+                        initRelationEditor();
+                    }
+                    if (typeof initSceneEditor === 'function') {
+                        initSceneEditor();
+                    }
+                }, 200);
+            }, 300);
+        })
+        .catch(error => {
+            console.error('获取文档内容失败:', error);
+            showSmartTestNotification('获取文档内容失败: ' + error.message, 'error');
+        });
+}
+
+// 编辑三个文档
+function editThreeDocuments(docId) {
+    console.log(`编辑三个文档:`, docId);
+    
+    // 获取三种文档类型的内容
+    const documentTypes = ['openapi', 'relation', 'scene'];
+    const documentPromises = [];
+    
+    documentTypes.forEach(docType => {
+        const endpoint = API_CONFIG.ENDPOINTS.DOCS.GET_DOCUMENT
+            .replace('{doc_type}', docType)
+            .replace('{file_id}', docId);
+        
+        const apiUrl = API_CONFIG.BASE_URL + endpoint;
+        
+        documentPromises.push(
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    return { docType, data };
+                })
+                .catch(error => {
+                    console.error(`获取${docType}文档失败:`, error);
+                    return { docType, data: { success: false, error: error.message } };
+                })
+        );
+    });
+    
+    Promise.all(documentPromises)
+        .then(results => {
+            // 显示三文档编辑模态框
+            const modal = document.getElementById('threeDocEditModal');
+            const modalTitle = document.getElementById('threeDocEditModalTitle');
+            
+            if (modal && modalTitle) {
+                // 设置模态框标题
+                modalTitle.textContent = `编辑文档: ${docId}`;
+                
+                // 填充文档基本信息
+                const openapiDoc = results.find(r => r.docType === 'openapi').data;
+                if (openapiDoc.success) {
+                    document.getElementById('editDocId').textContent = openapiDoc.data.file_id;
+                    document.getElementById('editDocCreatedTime').textContent = new Date(openapiDoc.data.created_at).toLocaleString();
+                    
+                    // 计算API数量
+                    let apiCount = 0;
+                    try {
+                        // 尝试解析为JSON
+                        const openApiSpec = JSON.parse(openapiDoc.data.content);
+                        if (openApiSpec.paths) {
+                            apiCount = Object.keys(openApiSpec.paths).length;
+                        }
+                    } catch (e) {
+                        // 如果JSON解析失败，可能是YAML格式
+                        console.log('OpenAPI文档可能是YAML格式，尝试其他方法计算API数量');
+                        // 简单计算path条目数量（适用于YAML格式）
+                        const content = openapiDoc.data.content;
+                        const pathMatches = content.match(/paths:\s*\n((?:\s{2,}[^:\n]+:\s*\n(?:\s{4,}[^\n]*\n?)*)*)/);
+                        if (pathMatches && pathMatches[1]) {
+                            // 匹配路径行（以2个或更多空格开头，后跟非冒号字符，然后是冒号）
+                            const pathLines = pathMatches[1].match(/^\s{2,}[^:\s]+:/gm);
+                            if (pathLines) {
+                                apiCount = pathLines.length;
+                            }
+                        }
+                    }
+                    document.getElementById('editDocApiCount').textContent = apiCount;
+                }
+                
+                // 初始化全局变量
+                if (!window.threeDocContents) {
+                    window.threeDocContents = {
+                        openapi: '',
+                        relation: '',
+                        scene: ''
+                    };
+                }
+                
+                // 填充各文档内容
+                results.forEach(result => {
+                    if (result.data.success) {
+                        const { docType, data } = result;
+                        const content = data.data.content || '';
+                        
+                        // 存储内容到全局变量
+                        window.threeDocContents[docType] = content;
+                        console.log(`已将${docType}文档内容存储到全局变量，长度: ${content.length}`);
+                        
+                        // 设置文档名称
+                        const docNameElement = document.getElementById(`edit${docType.charAt(0).toUpperCase() + docType.slice(1)}DocName`);
+                        if (docNameElement) {
+                            docNameElement.textContent = data.data.file_name || data.data.file_id;
+                        }
+                        
+                        // 设置文档内容到textarea（作为备用）
+                        const editorElement = document.getElementById(`edit${docType.charAt(0).toUpperCase() + docType.slice(1)}SpecEditor`);
+                        if (editorElement) {
+                            editorElement.value = content;
+                        }
+                    }
+                });
+                
+                // 打印全局变量内容，用于调试
+                console.log('全局变量window.threeDocContents内容:', window.threeDocContents);
+                
+                // 设置保存按钮事件
+                const saveBtn = document.getElementById('saveThreeDocumentsBtn');
+                if (saveBtn) {
+                    saveBtn.onclick = function() {
+                        saveThreeDocuments(docId, results);
+                    };
+                }
+                
+                // 显示模态框
+                const modalInstance = new bootstrap.Modal(modal);
+                modalInstance.show();
+            }
+        })
+        .catch(error => {
+            console.error('获取文档内容失败:', error);
+            showSmartTestNotification('获取文档内容失败: ' + error.message, 'error');
+        });
+}
+
+// 保存三个文档
+function saveThreeDocuments(docId, originalDocs) {
+    console.log(`保存三个文档:`, docId);
+    
+    const documentTypes = ['openapi', 'relation', 'scene'];
+    const savePromises = [];
+    
+    documentTypes.forEach(docType => {
+        // 获取编辑器内容
+        let content = '';
+        
+        // 优先使用全局编辑器变量
+        const editorVarName = `edit${docType.charAt(0).toUpperCase() + docType.slice(1)}SpecEditor`;
+        if (window[editorVarName] && typeof window[editorVarName].getValue === 'function') {
+            content = window[editorVarName].getValue();
+            console.log(`从全局变量获取${docType}编辑器内容，长度:`, content.length);
+        } else {
+            // 备用方法：通过DOM元素获取编辑器内容
+            const editorElement = document.getElementById(`edit${docType.charAt(0).toUpperCase() + docType.slice(1)}SpecEditor`);
+            
+            if (editorElement) {
+                // 如果有CodeMirror编辑器，从编辑器获取内容
+                const cmElement = editorElement.nextElementSibling;
+                if (cmElement && cmElement.classList.contains('CodeMirror')) {
+                    const cm = cmElement.CodeMirror;
+                    if (cm && typeof cm.getValue === 'function') {
+                        content = cm.getValue();
+                    }
+                } else {
+                    // 否则从textarea获取内容
+                    content = editorElement.value;
+                }
+            }
+        }
+        
+        // 检查内容是否有变化
+        const originalDoc = originalDocs.find(d => d.docType === docType);
+        const originalContent = originalDoc && originalDoc.data.success ? originalDoc.data.data.content : '';
+        
+        // 只有内容有变化时才保存
+        if (content !== originalContent) {
+            const endpoint = API_CONFIG.ENDPOINTS.DOCS.UPDATE_DOCUMENT
+                .replace('{doc_type}', docType)
+                .replace('{file_id}', docId);
+            
+            const updateUrl = API_CONFIG.BASE_URL + endpoint;
+            
+            savePromises.push(
+                fetch(updateUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: content
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    return { docType, success: data.success, message: data.message };
+                })
+                .catch(error => {
+                    console.error(`保存${docType}文档失败:`, error);
+                    return { docType, success: false, message: error.message };
+                })
+            );
+        } else {
+            // 内容没有变化，视为成功
+            savePromises.push(Promise.resolve({ docType, success: true, message: '内容未变化' }));
+        }
+    });
+    
+    Promise.all(savePromises)
+        .then(results => {
+            const successCount = results.filter(r => r.success).length;
+            const failCount = results.length - successCount;
+            
+            if (failCount === 0) {
+                showSmartTestNotification('所有文档保存成功', 'success');
+                // 关闭模态框
+                const modal = document.getElementById('threeDocEditModal');
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                modalInstance.hide();
+                // 刷新文档列表
+                loadUploadedDocuments();
+            } else {
+                const failedDocs = results.filter(r => !r.success).map(r => r.docType).join(', ');
+                showSmartTestNotification(`部分文档保存失败: ${failedDocs}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('保存文档失败:', error);
+            showSmartTestNotification('保存文档失败: ' + error.message, 'error');
+        });
+}
+
+// 编辑文档
+function editDocument(docType, docId) {
+    console.log(`编辑${docType}文档:`, docId);
+    
+    // 获取文档内容
+    // 先替换占位符，再构建完整URL
+    const endpoint = API_CONFIG.ENDPOINTS.DOCS.GET_DOCUMENT
+        .replace('{doc_type}', docType)
+        .replace('{file_id}', docId);
+    
+    const apiUrl = API_CONFIG.BASE_URL + endpoint;
+    
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 显示文档编辑模态框
+                const modal = document.getElementById('documentEditModal');
+                const modalTitle = document.getElementById('documentEditModalTitle');
+                const modalContent = document.getElementById('documentEditContent');
+                const saveBtn = document.getElementById('saveDocumentBtn');
+                
+                if (modal && modalTitle && modalContent && saveBtn) {
+                    modalTitle.textContent = `编辑${docType}文档: ${data.data.file_name}`;
+                    modalContent.value = data.data.content;
+                    
+                    // 设置保存按钮事件
+                    saveBtn.onclick = function() {
+                        const updatedContent = modalContent.value;
+                        
+                        // 更新文档内容
+                        // 先替换占位符，再构建完整URL
+                        const updateEndpoint = API_CONFIG.ENDPOINTS.DOCS.UPDATE_DOCUMENT
+                            .replace('{doc_type}', docType)
+                            .replace('{file_id}', docId);
+                        
+                        const updateUrl = API_CONFIG.BASE_URL + updateEndpoint;
+                        
+                        fetch(updateUrl, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                content: updatedContent
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(updateData => {
+                            if (updateData.success) {
+                                showSmartTestNotification('文档更新成功', 'success');
+                                // 关闭模态框
+                                const modalInstance = bootstrap.Modal.getInstance(modal);
+                                modalInstance.hide();
+                                // 刷新文档列表
+                                loadUploadedDocuments();
+                            } else {
+                                showSmartTestNotification('文档更新失败: ' + updateData.message, 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('文档更新失败:', error);
+                            showSmartTestNotification('文档更新失败: ' + error.message, 'error');
+                        });
+                    };
+                    
+                    // 显示模态框
+                    const modalInstance = new bootstrap.Modal(modal);
+                    modalInstance.show();
+                }
+            } else {
+                showSmartTestNotification('获取文档内容失败: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('获取文档内容失败:', error);
+            showSmartTestNotification('获取文档内容失败: ' + error.message, 'error');
+        });
+}
+
+// 删除文档
+function deleteDocument(docType, docId) {
+    console.log(`删除${docType}文档:`, docId);
+    
+    if (confirm(`确定要删除这个${docType}文档吗？此操作不可恢复。`)) {
+        // 调用删除API
+        // 先替换占位符，再构建完整URL
+        const endpoint = API_CONFIG.ENDPOINTS.DOCS.DELETE_DOCUMENT
+            .replace('{doc_type}', docType)
+            .replace('{file_id}', docId);
+        
+        const apiUrl = API_CONFIG.BASE_URL + endpoint;
+        
+        fetch(apiUrl, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSmartTestNotification(`${docType}文档删除成功`, 'success');
+                // 刷新文档列表
+                loadUploadedDocuments();
+            } else {
+                showSmartTestNotification(`删除${docType}文档失败: ` + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error(`删除${docType}文档失败:`, error);
+            showSmartTestNotification(`删除${docType}文档失败: ` + error.message, 'error');
+        });
+    }
+}
+
 // 生成选中的测试用例
 function generateSelectedTests() {
     // 获取选中的场景
@@ -2263,3 +3074,112 @@ function generateSelectedTests() {
         }
     }, 2000);
 }
+
+// 初始化测试按钮事件监听器
+document.addEventListener('DOMContentLoaded', function() {
+    // 测试关联关系编辑器按钮
+    const testRelationEditorBtn = document.getElementById('testRelationEditorBtn');
+    if (testRelationEditorBtn) {
+        testRelationEditorBtn.addEventListener('click', function() {
+            console.log('测试关联关系编辑器按钮被点击');
+            const relationEditor = document.getElementById('relationSpecEditor');
+            if (relationEditor) {
+                console.log('找到关联关系编辑器元素:', relationEditor);
+                
+                // 设置一些测试内容
+                relationEditor.value = JSON.stringify({
+                    "test": "这是测试内容",
+                    "timestamp": new Date().toISOString()
+                }, null, 2);
+                
+                // 如果已经初始化了CodeMirror，先销毁它
+                if (relationEditor.nextElementSibling && relationEditor.nextElementSibling.classList.contains('CodeMirror')) {
+                    const wrapper = relationEditor.nextElementSibling;
+                    wrapper.parentNode.replaceChild(relationEditor, wrapper);
+                }
+                
+                // 初始化CodeMirror
+                try {
+                    const cm = CodeMirror.fromTextArea(relationEditor, {
+                        mode: {name: "javascript", json: true},
+                        theme: 'default',
+                        lineNumbers: true,
+                        readOnly: false,
+                        autoCloseBrackets: true,
+                        matchBrackets: true
+                    });
+                    console.log('关联关系编辑器测试初始化完成', cm);
+                } catch (error) {
+                    console.error('关联关系编辑器测试初始化失败:', error);
+                    // 尝试使用简单模式
+                    try {
+                        const cm = CodeMirror.fromTextArea(relationEditor, {
+                            mode: 'text/plain',
+                            theme: 'default',
+                            lineNumbers: true,
+                            readOnly: false
+                        });
+                        console.log('关联关系编辑器使用简单模式初始化完成', cm);
+                    } catch (fallbackError) {
+                        console.error('关联关系编辑器简单模式初始化也失败:', fallbackError);
+                    }
+                }
+            } else {
+                console.error('未找到关联关系编辑器元素');
+            }
+        });
+    }
+    
+    // 测试业务场景编辑器按钮
+    const testSceneEditorBtn = document.getElementById('testSceneEditorBtn');
+    if (testSceneEditorBtn) {
+        testSceneEditorBtn.addEventListener('click', function() {
+            console.log('测试业务场景编辑器按钮被点击');
+            const sceneEditor = document.getElementById('sceneSpecEditor');
+            if (sceneEditor) {
+                console.log('找到业务场景编辑器元素:', sceneEditor);
+                
+                // 设置一些测试内容
+                sceneEditor.value = JSON.stringify({
+                    "test": "这是测试内容",
+                    "timestamp": new Date().toISOString()
+                }, null, 2);
+                
+                // 如果已经初始化了CodeMirror，先销毁它
+                if (sceneEditor.nextElementSibling && sceneEditor.nextElementSibling.classList.contains('CodeMirror')) {
+                    const wrapper = sceneEditor.nextElementSibling;
+                    wrapper.parentNode.replaceChild(sceneEditor, wrapper);
+                }
+                
+                // 初始化CodeMirror
+                try {
+                    const cm = CodeMirror.fromTextArea(sceneEditor, {
+                        mode: {name: "javascript", json: true},
+                        theme: 'default',
+                        lineNumbers: true,
+                        readOnly: false,
+                        autoCloseBrackets: true,
+                        matchBrackets: true
+                    });
+                    console.log('业务场景编辑器测试初始化完成', cm);
+                } catch (error) {
+                    console.error('业务场景编辑器测试初始化失败:', error);
+                    // 尝试使用简单模式
+                    try {
+                        const cm = CodeMirror.fromTextArea(sceneEditor, {
+                            mode: 'text/plain',
+                            theme: 'default',
+                            lineNumbers: true,
+                            readOnly: false
+                        });
+                        console.log('业务场景编辑器使用简单模式初始化完成', cm);
+                    } catch (fallbackError) {
+                        console.error('业务场景编辑器简单模式初始化也失败:', fallbackError);
+                    }
+                }
+            } else {
+                console.error('未找到业务场景编辑器元素');
+            }
+        });
+    }
+});

@@ -36,7 +36,268 @@ function loadSavedData() {
                 }
             }
             
-            // 加载测试用例
+// 加载OpenAPI文档列表
+async function loadOpenApiDocs() {
+    console.log('开始加载OpenAPI文档列表');
+    
+    try {
+        // 显示加载状态
+        showLoading();
+        
+        // 检查API_CONFIG是否已定义
+        if (!window.API_CONFIG) {
+            console.warn('API_CONFIG未定义，使用默认值');
+            window.API_CONFIG = {
+                BASE_URL: 'http://127.0.0.1:5000'
+            };
+        }
+        
+        // 使用直接拼接URL的方式，避免undefined问题
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const apiUrl = baseUrl + '/api/docs/openapi-list';
+        
+        console.log('API请求URL:', apiUrl);
+        
+        // 设置10秒超时
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const response = await fetch(apiUrl, {
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`获取OpenAPI文档列表失败: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('OpenAPI文档列表响应:', data);
+        
+        // 获取表格体
+        const tableBody = document.getElementById('openApiDocsTableBody');
+        if (!tableBody) {
+            console.error('找不到表格体元素: openApiDocsTableBody');
+            hideLoading();
+            return;
+        }
+        
+        // 清空表格
+        tableBody.innerHTML = '';
+        
+        // 检查是否有文档
+        if (!data.success || !data.data || data.data.length === 0) {
+            // 显示无文档提示
+            const noDocsMessage = document.getElementById('noOpenApiDocsMessage');
+            if (noDocsMessage) {
+                noDocsMessage.style.display = 'block';
+            }
+            
+            // 添加空行
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `
+                <td colspan="5" class="text-center text-muted">
+                    暂无OpenAPI文档
+                </td>
+            `;
+            tableBody.appendChild(emptyRow);
+            
+            hideLoading();
+            return;
+        }
+        
+        // 隐藏无文档提示
+        const noDocsMessage = document.getElementById('noOpenApiDocsMessage');
+        if (noDocsMessage) {
+            noDocsMessage.style.display = 'none';
+        }
+        
+        // 添加文档行
+        data.data.forEach(doc => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${doc.file_id || ''}</td>
+                <td>${doc.file_name || ''}</td>
+                <td>${formatFileSize(doc.file_size || 0)}</td>
+                <td>${formatDateTime(doc.upload_time)}</td>
+                <td>${doc.api_count || 0}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-success" onclick="generateTestCasesFromOpenApi('${doc.file_id}', '${doc.file_name || ''}')">
+                        <i class="fas fa-cogs"></i> 生成测试用例
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteOpenApiDoc('${doc.file_id}', '${doc.file_name || ''}')">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+        
+        console.log('OpenAPI文档列表加载完成');
+        
+    } catch (error) {
+        console.error('加载OpenAPI文档列表失败:', error);
+        
+        // 显示错误信息
+        const tableBody = document.getElementById('openApiDocsTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-danger">
+                        加载OpenAPI文档列表失败: ${error.message}
+                    </td>
+                </tr>
+            `;
+        }
+        
+        showNotification('加载OpenAPI文档列表失败: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 从OpenAPI文档生成测试用例
+async function generateTestCasesFromOpenApi(fileId, fileName) {
+    console.log(`开始从OpenAPI文档生成测试用例: ${fileName} (ID: ${fileId})`);
+    
+    try {
+        // 显示加载状态
+        showLoading();
+        
+        // 检查API_CONFIG是否已定义
+        if (!window.API_CONFIG) {
+            console.warn('API_CONFIG未定义，使用默认值');
+            window.API_CONFIG = {
+                BASE_URL: 'http://127.0.0.1:5000'
+            };
+        }
+        
+        // 使用直接拼接URL的方式，避免undefined问题
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const apiUrl = baseUrl + `/api/docs/generate-from-openapi/${fileId}`;
+        
+        console.log('API请求URL:', apiUrl);
+        
+        // 设置30秒超时（生成测试用例可能需要更长时间）
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`生成测试用例失败: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('生成测试用例响应:', data);
+        
+        if (data.success) {
+            showNotification(`成功从 ${fileName} 生成测试用例`, 'success');
+            
+            // 刷新已上传文档列表，因为新生成的文档会出现在那里
+            loadUploadedDocs();
+            
+            // 切换到测试用例标签页
+            const testCasesTab = document.getElementById('test-cases-tab');
+            if (testCasesTab) {
+                const tab = new bootstrap.Tab(testCasesTab);
+                tab.show();
+            }
+        } else {
+            throw new Error(data.message || '生成测试用例失败');
+        }
+        
+    } catch (error) {
+        console.error('生成测试用例失败:', error);
+        showNotification('生成测试用例失败: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 删除OpenAPI文档
+async function deleteOpenApiDoc(fileId, fileName) {
+    console.log(`开始删除OpenAPI文档: ${fileName} (ID: ${fileId})`);
+    
+    // 确认删除
+    if (!confirm(`确定要删除OpenAPI文档 "${fileName}" 吗？此操作不可恢复。`)) {
+        return;
+    }
+    
+    try {
+        // 显示加载状态
+        showLoading();
+        
+        // 检查API_CONFIG是否已定义
+        if (!window.API_CONFIG) {
+            console.warn('API_CONFIG未定义，使用默认值');
+            window.API_CONFIG = {
+                BASE_URL: 'http://127.0.0.1:5000'
+            };
+        }
+        
+        // 使用直接拼接URL的方式，避免undefined问题
+        const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+        const apiUrl = baseUrl + `/api/docs/delete-openapi/${fileId}`;
+        
+        console.log('API请求URL:', apiUrl);
+        
+        // 设置10秒超时
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const response = await fetch(apiUrl, {
+            method: 'DELETE',
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`删除OpenAPI文档失败: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('删除OpenAPI文档响应:', data);
+        
+        if (data.success) {
+            showNotification(`成功删除OpenAPI文档 "${fileName}"`, 'success');
+            
+            // 刷新OpenAPI文档列表
+            loadOpenApiDocs();
+        } else {
+            throw new Error(data.message || '删除OpenAPI文档失败');
+        }
+        
+    } catch (error) {
+        console.error('删除OpenAPI文档失败:', error);
+        showNotification('删除OpenAPI文档失败: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 格式化文件大小
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 加载测试用例
             if (testCases.length > 0) {
                 loadTestCases();
             }
@@ -134,6 +395,14 @@ function initUploadedDocsTab() {
         console.warn('Element with ID "refreshDocsBtn" not found');
     }
     
+    // 刷新OpenAPI文档按钮
+    const refreshOpenApiDocsBtn = document.getElementById('refreshOpenApiDocsBtn');
+    if (refreshOpenApiDocsBtn) {
+        refreshOpenApiDocsBtn.addEventListener('click', loadOpenApiDocs);
+    } else {
+        console.warn('Element with ID "refreshOpenApiDocsBtn" not found');
+    }
+    
     // 监听接口文档标签页激活事件
     const apiDocsTab = document.getElementById('api-docs-tab');
     if (apiDocsTab) {
@@ -143,6 +412,17 @@ function initUploadedDocsTab() {
         });
     } else {
         console.warn('Element with ID "api-docs-tab" not found');
+    }
+    
+    // 监听OpenAPI文档标签页激活事件
+    const openApiDocsTab = document.getElementById('openapi-docs-tab');
+    if (openApiDocsTab) {
+        openApiDocsTab.addEventListener('shown.bs.tab', function() {
+            console.log('OpenAPI文档标签页被激活，加载OpenAPI文档列表');
+            loadOpenApiDocs();
+        });
+    } else {
+        console.warn('Element with ID "openapi-docs-tab" not found');
     }
     
     // 初始加载已上传文档列表
@@ -705,19 +985,144 @@ async function viewDocument(taskId) {
         }
         
         // 创建CodeMirror实例
-        const editor = CodeMirror.fromTextArea(openApiSpecEditor, {
-            lineNumbers: true,
-            mode: 'application/json',
-            theme: 'default',
-            readOnly: true,
-            lineWrapping: true
-        });
+        let editor;
+        try {
+            editor = CodeMirror.fromTextArea(openApiSpecEditor, {
+                lineNumbers: true,
+                mode: {name: "javascript", json: true},
+                theme: 'default',
+                readOnly: true,
+                lineWrapping: true,
+                autoCloseBrackets: true,
+                matchBrackets: true
+            });
+            console.log('OpenAPI编辑器初始化完成', editor);
+        } catch (error) {
+            console.error('OpenAPI编辑器初始化失败:', error);
+            // 尝试使用简单模式
+            try {
+                editor = CodeMirror.fromTextArea(openApiSpecEditor, {
+                    lineNumbers: true,
+                    mode: 'text/plain',
+                    theme: 'default',
+                    readOnly: true,
+                    lineWrapping: true
+                });
+                console.log('OpenAPI编辑器使用简单模式初始化完成', editor);
+            } catch (fallbackError) {
+                console.error('OpenAPI编辑器简单模式初始化也失败:', fallbackError);
+                // 如果还是失败，直接使用textarea
+                editor = null;
+            }
+        }
         
         // 设置编辑器内容
         editor.setValue(JSON.stringify(documentData.api_data || {}, null, 2));
         
         // 保存编辑器实例引用
         openApiSpecEditor.CodeMirror = editor;
+        
+        // 初始化关联关系编辑器
+        const relationSpecEditor = document.getElementById('relationSpecEditor');
+        if (relationSpecEditor) {
+            // 如果已经存在CodeMirror实例，先销毁它
+            if (relationSpecEditor.CodeMirror) {
+                relationSpecEditor.CodeMirror.toTextArea();
+            }
+            
+            // 创建关联关系编辑器实例
+            let relationEditor;
+            try {
+                relationEditor = CodeMirror.fromTextArea(relationSpecEditor, {
+                    lineNumbers: true,
+                    mode: {name: "javascript", json: true},
+                    theme: 'default',
+                    readOnly: true,
+                    lineWrapping: true,
+                    autoCloseBrackets: true,
+                    matchBrackets: true
+                });
+                console.log('关联关系编辑器初始化完成', relationEditor);
+            } catch (error) {
+                console.error('关联关系编辑器初始化失败:', error);
+                // 尝试使用简单模式
+                try {
+                    relationEditor = CodeMirror.fromTextArea(relationSpecEditor, {
+                        lineNumbers: true,
+                        mode: 'text/plain',
+                        theme: 'default',
+                        readOnly: true,
+                        lineWrapping: true
+                    });
+                    console.log('关联关系编辑器使用简单模式初始化完成', relationEditor);
+                } catch (fallbackError) {
+                    console.error('关联关系编辑器简单模式初始化也失败:', fallbackError);
+                    // 如果还是失败，直接使用textarea
+                    relationEditor = null;
+                }
+            }
+            
+            // 设置编辑器内容
+            if (relationEditor) {
+                relationEditor.setValue(JSON.stringify(documentData.relation_data || {}, null, 2));
+            } else {
+                relationSpecEditor.value = JSON.stringify(documentData.relation_data || {}, null, 2);
+            }
+            
+            // 保存编辑器实例引用
+            relationSpecEditor.CodeMirror = relationEditor;
+        }
+        
+        // 初始化业务场景编辑器
+        const sceneSpecEditor = document.getElementById('sceneSpecEditor');
+        if (sceneSpecEditor) {
+            // 如果已经存在CodeMirror实例，先销毁它
+            if (sceneSpecEditor.CodeMirror) {
+                sceneSpecEditor.CodeMirror.toTextArea();
+            }
+            
+            // 创建业务场景编辑器实例
+            let sceneEditor;
+            try {
+                sceneEditor = CodeMirror.fromTextArea(sceneSpecEditor, {
+                    lineNumbers: true,
+                    mode: {name: "javascript", json: true},
+                    theme: 'default',
+                    readOnly: true,
+                    lineWrapping: true,
+                    autoCloseBrackets: true,
+                    matchBrackets: true
+                });
+                console.log('业务场景编辑器初始化完成', sceneEditor);
+            } catch (error) {
+                console.error('业务场景编辑器初始化失败:', error);
+                // 尝试使用简单模式
+                try {
+                    sceneEditor = CodeMirror.fromTextArea(sceneSpecEditor, {
+                        lineNumbers: true,
+                        mode: 'text/plain',
+                        theme: 'default',
+                        readOnly: true,
+                        lineWrapping: true
+                    });
+                    console.log('业务场景编辑器使用简单模式初始化完成', sceneEditor);
+                } catch (fallbackError) {
+                    console.error('业务场景编辑器简单模式初始化也失败:', fallbackError);
+                    // 如果还是失败，直接使用textarea
+                    sceneEditor = null;
+                }
+            }
+            
+            // 设置编辑器内容
+            if (sceneEditor) {
+                sceneEditor.setValue(JSON.stringify(documentData.scene_data || {}, null, 2));
+            } else {
+                sceneSpecEditor.value = JSON.stringify(documentData.scene_data || {}, null, 2);
+            }
+            
+            // 保存编辑器实例引用
+            sceneSpecEditor.CodeMirror = sceneEditor;
+        }
         
         // 显示关联关系数据
         if (documentData.relation_data) {

@@ -10,9 +10,9 @@ import os
 import sys
 import json
 import time
-import hashlib
 import logging
 import yaml
+import uuid
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from flask import Flask, request, jsonify, send_from_directory
@@ -34,8 +34,9 @@ from utils.parse.ai import (
             generate_business_scene_file,
             generate_file_fingerprint, 
             get_output_path,
-            should_regenerate,
-            process_url_with_ai
+            process_url_with_ai,
+            _normalize_url,
+            _create_file_key_from_url
         )
 import tempfile
 import traceback
@@ -151,7 +152,7 @@ def internal_error(error):
     return jsonify({'error': 'Internal server error', 'message': str(error)}), 500
 
 # 辅助函数
-def generate_task_id(url=None):
+def generate_file_id(url=None):
     """生成任务ID"""
     if url:
         # 从URL生成稳定的ID，使用URL的哈希值确保相同URL生成相同ID
@@ -278,8 +279,8 @@ def parse_uploaded_document(file_id):
         
         # 创建输出目录 - 使用uploads目录下的不同子目录
         openapi_dir = os.path.join(os.getcwd(), app.config['UPLOAD_FOLDER'], 'openapi')
-        relation_dir = os.path.join(os.getcwd(), app.config['UPLOAD_FOLDER'], 'api_relation')
-        scene_dir = os.path.join(os.getcwd(), app.config['UPLOAD_FOLDER'], 'business_scene')
+        relation_dir = os.path.join(os.getcwd(), app.config['UPLOAD_FOLDER'], 'relation')
+        scene_dir = os.path.join(os.getcwd(), app.config['UPLOAD_FOLDER'], 'scene')
         os.makedirs(openapi_dir, exist_ok=True)
         os.makedirs(relation_dir, exist_ok=True)
         os.makedirs(scene_dir, exist_ok=True)
@@ -589,6 +590,167 @@ def full_test_workflow_for_document(file_id):
         logger.error(f"执行完整工作流程失败: {str(e)}")
         return jsonify({'error': '执行完整工作流程失败', 'message': str(e)}), 500
 
+@app.route('/api/docs/delete-openapi/<file_id>', methods=['DELETE'])
+def delete_openapi_doc(file_id):
+    """删除OpenAPI文档"""
+    try:
+        # 安全检查文件ID
+        if not file_id or not isinstance(file_id, str):
+            return jsonify({
+                'success': False,
+                'message': '无效的文件ID'
+            }), 400
+        
+        # 防止路径遍历攻击
+        if '..' in file_id or '/' in file_id or '\\' in file_id:
+            return jsonify({
+                'success': False,
+                'message': '文件ID包含非法字符'
+            }), 400
+        
+        # 构建文件路径
+        openapi_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'openapi')
+        
+        # 尝试不同的文件名格式
+        possible_paths = [
+            os.path.join(openapi_dir, f"{file_id}.yaml"),
+            os.path.join(openapi_dir, f"openapi_{file_id}.yaml"),
+            os.path.join(openapi_dir, f"{file_id}.yml"),
+            os.path.join(openapi_dir, f"openapi_{file_id}.yml")
+        ]
+        
+        # 查找存在的文件
+        file_path = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                file_path = path
+                break
+        
+        # 检查文件是否存在
+        if not file_path:
+            return jsonify({
+                'success': False,
+                'message': '文件不存在'
+            }), 404
+        
+        # 删除文件
+        os.remove(file_path)
+        
+        # 清除相关缓存
+        try:
+            from utils.cache_process.cache_control import _cache_config
+            cache_keys = [key for key in _cache_config.keys() if 'openapi_list' in key]
+            for key in cache_keys:
+                _cache_config.pop(key, None)
+        except ImportError:
+            pass
+        
+        return jsonify({
+            'success': True,
+            'message': '文件删除成功'
+        })
+        
+    except Exception as e:
+        logger.error(f"删除OpenAPI文档失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'删除文件失败: {str(e)}'
+        }), 500
+
+@app.route('/api/docs/generate-from-openapi/<file_id>', methods=['POST'])
+def generate_test_cases_from_openapi(file_id):
+    """从OpenAPI文档生成测试用例"""
+    try:
+        # 安全检查文件ID
+        if not file_id or not isinstance(file_id, str):
+            return jsonify({
+                'success': False,
+                'message': '无效的文件ID'
+            }), 400
+        
+        # 防止路径遍历攻击
+        if '..' in file_id or '/' in file_id or '\\' in file_id:
+            return jsonify({
+                'success': False,
+                'message': '文件ID包含非法字符'
+            }), 400
+        
+        # 构建文件路径
+        openapi_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'openapi')
+        
+        # 尝试不同的文件名格式
+        possible_paths = [
+            os.path.join(openapi_dir, f"{file_id}.yaml"),
+            os.path.join(openapi_dir, f"openapi_{file_id}.yaml"),
+            os.path.join(openapi_dir, f"{file_id}.yml"),
+            os.path.join(openapi_dir, f"openapi_{file_id}.yml")
+        ]
+        
+        # 查找存在的文件
+        file_path = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                file_path = path
+                break
+        
+        # 检查文件是否存在
+        if not file_path:
+            return jsonify({
+                'success': False,
+                'message': '文件不存在'
+            }), 404
+        
+        # 读取OpenAPI文档
+        with open(file_path, 'r', encoding='utf-8') as f:
+            openapi_content = f.read()
+        
+        # 解析OpenAPI文档
+        try:
+            import yaml
+            openapi_data = yaml.safe_load(openapi_content)
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'解析OpenAPI文档失败: {str(e)}'
+            }), 400
+        
+        # 生成任务ID
+        task_id = str(uuid.uuid4())
+        
+        # 保存OpenAPI文档到JSON目录
+        json_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'json')
+        json_file_path = os.path.join(json_dir, f"{task_id}.json")
+        
+        with open(json_file_path, 'w', encoding='utf-8') as f:
+            json.dump(openapi_data, f, ensure_ascii=False, indent=2)
+        
+        # 调用现有的生成测试用例函数
+        result = generate_test_cases(task_id)
+        
+        # 清除相关缓存
+        try:
+            from utils.cache_process.cache_control import _cache_config
+            cache_keys = [key for key in _cache_config.keys() if 'docs_list' in key]
+            for key in cache_keys:
+                _cache_config.pop(key, None)
+        except ImportError:
+            pass
+        
+        return jsonify({
+            'success': True,
+            'message': '测试用例生成成功',
+            'task_id': task_id,
+            'result': result
+        })
+        
+    except Exception as e:
+        logger.error(f"从OpenAPI文档生成测试用例失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'生成测试用例失败: {str(e)}'
+        }), 500
+
+
 @app.route('/api/docs/uploaded-list', methods=['GET'])
 def list_uploaded_documents():
     """获取已上传的文档列表"""
@@ -621,6 +783,645 @@ def list_uploaded_documents():
     except Exception as e:
         logger.error(f"获取文档列表失败: {str(e)}")
         return jsonify({'error': '获取文档列表失败', 'message': str(e)}), 500
+
+@app.route('/api/docs/all-documents', methods=['GET'])
+def list_all_documents():
+    """获取uploads目录下的所有文档列表(openapi、relation、scene)"""
+    try:
+        # 定义要扫描的目录
+        directories = {
+            'openapi': {
+                'path': os.path.join(app.config['UPLOAD_FOLDER'], 'openapi'),
+                'description': 'OpenAPI文档',
+                'file_types': ['.yaml', '.yml', '.json']
+            },
+            'relation': {
+                'path': os.path.join(app.config['UPLOAD_FOLDER'], 'relation'),
+                'description': '关系文档',
+                'file_types': ['.json', '.yaml', '.yml', '.txt']
+            },
+            'scene': {
+                'path': os.path.join(app.config['UPLOAD_FOLDER'], 'scene'),
+                'description': '场景文档',
+                'file_types': ['.json', '.yaml', '.yml', '.txt']
+            }
+        }
+        
+        all_documents = {}
+        
+        # 遍历每个目录
+        for dir_type, dir_info in directories.items():
+            documents = []
+            dir_path = dir_info['path']
+            
+            # 确保目录存在
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path, exist_ok=True)
+                all_documents[dir_type] = {
+                    'description': dir_info['description'],
+                    'documents': [],
+                    'count': 0
+                }
+                continue
+            
+            # 遍历目录中的文件
+            for filename in os.listdir(dir_path):
+                file_extension = os.path.splitext(filename)[1].lower()
+                if file_extension in dir_info['file_types']:
+                    file_path = os.path.join(dir_path, filename)
+                    
+                    # 获取文件信息
+                    stat = os.stat(file_path)
+                    
+                    # 提取文件ID
+                    file_id = filename
+                    if filename.startswith(f'{dir_type}_'):
+                        file_id = filename[len(f'{dir_type}_'):]  # 去掉类型前缀
+                    
+                    # 去掉文件扩展名
+                    if '.' in file_id:
+                        file_id = file_id.rsplit('.', 1)[0]
+                    
+                    # 尝试解析文件内容
+                    content_preview = ""
+                    item_count = 0
+                    
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            if file_extension == '.json':
+                                content = json.load(f)
+                                content_preview = json.dumps(content, ensure_ascii=False, indent=2)
+                                
+                                # 根据目录类型计算项目数量
+                                if dir_type == 'openapi' and 'paths' in content:
+                                    for path, path_item in content['paths'].items():
+                                        for method in path_item:
+                                            if method.upper() in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
+                                                item_count += 1
+                                elif dir_type in ['relation', 'scene']:
+                                    item_count = len(content) if isinstance(content, (list, dict)) else 0
+                            else:
+                                content = f.read()
+                                content_preview = content
+                                item_count = len(content.split('\n')) if content else 0
+                    except Exception as e:
+                        logger.warning(f"解析文件失败 {filename}: {str(e)}")
+                        content_preview = f"解析失败: {str(e)}"
+                    
+                    documents.append({
+                        'file_id': file_id,
+                        'file_name': filename,
+                        'file_size': stat.st_size,
+                        'upload_time': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                        'item_count': item_count,
+                        'content_preview': content_preview[:500] + ('...' if len(content_preview) > 500 else ''),
+                        'status': 'uploaded',
+                        'editable': True
+                    })
+            
+            all_documents[dir_type] = {
+                'description': dir_info['description'],
+                'documents': documents,
+                'count': len(documents)
+            }
+        
+        return jsonify({
+            'success': True,
+            'data': all_documents,
+            'total_count': sum(info['count'] for info in all_documents.values())
+        })
+    
+    except Exception as e:
+        logger.error(f"获取所有文档列表失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '获取所有文档列表失败',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/docs/get-document/<doc_type>/<file_id>', methods=['GET'])
+def get_document_content(doc_type, file_id):
+    """获取指定文档的完整内容"""
+    try:
+        # 验证文档类型
+        if doc_type not in ['openapi', 'relation', 'scene']:
+            return jsonify({
+                'success': False,
+                'error': '无效的文档类型'
+            }), 400
+        
+        # 构建文件路径
+        doc_dir = os.path.join(app.config['UPLOAD_FOLDER'], doc_type)
+        if not os.path.exists(doc_dir):
+            return jsonify({
+                'success': False,
+                'error': f'{doc_type}目录不存在'
+            }), 404
+        
+        # 查找文件
+        file_path = None
+        file_name = None
+        
+        # 首先尝试直接匹配完整文件名（包含前缀和扩展名）
+        for filename in os.listdir(doc_dir):
+            # 检查完整文件名（去掉扩展名）是否匹配file_id
+            filename_without_ext = filename.rsplit('.', 1)[0] if '.' in filename else filename
+            if filename_without_ext == file_id:
+                file_path = os.path.join(doc_dir, filename)
+                file_name = filename
+                break
+        
+        # 如果没有找到，尝试匹配去掉前缀和扩展名后的文件ID
+        if not file_path:
+            for filename in os.listdir(doc_dir):
+                # 尝试匹配文件ID
+                potential_id = filename
+                if filename.startswith(f'{doc_type}_'):
+                    potential_id = filename[len(f'{doc_type}_'):]
+                
+                if '.' in potential_id:
+                    potential_id = potential_id.rsplit('.', 1)[0]
+                
+                if potential_id == file_id:
+                    file_path = os.path.join(doc_dir, filename)
+                    file_name = filename
+                    break
+        
+        if not file_path or not os.path.exists(file_path):
+            return jsonify({
+                'success': False,
+                'error': '文件不存在'
+            }), 404
+        
+        # 读取文件内容
+        file_extension = os.path.splitext(file_name)[1].lower()
+        content = ""
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            if file_extension == '.json':
+                try:
+                    json_content = json.load(f)
+                    content = json.dumps(json_content, ensure_ascii=False, indent=2)
+                except:
+                    content = f.read()
+            else:
+                content = f.read()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'file_id': file_id,
+                'file_name': file_name,
+                'doc_type': doc_type,
+                'content': content,
+                'file_extension': file_extension
+            }
+        })
+    
+    except Exception as e:
+        logger.error(f"获取文档内容失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '获取文档内容失败',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/docs/update-document/<doc_type>/<file_id>', methods=['PUT'])
+def update_document_content(doc_type, file_id):
+    """更新指定文档的内容"""
+    try:
+        # 验证文档类型
+        if doc_type not in ['openapi', 'relation', 'scene']:
+            return jsonify({
+                'success': False,
+                'error': '无效的文档类型'
+            }), 400
+        
+        # 获取请求数据
+        data = request.json
+        if not data or 'content' not in data:
+            return jsonify({
+                'success': False,
+                'error': '缺少必要参数: content'
+            }), 400
+        
+        content = data.get('content', '')
+        
+        # 构建文件路径
+        doc_dir = os.path.join(app.config['UPLOAD_FOLDER'], doc_type)
+        if not os.path.exists(doc_dir):
+            os.makedirs(doc_dir, exist_ok=True)
+        
+        # 查找文件
+        file_path = None
+        file_name = None
+        
+        # 首先尝试直接匹配完整文件名（包含前缀和扩展名）
+        for filename in os.listdir(doc_dir):
+            # 检查完整文件名（去掉扩展名）是否匹配file_id
+            filename_without_ext = filename.rsplit('.', 1)[0] if '.' in filename else filename
+            if filename_without_ext == file_id:
+                file_path = os.path.join(doc_dir, filename)
+                file_name = filename
+                break
+        
+        # 如果没有找到，尝试匹配去掉前缀和扩展名后的文件ID
+        if not file_path:
+            for filename in os.listdir(doc_dir):
+                # 尝试匹配文件ID
+                potential_id = filename
+                if filename.startswith(f'{doc_type}_'):
+                    potential_id = filename[len(f'{doc_type}_'):]
+                
+                if '.' in potential_id:
+                    potential_id = potential_id.rsplit('.', 1)[0]
+                
+                if potential_id == file_id:
+                    file_path = os.path.join(doc_dir, filename)
+                    file_name = filename
+                    break
+        
+        if not file_path or not os.path.exists(file_path):
+            return jsonify({
+                'success': False,
+                'error': '文件不存在'
+            }), 404
+        
+        # 获取文件扩展名
+        file_extension = os.path.splitext(file_name)[1].lower()
+        
+        # 验证内容（如果是JSON，尝试解析）
+        if file_extension == '.json':
+            try:
+                json.loads(content)
+            except json.JSONDecodeError as e:
+                return jsonify({
+                    'success': False,
+                    'error': '无效的JSON格式',
+                    'message': str(e)
+                }), 400
+        elif file_extension in ['.yaml', '.yml']:
+            try:
+                yaml.safe_load(content)
+            except yaml.YAMLError as e:
+                return jsonify({
+                    'success': False,
+                    'error': '无效的YAML格式',
+                    'message': str(e)
+                }), 400
+        
+        # 创建备份
+        backup_path = f"{file_path}.backup.{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        shutil.copy2(file_path, backup_path)
+        
+        # 写入新内容
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        # 如果是OpenAPI文档，更新内存中的解析结果
+        if doc_type == 'openapi' and file_id in api_docs:
+            try:
+                parser = APIParser(file_path)
+                api_data = parser.parse()
+                api_docs[file_id]['api_data'] = api_data
+                api_docs[file_id]['updated_at'] = datetime.now().isoformat()
+                save_result(file_id, api_docs[file_id])
+            except Exception as e:
+                logger.warning(f"更新OpenAPI文档解析结果失败: {str(e)}")
+        
+        return jsonify({
+            'success': True,
+            'message': '文档更新成功',
+            'backup_file': os.path.basename(backup_path)
+        })
+    
+    except Exception as e:
+        logger.error(f"更新文档内容失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '更新文档内容失败',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/docs/generate-document/<doc_type>/<file_id>', methods=['POST'])
+def generate_document_content(doc_type, file_id):
+    """生成指定类型的文档内容"""
+    try:
+        # 验证文档类型
+        if doc_type not in ['relation', 'scene']:
+            return jsonify({
+                'success': False,
+                'error': '无效的文档类型'
+            }), 400
+        
+        # 查找文件
+        upload_dir = app.config['UPLOAD_FOLDER']
+        file_path = None
+        
+        # 遍历上传目录查找匹配的文件
+        for filename in os.listdir(upload_dir):
+            if filename.startswith(file_id):
+                file_path = os.path.join(upload_dir, filename)
+                break
+        
+        if not file_path or not os.path.exists(file_path):
+            return jsonify({
+                'success': False,
+                'error': '文件不存在'
+            }), 404
+        
+        # 创建临时目录和文件
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_filepath = os.path.join(temp_dir, "data.json")
+            
+            # 读取原始文件内容
+            with open(file_path, 'r', encoding='utf-8') as f:
+                try:
+                    json_data = json.load(f)
+                except:
+                    # 如果不是JSON格式，尝试作为文本处理
+                    content = f.read()
+                    json_data = {"content": content}
+            
+            # 写入临时文件
+            with open(temp_filepath, 'w', encoding='utf-8') as f:
+                json.dump(json_data, f, ensure_ascii=False, indent=2)
+            
+            # 定义输出路径
+            doc_dir = os.path.join(app.config['UPLOAD_FOLDER'], doc_type)
+            os.makedirs(doc_dir, exist_ok=True)
+            output_path = os.path.join(doc_dir, f"{doc_type}_{file_id}.json")
+            
+            # 根据文档类型生成内容
+            if doc_type == 'relation':
+                result = generate_api_relation_file([temp_filepath], output_path)
+            elif doc_type == 'scene':
+                result = generate_business_scene_file([temp_filepath], output_path)
+            
+            # 读取生成的内容
+            with open(output_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'file_id': file_id,
+                    'doc_type': doc_type,
+                    'content': content,
+                    'file_path': output_path
+                }
+            })
+    
+    except Exception as e:
+        logger.error(f"生成文档内容失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '生成文档内容失败',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/docs/create-document/<doc_type>', methods=['POST'])
+def create_document(doc_type):
+    """创建新文档"""
+    try:
+        # 验证文档类型
+        if doc_type not in ['openapi', 'relation', 'scene']:
+            return jsonify({
+                'success': False,
+                'error': '无效的文档类型'
+            }), 400
+        
+        # 获取请求数据
+        data = request.json
+        if not data or 'file_name' not in data or 'content' not in data:
+            return jsonify({
+                'success': False,
+                'error': '缺少必要参数: file_name, content'
+            }), 400
+        
+        file_name = data.get('file_name', '')
+        content = data.get('content', '')
+        
+        # 验证文件名
+        if not file_name:
+            return jsonify({
+                'success': False,
+                'error': '文件名不能为空'
+            }), 400
+        
+        # 确保文件名有正确的扩展名
+        if not any(file_name.endswith(ext) for ext in ['.json', '.yaml', '.yml', '.txt']):
+            if doc_type == 'openapi':
+                file_name += '.json'
+            else:
+                file_name += '.json'
+        
+        # 构建文件路径
+        doc_dir = os.path.join(app.config['UPLOAD_FOLDER'], doc_type)
+        if not os.path.exists(doc_dir):
+            os.makedirs(doc_dir, exist_ok=True)
+        
+        # 添加前缀
+        prefixed_name = f"{doc_type}_{file_name}"
+        file_path = os.path.join(doc_dir, prefixed_name)
+        
+        # 检查文件是否已存在
+        if os.path.exists(file_path):
+            return jsonify({
+                'success': False,
+                'error': '文件已存在'
+            }), 409
+        
+        # 验证内容（如果是JSON，尝试解析）
+        if file_name.endswith('.json'):
+            try:
+                json.loads(content)
+            except json.JSONDecodeError as e:
+                return jsonify({
+                    'success': False,
+                    'error': '无效的JSON格式',
+                    'message': str(e)
+                }), 400
+        elif file_name.endswith(('.yaml', '.yml')):
+            try:
+                yaml.safe_load(content)
+            except yaml.YAMLError as e:
+                return jsonify({
+                    'success': False,
+                    'error': '无效的YAML格式',
+                    'message': str(e)
+                }), 400
+        
+        # 写入文件
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        # 生成文件ID
+        file_id = file_name
+        if '.' in file_id:
+            file_id = file_id.rsplit('.', 1)[0]
+        
+        return jsonify({
+            'success': True,
+            'message': '文档创建成功',
+            'data': {
+                'file_id': file_id,
+                'file_name': prefixed_name,
+                'doc_type': doc_type
+            }
+        })
+    
+    except Exception as e:
+        logger.error(f"创建文档失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '创建文档失败',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/docs/delete-document/<doc_type>/<file_id>', methods=['DELETE'])
+def delete_document(doc_type, file_id):
+    """删除指定文档"""
+    try:
+        # 验证文档类型
+        if doc_type not in ['openapi', 'relation', 'scene']:
+            return jsonify({
+                'success': False,
+                'error': '无效的文档类型'
+            }), 400
+        
+        # 构建文件路径
+        doc_dir = os.path.join(app.config['UPLOAD_FOLDER'], doc_type)
+        if not os.path.exists(doc_dir):
+            return jsonify({
+                'success': False,
+                'error': f'{doc_type}目录不存在'
+            }), 404
+        
+        # 查找文件
+        file_path = None
+        file_name = None
+        
+        for filename in os.listdir(doc_dir):
+            # 尝试匹配文件ID
+            potential_id = filename
+            if filename.startswith(f'{doc_type}_'):
+                potential_id = filename[len(f'{doc_type}_'):]
+            
+            if '.' in potential_id:
+                potential_id = potential_id.rsplit('.', 1)[0]
+            
+            if potential_id == file_id:
+                file_path = os.path.join(doc_dir, filename)
+                file_name = filename
+                break
+        
+        if not file_path or not os.path.exists(file_path):
+            return jsonify({
+                'success': False,
+                'error': '文件不存在'
+            }), 404
+        
+        # 删除文件
+        os.remove(file_path)
+        
+        # 如果是OpenAPI文档，从内存中删除解析结果
+        if doc_type == 'openapi' and file_id in api_docs:
+            del api_docs[file_id]
+            # 清除文档列表缓存
+            clear_docs_list_cache()
+            
+            # 删除结果文件
+            result_path = os.path.join(app.config['RESULTS_FOLDER'], f"{file_id}.json")
+            if os.path.exists(result_path):
+                os.remove(result_path)
+        
+        return jsonify({
+            'success': True,
+            'message': '文档删除成功'
+        })
+    
+    except Exception as e:
+        logger.error(f"删除文档失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '删除文档失败',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/docs/openapi-list', methods=['GET'])
+def list_openapi_documents():
+    """获取uploads/openapi目录下的OpenAPI文档列表"""
+    try:
+        openapi_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'openapi')
+        documents = []
+        
+        # 确保目录存在
+        if not os.path.exists(openapi_dir):
+            os.makedirs(openapi_dir, exist_ok=True)
+            return jsonify({
+                'success': True,
+                'data': [],
+                'count': 0
+            })
+        
+        # 遍历openapi目录
+        for filename in os.listdir(openapi_dir):
+            if filename.endswith('.yaml') or filename.endswith('.yml') or filename.endswith('.json'):
+                file_path = os.path.join(openapi_dir, filename)
+                
+                # 获取文件信息
+                stat = os.stat(file_path)
+                
+                # 提取文件ID（去掉openapi_前缀）
+                file_id = filename
+                if filename.startswith('openapi_'):
+                    file_id = filename[8:]  # 去掉'openapi_'前缀
+                
+                # 去掉文件扩展名
+                if '.' in file_id:
+                    file_id = file_id.rsplit('.', 1)[0]
+                
+                # 尝试解析文件获取API数量
+                api_count = 0
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        if filename.endswith('.json'):
+                            content = json.load(f)
+                        else:
+                            content = yaml.safe_load(f)
+                        
+                        # 计算API数量
+                        if 'paths' in content:
+                            for path, path_item in content['paths'].items():
+                                for method in path_item:
+                                    if method.upper() in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
+                                        api_count += 1
+                except Exception as e:
+                    logger.warning(f"解析OpenAPI文件失败 {filename}: {str(e)}")
+                
+                documents.append({
+                    'file_id': file_id,
+                    'file_name': filename,
+                    'file_size': stat.st_size,
+                    'upload_time': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    'api_count': api_count,
+                    'status': 'uploaded'
+                })
+        
+        return jsonify({
+            'success': True,
+            'data': documents,
+            'count': len(documents)
+        })
+    
+    except Exception as e:
+        logger.error(f"获取OpenAPI文档列表失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '获取OpenAPI文档列表失败',
+            'message': str(e)
+        }), 500
 
 @app.route('/api/docs/delete/<file_id>', methods=['DELETE'])
 def delete_uploaded_document(file_id):
@@ -2337,18 +3138,17 @@ def get_ai_files():
         if not url:
             return jsonify({'error': 'URL不能为空'}), 400
         
-        
-        # 生成URL的哈希值
-        url_hash = hashlib.md5(url.encode()).hexdigest()
+        url = _normalize_url(url)
+        file_key = _create_file_key_from_url(url)
         
         # 定义输出目录
         output_dir = app.config['UPLOAD_FOLDER']
         
         # 定义文件路径
-        json_file = os.path.join(output_dir, 'json', f"json_{url_hash}.json")
-        openapi_file = os.path.join(output_dir, 'openapi', f"openapi_{url_hash}.yaml")
-        relation_file = os.path.join(output_dir, 'relation', f"relation_{url_hash}.json")
-        scene_file = os.path.join(output_dir, 'scene', f"scene_{url_hash}.json")
+        json_file = os.path.join(output_dir, 'json', f"json_{file_key}.json")
+        openapi_file = os.path.join(output_dir, 'openapi', f"openapi_{file_key}.yaml")
+        relation_file = os.path.join(output_dir, 'relation', f"relation_{file_key}.json")
+        scene_file = os.path.join(output_dir, 'scene', f"scene_{file_key}.json")
         
         # 检查文件是否存在
         files_exist = {
@@ -2368,7 +3168,7 @@ def get_ai_files():
         result = {
             'success': True,
             'url': url,
-            'url_hash': url_hash,
+            'file_key': file_key,
             'files_exist': files_exist
         }
         
@@ -2413,7 +3213,7 @@ if __name__ == '__main__':
     
     # 解析命令行参数
     parser = argparse.ArgumentParser(description='启动智能自动化测试平台API服务器')
-    parser.add_argument('--port', type=int, default=5001, help='服务器端口 (默认: 5001)')
+    parser.add_argument('--port', type=int, default=5000, help='服务器端口 (默认: 5000)')
     parser.add_argument('--host', type=str, default='0.0.0.0', help='服务器主机 (默认: 0.0.0.0)')
     parser.add_argument('--debug', type=bool, default=True, help='调试模式 (默认: True)')
     args = parser.parse_args()

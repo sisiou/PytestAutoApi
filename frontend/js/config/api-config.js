@@ -6,7 +6,7 @@
 // API基础配置
 const API_CONFIG = {
     // API服务器基础URL
-    BASE_URL: 'http://127.0.0.1:5001',
+    BASE_URL: 'http://127.0.0.1:5000',
     
     // API端点路径
     ENDPOINTS: {
@@ -17,6 +17,12 @@ const API_CONFIG = {
             PARSE: '/api/docs/parse',
             PARSE_URL: '/api/docs/parse-url',
             UPLOADED_LIST: '/api/docs/uploaded-list',
+            OPENAPI_LIST: '/api/docs/openapi-list',
+            ALL_DOCUMENTS: '/api/docs/all-documents',
+            GET_DOCUMENT: '/api/docs/get-document/{doc_type}/{file_id}',
+            UPDATE_DOCUMENT: '/api/docs/update-document/{doc_type}/{file_id}',
+            CREATE_DOCUMENT: '/api/docs/create-document/{doc_type}',
+            DELETE_DOCUMENT: '/api/docs/delete-document/{doc_type}/{file_id}',
             DELETE: '/api/docs/delete',
             GENERATE_TEST_CASES: '/api/docs/generate-test-cases/{doc_task_id}',
             EXECUTE_TESTS: '/api/docs/execute-tests',
