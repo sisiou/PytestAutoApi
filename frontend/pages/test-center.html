@@ -545,7 +545,7 @@
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="test-workflow-tab" data-bs-toggle="tab" data-bs-target="#test-workflow" type="button" role="tab" aria-controls="test-workflow" aria-selected="false">
-                                    <i class="fas fa-project-diagram me-2"></i>测试工作流
+                                    <i class="fas fa-project-diagram me-2"></i>智能测试工作流
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
@@ -581,7 +581,7 @@
                                                     </li>
                                                     <li class="nav-item" role="presentation">
                                                         <button class="nav-link" id="file-upload-tab" data-bs-toggle="tab" data-bs-target="#file-upload" type="button" role="tab" aria-controls="file-upload" aria-selected="false">
-                                                            <i class="fas fa-file-upload me-2"></i>文件上传
+                                                            <i class="fas fa-file-upload me-2"></i>多接口文档上传
                                                         </button>
                                                     </li>
                                                     <li class="nav-item" role="presentation">
@@ -712,7 +712,7 @@
                                         <ul class="nav nav-tabs mb-3" id="documentTabsNav" role="tablist">
                                             <li class="nav-item" role="presentation">
                                                 <button class="nav-link active" id="openapi-docs-tab" data-bs-toggle="tab" data-bs-target="#openapi-docs-content" type="button" role="tab" aria-controls="openapi-docs-content" aria-selected="true">
-                                                    <i class="fas fa-file-code me-2"></i>OpenAPI文档
+                                                    <i class="fas fa-file-code me-2"></i>单接口文档
                                                 </button>
                                             </li>
                                             <li class="nav-item" role="presentation">
@@ -728,7 +728,7 @@
                                             <div class="tab-pane fade show active" id="openapi-docs-content" role="tabpanel" aria-labelledby="openapi-docs-tab">
                                                 <div class="card">
                                                     <div class="card-header d-flex justify-content-between align-items-center">
-                                                        <h5 class="card-title mb-0">已解析文档</h5>
+                                                        <h5 class="card-title mb-0">单接口解析文档</h5>
                                                         <div>
                                                             <button class="btn btn-sm btn-outline-primary" id="refreshOpenApiDocsBtn">
                                                                 <i class="fas fa-sync-alt me-1"></i>刷新
@@ -883,14 +883,24 @@
                                                     <p class="text-muted">上传或导入OpenAPI 3.0.0格式的接口文档</p>
                                                     <div class="card mt-3">
                                                         <div class="card-body">
+                                                            <!-- 文档类型选择 -->
+                                                            <div class="mb-3">
+                                                                <label for="workflowDocTypeSelect" class="form-label">文档类型</label>
+                                                                <select class="form-select" id="workflowDocTypeSelect">
+                                                                    <option value="">请选择文档类型</option>
+                                                                    <option value="single">单接口文档</option>
+                                                                    <option value="multi">多接口文档</option>
+                                                                </select>
+                                                            </div>
+                                                            
                                                             <div class="d-flex justify-content-between align-items-center">
                                                                 <div>
-                                                                    <h6 class="mb-1">用户管理API文档</h6>
-                                                                    <small class="text-muted">包含15个API端点</small>
+                                                                    <h6 class="mb-1">未选择文档</h6>
+                                                                    <small class="text-muted">请选择文档类型</small>
                                                                 </div>
                                                                 <div>
-                                                                    <span class="badge bg-success">已导入</span>
-                                                                    <button class="btn btn-sm btn-outline-secondary ms-2">
+                                                                    <span class="badge bg-secondary" id="workflowDocStatusBadge" style="display: none;">已导入</span>
+                                                                    <button class="btn btn-sm btn-outline-secondary ms-2" id="workflowChangeDocBtn" style="display: none;">
                                                                         <i class="fas fa-exchange-alt"></i> 更换
                                                                     </button>
                                                                 </div>

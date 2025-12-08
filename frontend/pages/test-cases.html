@@ -391,6 +391,16 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
+                        <label class="form-label">文档类型</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="docTypeRadio" id="singleDocRadio" value="single" checked>
+                            <label class="btn btn-outline-primary" for="singleDocRadio">单接口文档</label>
+                            
+                            <input type="radio" class="btn-check" name="docTypeRadio" id="multiDocRadio" value="multi">
+                            <label class="btn btn-outline-primary" for="multiDocRadio">多接口文档</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
                         <label for="apiDocSelect" class="form-label">选择接口文档</label>
                         <select class="form-select" id="apiDocSelect">
                             <option value="">请选择接口文档</option>

@@ -26,62 +26,117 @@ function initTestCasesPage() {
 // 绑定事件监听器
 function bindEventListeners() {
     // 刷新按钮
-    document.getElementById('refreshBtn').addEventListener('click', function() {
-        showLoadingState();
-        loadTestCases();
-    });
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            showLoadingState();
+            loadTestCases();
+        });
+    }
     
     // 运行所有测试按钮
-    document.getElementById('runAllBtn').addEventListener('click', function() {
-        showRunModal('all');
-    });
+    const runAllBtn = document.getElementById('runAllBtn');
+    if (runAllBtn) {
+        runAllBtn.addEventListener('click', function() {
+            showRunModal('all');
+        });
+    }
     
     // 生成测试用例按钮
-    document.getElementById('generateBtn').addEventListener('click', function() {
-        showGenerateModal();
-    });
+    const generateBtn = document.getElementById('generateBtn');
+    if (generateBtn) {
+        generateBtn.addEventListener('click', function() {
+            showGenerateModal();
+        });
+    }
     
     // 搜索输入
-    document.getElementById('searchInput').addEventListener('input', function() {
-        filterTestCases();
-    });
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            filterTestCases();
+        });
+    }
     
     // 筛选器
-    document.getElementById('statusFilter').addEventListener('change', function() {
-        filterTestCases();
-    });
-    
-    document.getElementById('typeFilter').addEventListener('change', function() {
-        filterTestCases();
-    });
-    
-    document.getElementById('apiFilter').addEventListener('change', function() {
-        filterTestCases();
-    });
+    const statusFilter = document.getElementById('statusFilter');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            filterTestCases();
+        });
+    }
+
+    const typeFilter = document.getElementById('typeFilter');
+    if (typeFilter) {
+        typeFilter.addEventListener('change', function() {
+            filterTestCases();
+        });
+    }
+
+    const apiFilter = document.getElementById('apiFilter');
+    if (apiFilter) {
+        apiFilter.addEventListener('change', function() {
+            filterTestCases();
+        });
+    }
     
     // 视图模式切换
-    document.getElementById('listViewBtn').addEventListener('click', function() {
-        switchViewMode('list');
-    });
+    const listViewBtn = document.getElementById('listViewBtn');
+    if (listViewBtn) {
+        listViewBtn.addEventListener('click', function() {
+            switchViewMode('list');
+        });
+    }
+
+    const gridViewBtn = document.getElementById('gridViewBtn');
+    if (gridViewBtn) {
+        gridViewBtn.addEventListener('click', function() {
+            switchViewMode('grid');
+        });
+    }
     
-    document.getElementById('gridViewBtn').addEventListener('click', function() {
-        switchViewMode('grid');
-    });
+    // 文档类型切换
+    const singleDocRadio = document.getElementById('singleDocRadio');
+    if (singleDocRadio) {
+        singleDocRadio.addEventListener('change', function() {
+            if (this.checked) {
+                loadDocsByType('single');
+            }
+        });
+    }
+
+    const multiDocRadio = document.getElementById('multiDocRadio');
+    if (multiDocRadio) {
+        multiDocRadio.addEventListener('change', function() {
+            if (this.checked) {
+                loadDocsByType('multi');
+            }
+        });
+    }
     
     // 生成测试用例模态框
-    document.getElementById('confirmGenerateBtn').addEventListener('click', function() {
-        generateTestCases();
-    });
+    const confirmGenerateBtn = document.getElementById('confirmGenerateBtn');
+    if (confirmGenerateBtn) {
+        confirmGenerateBtn.addEventListener('click', function() {
+            generateTestCases();
+        });
+    }
     
     // 运行测试模态框
-    document.getElementById('cancelRunBtn').addEventListener('click', function() {
-        hideRunModal();
-    });
-    
-    document.getElementById('viewResultsBtn').addEventListener('click', function() {
-        hideRunModal();
-        // 可以在这里添加跳转到测试结果的逻辑
-    });
+    const cancelRunBtn = document.getElementById('cancelRunBtn');
+    if (cancelRunBtn) {
+        cancelRunBtn.addEventListener('click', function() {
+            hideRunModal();
+        });
+    }
+
+    const viewResultsBtn = document.getElementById('viewResultsBtn');
+    if (viewResultsBtn) {
+        viewResultsBtn.addEventListener('click', function() {
+            hideRunModal();
+            // 可以在这里添加跳转到测试结果的逻辑
+        });
+    }
 }
 
 // 初始化视图模式
@@ -173,7 +228,7 @@ function loadTestCases() {
     })
     .catch(error => {
         console.error('加载测试用例失败:', error);
-        showSmartTestNotification('加载测试用例失败: ' + error.message, 'error');
+        showNotification('加载测试用例失败: ' + error.message, 'error');
         
         // 如果加载失败，显示空状态
         window.currentTestCases = [];
@@ -193,10 +248,17 @@ function updateStatistics(testCases) {
     const skippedCases = testCases.filter(tc => tc.status === 'skipped').length;
     const passRate = totalCases > 0 ? ((passedCases / totalCases) * 100).toFixed(1) : 0;
     
-    document.getElementById('totalCases').textContent = totalCases;
-    document.getElementById('passedCases').textContent = passedCases;
-    document.getElementById('failedCases').textContent = failedCases;
-    document.getElementById('passRate').textContent = passRate + '%';
+    const totalCasesEl = document.getElementById('totalCases');
+    if (totalCasesEl) totalCasesEl.textContent = totalCases;
+    
+    const passedCasesEl = document.getElementById('passedCases');
+    if (passedCasesEl) passedCasesEl.textContent = passedCases;
+    
+    const failedCasesEl = document.getElementById('failedCases');
+    if (failedCasesEl) failedCasesEl.textContent = failedCases;
+    
+    const passRateEl = document.getElementById('passRate');
+    if (passRateEl) passRateEl.textContent = passRate + '%';
 }
 
 // 渲染测试用例列表
@@ -607,7 +669,7 @@ def test_${testCase.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}():
     })
     .catch(error => {
         console.error('获取测试用例详情失败:', error);
-        showSmartTestNotification('获取测试用例详情失败: ' + error.message, 'error');
+        showNotification('获取测试用例详情失败: ' + error.message, 'error');
     });
 }
 
@@ -620,7 +682,7 @@ function hideTestCaseDetailModal() {
 // 编辑测试用例
 function editTestCase(testCaseId) {
     // 这里可以实现编辑测试用例的逻辑
-    showSmartTestNotification('编辑功能正在开发中', 'info');
+    showNotification('编辑功能正在开发中', 'info');
 }
 
 // 删除测试用例
@@ -726,7 +788,7 @@ function showRunModal(testCaseId) {
     .catch(error => {
         console.error('运行测试失败:', error);
         runStatus.textContent = '运行测试失败: ' + error.message;
-        showSmartTestNotification('运行测试失败: ' + error.message, 'error');
+        showNotification('运行测试失败: ' + error.message, 'error');
     });
 }
 
@@ -750,8 +812,11 @@ function generateTestCases() {
     const boundaryCheck = document.getElementById('boundaryCheck');
     const exceptionCheck = document.getElementById('exceptionCheck');
     
+    // 获取当前选择的文档类型
+    const docType = document.querySelector('input[name="docTypeRadio"]:checked').value;
+    
     if (!apiDocSelect.value) {
-        showSmartTestNotification('请选择API文档', 'warning');
+        showNotification('请选择API文档', 'warning');
         return;
     }
     
@@ -762,7 +827,7 @@ function generateTestCases() {
     if (exceptionCheck.checked) selectedTypes.push('exception');
     
     if (selectedTypes.length === 0) {
-        showSmartTestNotification('请至少选择一种测试用例类型', 'warning');
+        showNotification('请至少选择一种测试用例类型', 'warning');
         return;
     }
     
@@ -775,19 +840,31 @@ function generateTestCases() {
     
     // 调用后端API生成测试用例
     const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
-    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
-    const testCasesEndpoint = endpoints.TEST_CASES || {};
-    const generateUrl = baseUrl + (testCasesEndpoint.GENERATE || '/api/test-cases/generate');
+    
+    // 根据文档类型选择不同的API端点
+    let generateUrl;
+    if (docType === 'single') {
+        // 单接口文档使用原有的API端点
+        const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
+        const testCasesEndpoint = endpoints.TEST_CASES || {};
+        generateUrl = baseUrl + (testCasesEndpoint.GENERATE || '/api/test-cases/generate');
+    } else {
+        // 多接口文档使用新的API端点
+        generateUrl = `${baseUrl}/api/multiapi/test-cases/generate`;
+    }
+    
+    const requestBody = {
+        task_id: apiDocSelect.value,
+        test_types: selectedTypes,
+        doc_type: docType  // 添加文档类型信息
+    };
     
     fetch(generateUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            task_id: apiDocSelect.value,
-            test_types: selectedTypes
-        })
+        body: JSON.stringify(requestBody)
     })
     .then(response => {
         if (!response.ok) {
@@ -811,14 +888,14 @@ function generateTestCases() {
                 renderTestCasesList();
             }
             
-            showSmartTestNotification(`成功生成 ${data.test_cases.length} 个测试用例`, 'success');
+            showNotification(`成功生成 ${data.test_cases.length} 个测试用例`, 'success');
         } else {
-            showSmartTestNotification('未生成任何测试用例', 'warning');
+            showNotification('未生成任何测试用例', 'warning');
         }
     })
     .catch(error => {
         console.error('生成测试用例失败:', error);
-        showSmartTestNotification('生成测试用例失败: ' + error.message, 'error');
+        showNotification('生成测试用例失败: ' + error.message, 'error');
     })
     .finally(() => {
         hideLoadingState();
@@ -900,18 +977,23 @@ function loadAPIList() {
 
 // 加载接口文档列表
 function loadAPIDocList() {
+    // 获取当前选择的文档类型
+    const docType = document.querySelector('input[name="docTypeRadio"]:checked').value;
+    loadDocsByType(docType);
+}
+
+// 根据文档类型加载文档列表
+function loadDocsByType(docType) {
     const apiDocSelect = document.getElementById('apiDocSelect');
     
     // 清空现有选项
     apiDocSelect.innerHTML = '<option value="">请选择接口文档</option>';
     
-    // 从后端API获取API文档列表
+    // 从后端API获取文档列表
     const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
-    const endpoints = window.API_CONFIG ? window.API_CONFIG.ENDPOINTS || {} : {};
-    const docsEndpoint = endpoints.DOCS || {};
-    const listUrl = baseUrl + (docsEndpoint.LIST || '/api/docs/list');
+    const url = `${baseUrl}/api/docs/by-type/${docType}`;
     
-    fetch(listUrl, {
+    fetch(url, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -919,33 +1001,38 @@ function loadAPIDocList() {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('获取接口文档列表失败');
+            throw new Error('获取文档列表失败');
         }
         return response.json();
     })
     .then(data => {
-        console.log('从后端加载的接口文档列表:', data);
+        console.log(`从后端加载的${docType === 'single' ? '单接口' : '多接口'}文档列表:`, data);
+        
+        // 检查响应格式
+        if (!data.success || !data.data) {
+            throw new Error('响应数据格式错误');
+        }
         
         // 如果没有接口文档，显示提示
-        if (!data || data.length === 0) {
+        if (data.data.length === 0) {
             const option = document.createElement('option');
             option.value = "";
-            option.textContent = "暂无接口文档，请先解析接口文档";
+            option.textContent = `暂无${docType === 'single' ? '单接口' : '多接口'}文档，请先解析接口文档`;
             option.disabled = true;
             apiDocSelect.appendChild(option);
             return;
         }
         
         // 添加接口文档选项
-        data.forEach(doc => {
+        data.data.forEach(doc => {
             const option = document.createElement('option');
             option.value = doc.task_id;
-            option.textContent = `${doc.source.name} (${doc.api_count}个API)`;
+            option.textContent = `${doc.filename} (${doc.api_count}个API)`;
             apiDocSelect.appendChild(option);
         });
     })
     .catch(error => {
-        console.error('加载接口文档列表失败:', error);
+        console.error('加载文档列表失败:', error);
         
         // 如果加载失败，显示错误提示
         const option = document.createElement('option');
@@ -954,7 +1041,7 @@ function loadAPIDocList() {
         option.disabled = true;
         apiDocSelect.appendChild(option);
         
-        showSmartTestNotification('加载接口文档列表失败: ' + error.message, 'error');
+        showNotification('加载文档列表失败: ' + error.message, 'error');
     });
 }
 

@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化文档标签页
     initDocumentTabs();
+    
+    // 初始化测试工作流
+    initTestWorkflow();
 });
 
 // 初始化测试中心 - 智能测试功能专用
@@ -3439,6 +3442,319 @@ function generateSelectedTests() {
             showSmartTestNotification('生成测试用例失败: ' + error.message, 'error');
         }
     }, 2000);
+}
+
+// 初始化测试工作流
+function initTestWorkflow() {
+    // 文档类型选择
+    const workflowDocTypeSelect = document.getElementById('workflowDocTypeSelect');
+    if (workflowDocTypeSelect) {
+        workflowDocTypeSelect.addEventListener('change', function() {
+            const docType = this.value;
+            if (docType) {
+                // 根据文档类型加载对应的文档列表
+                loadWorkflowDocuments(docType);
+            } else {
+                // 清空文档列表
+                clearWorkflowDocument();
+            }
+        });
+    }
+    
+    // 更换文档按钮
+    const workflowChangeDocBtn = document.getElementById('workflowChangeDocBtn');
+    if (workflowChangeDocBtn) {
+        workflowChangeDocBtn.addEventListener('click', function() {
+            const docType = document.getElementById('workflowDocTypeSelect').value;
+            if (docType) {
+                showWorkflowDocumentSelector(docType);
+            } else {
+                showSmartTestNotification('请先选择文档类型', 'warning');
+            }
+        });
+    }
+}
+
+// 加载工作流文档
+function loadWorkflowDocuments(docType) {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    let apiUrl;
+    
+    if (docType === 'single') {
+        apiUrl = baseUrl + '/api/docs/by-type/single';
+    } else if (docType === 'multi') {
+        apiUrl = baseUrl + '/api/docs/by-type/multi';
+    } else {
+        console.error('未知的文档类型:', docType);
+        return;
+    }
+    
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data.length > 0) {
+                // 默认选择第一个文档
+                const doc = data.data[0];
+                updateWorkflowDocument(doc, docType);
+            } else {
+                showSmartTestNotification(`没有找到${docType === 'single' ? '单接口' : '多接口'}文档`, 'warning');
+                clearWorkflowDocument();
+            }
+        })
+        .catch(error => {
+            console.error('加载文档失败:', error);
+            showSmartTestNotification('加载文档失败: ' + error.message, 'error');
+        });
+}
+
+// 更新工作流文档显示
+function updateWorkflowDocument(doc, docType) {
+    const docNameElement = document.querySelector('.workflow-step .card-body h6');
+    const docInfoElement = document.querySelector('.workflow-step .card-body small.text-muted');
+    
+    if (docNameElement) {
+        if (docType === 'single') {
+            // 单接口文档使用文档ID
+            docNameElement.textContent = `${doc.id || doc.file_id}`;
+        } else {
+            // 多接口文档使用文档名称
+            docNameElement.textContent = doc.file_name || doc.name || '未命名文档';
+        }
+    }
+    
+    if (docInfoElement) {
+        if (docType === 'single') {
+            // 单接口文档不显示额外信息，因为文档名称已经是ID
+            docInfoElement.textContent = '';
+        } else if (docType === 'multi') {
+            const endpointCount = doc.endpoint_count || doc.endpoints?.length || 0;
+            docInfoElement.textContent = `多接口文档，包含${endpointCount}个API端点`;
+        }
+    }
+    
+    // 显示更换文档按钮
+    const changeDocBtn = document.getElementById('workflowChangeDocBtn');
+    if (changeDocBtn) {
+        changeDocBtn.style.display = 'inline-block';
+    }
+    
+    // 显示状态徽章
+    const statusBadge = document.getElementById('workflowDocStatusBadge');
+    if (statusBadge) {
+        statusBadge.style.display = 'inline-block';
+        statusBadge.classList.remove('bg-secondary');
+        statusBadge.classList.add('bg-success');
+    }
+    
+    // 保存当前文档信息到全局变量
+    window.workflowCurrentDoc = {
+        id: doc.id || doc.file_id,
+        name: doc.file_name || doc.name,
+        type: docType
+    };
+    
+    // 如果文档类型是多接口，加载文档详情
+    if (docType === 'multi') {
+        loadMultiApiDocumentDetails(doc.id || doc.file_id);
+    }
+}
+
+// 清空工作流文档显示
+function clearWorkflowDocument() {
+    const docNameElement = document.querySelector('.workflow-step .card-body h6');
+    const docInfoElement = document.querySelector('.workflow-step .card-body small.text-muted');
+    
+    if (docNameElement) {
+        docNameElement.textContent = '未选择文档';
+    }
+    
+    if (docInfoElement) {
+        docInfoElement.textContent = '请选择文档类型';
+    }
+    
+    // 隐藏更换文档按钮
+    const changeDocBtn = document.getElementById('workflowChangeDocBtn');
+    if (changeDocBtn) {
+        changeDocBtn.style.display = 'none';
+    }
+    
+    // 隐藏状态徽章
+    const statusBadge = document.getElementById('workflowDocStatusBadge');
+    if (statusBadge) {
+        statusBadge.style.display = 'none';
+        statusBadge.classList.remove('bg-success');
+        statusBadge.classList.add('bg-secondary');
+    }
+    
+    // 清空全局变量
+    window.workflowCurrentDoc = null;
+    
+    // 重置文档类型选择下拉框
+    const workflowDocTypeSelect = document.getElementById('workflowDocTypeSelect');
+    if (workflowDocTypeSelect) {
+        workflowDocTypeSelect.value = '';
+    }
+}
+
+// 显示工作流文档选择器
+function showWorkflowDocumentSelector(docType) {
+    // 创建模态框
+    const modalId = 'workflowDocumentSelectorModal';
+    let modal = document.getElementById(modalId);
+    
+    if (!modal) {
+        // 创建模态框HTML
+        const modalHtml = `
+            <div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Label" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="${modalId}Label">选择${docType === 'single' ? '单接口' : '多接口'}文档</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>文档ID</th>
+                                            <th>上传时间</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="workflowDocumentTableBody">
+                                        <tr>
+                                            <td colspan="3" class="text-center">
+                                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                                正在加载文档列表...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 添加到页面
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        modal = document.getElementById(modalId);
+    }
+    
+    // 加载文档列表
+    loadWorkflowDocumentList(docType);
+    
+    // 显示模态框
+    const modalInstance = new bootstrap.Modal(modal);
+    modalInstance.show();
+}
+
+// 加载工作流文档列表
+function loadWorkflowDocumentList(docType) {
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    let apiUrl;
+    
+    if (docType === 'single') {
+        apiUrl = baseUrl + '/api/docs/by-type/single';
+    } else if (docType === 'multi') {
+        apiUrl = baseUrl + '/api/docs/by-type/multi';
+    } else {
+        console.error('未知的文档类型:', docType);
+        return;
+    }
+    
+    const tableBody = document.getElementById('workflowDocumentTableBody');
+    
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.data.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">
+                                没有找到${docType === 'single' ? '单接口' : '多接口'}文档
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tableBody.innerHTML = data.data.map(doc => {
+                        // 根据文档类型显示不同的信息
+                        let displayName;
+                        if (docType === 'single') {
+                            // 单接口文档显示文档ID
+                            displayName = `${doc.id || doc.file_id}`;
+                        } else {
+                            // 多接口文档显示文档名称
+                            displayName = doc.file_name || doc.name;
+                        }
+                        
+                        return `
+                        <tr>
+                            <td>${displayName}</td>
+                            <td>${doc.upload_time || new Date().toLocaleString()}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="selectWorkflowDocument('${doc.id || doc.file_id}', '${doc.file_name || doc.name}', '${docType}')">
+                                    选择
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    }).join('');
+                }
+            } else {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="text-center text-danger">
+                            加载文档失败: ${data.message}
+                        </td>
+                    </tr>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('加载文档列表失败:', error);
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="3" class="text-center text-danger">
+                        加载文档失败: ${error.message}
+                    </td>
+                </tr>
+            `;
+        });
+}
+
+// 选择工作流文档
+function selectWorkflowDocument(docId, docName, docType) {
+    // 更新文档显示
+    updateWorkflowDocument({
+        id: docId,
+        file_name: docName
+    }, docType);
+    
+    // 关闭模态框
+    const modal = document.getElementById('workflowDocumentSelectorModal');
+    if (modal) {
+        const modalInstance = bootstrap.Modal.getInstance(modal);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+    }
+    
+    // 根据文档类型显示不同的通知信息
+    let notificationMessage;
+    if (docType === 'single') {
+        notificationMessage = `已选择单接口文档，ID: ${docId}`;
+    } else {
+        notificationMessage = `已选择文档: ${docName}`;
+    }
+    
+    showSmartTestNotification(notificationMessage, 'success');
 }
 
 // 初始化测试按钮事件监听器 - 移至主初始化函数中

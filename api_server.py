@@ -2330,6 +2330,166 @@ def get_api_doc(task_id):
     
     return jsonify(response_data)
 
+@app.route('/api/docs/by-type/<doc_type>', methods=['GET'])
+def get_docs_by_type(doc_type):
+    """根据文档类型获取文档列表"""
+    try:
+        if doc_type == 'single':
+            # 获取单接口文档列表
+            dir_path = os.path.join(app.config['UPLOAD_FOLDER'], 'openapi')
+            documents = []
+            
+            # 确保目录存在
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path, exist_ok=True)
+                return jsonify({
+                    'success': True,
+                    'data': []
+                })
+            
+            # 遍历目录中的文件
+            for filename in os.listdir(dir_path):
+                file_extension = os.path.splitext(filename)[1].lower()
+                if file_extension in ['.yaml', '.yml', '.json']:
+                    file_path = os.path.join(dir_path, filename)
+                    
+                    # 获取文件信息
+                    stat = os.stat(file_path)
+                    
+                    # 提取文件ID
+                    file_id = filename
+                    if filename.startswith('openapi_'):
+                        file_id = filename[len('openapi_'):]  # 去掉类型前缀
+                    
+                    # 去掉文件扩展名
+                    if '.' in file_id:
+                        file_id = file_id.rsplit('.', 1)[0]
+                    
+                    # 尝试解析文件内容
+                    api_count = 0
+                    
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            if file_extension == '.json':
+                                content = json.load(f)
+                                
+                                # 计算API数量
+                                if 'paths' in content:
+                                    for path, path_item in content['paths'].items():
+                                        for method in path_item:
+                                            if method.upper() in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
+                                                api_count += 1
+                            elif file_extension in ['.yaml', '.yml']:
+                                content = yaml.safe_load(f)
+                                
+                                # 计算API数量
+                                if 'paths' in content:
+                                    for path, path_item in content['paths'].items():
+                                        for method in path_item:
+                                            if method.upper() in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
+                                                api_count += 1
+                    except Exception as e:
+                        logger.warning(f"解析单接口文档失败 {filename}: {str(e)}")
+                    
+                    documents.append({
+                        'id': file_id,
+                        'file_id': file_id,
+                        'file_name': filename,
+                        'upload_time': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                        'api_count': api_count,
+                        'doc_type': 'single'
+                    })
+            
+            return jsonify({
+                'success': True,
+                'data': documents
+            })
+        
+        elif doc_type == 'multi':
+            # 获取多接口文档列表
+            dir_path = os.path.join(app.config['MULTI_UPLOAD_FOLDER'], 'openapi')
+            documents = []
+            
+            # 确保目录存在
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path, exist_ok=True)
+                return jsonify({
+                    'success': True,
+                    'data': []
+                })
+            
+            # 遍历目录中的文件
+            for filename in os.listdir(dir_path):
+                file_extension = os.path.splitext(filename)[1].lower()
+                if file_extension in ['.yaml', '.yml', '.json']:
+                    file_path = os.path.join(dir_path, filename)
+                    
+                    # 获取文件信息
+                    stat = os.stat(file_path)
+                    
+                    # 提取文件ID
+                    file_id = filename
+                    if filename.startswith('multiopenapi_'):
+                        file_id = filename[len('multiopenapi_'):]  # 去掉类型前缀
+                    
+                    # 去掉文件扩展名
+                    if '.' in file_id:
+                        file_id = file_id.rsplit('.', 1)[0]
+                    
+                    # 尝试解析文件内容
+                    api_count = 0
+                    
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            if file_extension == '.json':
+                                content = json.load(f)
+                                
+                                # 计算API数量
+                                if 'paths' in content:
+                                    for path, path_item in content['paths'].items():
+                                        for method in path_item:
+                                            if method.upper() in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
+                                                api_count += 1
+                            elif file_extension in ['.yaml', '.yml']:
+                                content = yaml.safe_load(f)
+                                
+                                # 计算API数量
+                                if 'paths' in content:
+                                    for path, path_item in content['paths'].items():
+                                        for method in path_item:
+                                            if method.upper() in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
+                                                api_count += 1
+                    except Exception as e:
+                        logger.warning(f"解析多接口文档失败 {filename}: {str(e)}")
+                    
+                    documents.append({
+                        'id': file_id,
+                        'file_id': file_id,
+                        'file_name': filename,
+                        'upload_time': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                        'api_count': api_count,
+                        'doc_type': 'multi'
+                    })
+            
+            return jsonify({
+                'success': True,
+                'data': documents
+            })
+        
+        else:
+            return jsonify({
+                'success': False,
+                'error': '不支持的文档类型'
+            }), 400
+    
+    except Exception as e:
+        logger.error(f"获取文档列表失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '获取文档列表失败',
+            'message': str(e)
+        }), 500
+
 # 3. 测试用例生成
 @app.route('/api/test-cases/generate', methods=['POST'])
 def generate_test_cases():
