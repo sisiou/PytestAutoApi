@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 加载已上传文档列表
     loadUploadedDocuments();
+    
+    // 初始化测试编辑器按钮
+    initTestEditorButtons();
 });
 
 // 初始化测试中心 - 智能测试功能专用
@@ -55,6 +58,35 @@ function initSmartTestTab() {
             const fileInput = document.getElementById('fileInput');
             if (fileInput) {
                 fileInput.click();
+            }
+        });
+    }
+    
+    // 选择文件按钮
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    if (selectFileBtn) {
+        selectFileBtn.addEventListener('click', function() {
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) {
+                fileInput.click();
+            }
+        });
+    }
+    
+    // 上传容器点击事件
+    const uploadContainer = document.getElementById('uploadContainer');
+    if (uploadContainer) {
+        uploadContainer.addEventListener('click', function(e) {
+            // 确保点击的不是按钮或其他交互元素
+            if (e.target === uploadContainer || 
+                e.target.tagName === 'I' || 
+                e.target.tagName === 'H4' || 
+                e.target.tagName === 'P' ||
+                e.target.classList.contains('file-icon')) {
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput) {
+                    fileInput.click();
+                }
             }
         });
     }
@@ -374,25 +406,72 @@ function handleSmartFile(file) {
     
     // 显示上传进度
     showUploadProgress();
+    updateProgressMessage('正在上传文件...');
+    updateProgressBar(10);
     
-    // 读取文件
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const content = e.target.result;
-            parseSmartApiDocContent(content, file.name, file.size);
-        } catch (error) {
-            showSmartTestNotification('文件解析失败: ' + error.message, 'error');
-            hideUploadProgress();
+    // 创建FormData对象用于文件上传
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('doc_type', 'openapi');
+    formData.append('target_path', '/Users/oss/code/PytestAutoApi/multiuploads/openapi');
+    
+    // 上传文件到服务器
+    const uploadUrl = API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.DOCS.UPLOAD;
+    
+    fetch(uploadUrl, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        updateProgressMessage('正在解析文件内容...');
+        updateProgressBar(50);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-    };
-    
-    reader.onerror = function() {
-        showSmartTestNotification('文件读取失败', 'error');
+        return response.json();
+    })
+    .then(data => {
+        updateProgressMessage('正在处理API文档...');
+        updateProgressBar(80);
+        
+        if (!data.success) {
+            throw new Error(data.message || '上传失败');
+        }
+        
+        // 读取文件内容进行本地解析
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const content = e.target.result;
+                updateProgressMessage('正在完成文档解析...');
+                updateProgressBar(90);
+                
+                parseSmartApiDocContent(content, file.name, file.size);
+                
+                updateProgressBar(100);
+                setTimeout(() => {
+                    hideUploadProgress();
+                    showSmartTestNotification(`文件 ${file.name} 上传成功`, 'success');
+                }, 500);
+            } catch (error) {
+                showSmartTestNotification('文件解析失败: ' + error.message, 'error');
+                hideUploadProgress();
+            }
+        };
+        
+        reader.onerror = function() {
+            showSmartTestNotification('文件读取失败', 'error');
+            hideUploadProgress();
+        };
+        
+        reader.readAsText(file);
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        showSmartTestNotification('文件上传失败: ' + error.message, 'error');
         hideUploadProgress();
-    };
-    
-    reader.readAsText(file);
+    });
 }
 
 // 从URL获取API文档 (智能测试标签页)
@@ -3075,8 +3154,8 @@ function generateSelectedTests() {
     }, 2000);
 }
 
-// 初始化测试按钮事件监听器
-document.addEventListener('DOMContentLoaded', function() {
+// 初始化测试按钮事件监听器 - 移至主初始化函数中
+function initTestEditorButtons() {
     // 测试关联关系编辑器按钮
     const testRelationEditorBtn = document.getElementById('testRelationEditorBtn');
     if (testRelationEditorBtn) {
@@ -3182,4 +3261,4 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+}

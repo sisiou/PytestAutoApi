@@ -13,6 +13,7 @@ import time
 import logging
 import yaml
 import uuid
+import hashlib
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from flask import Flask, request, jsonify, send_from_directory
@@ -152,11 +153,10 @@ def internal_error(error):
     return jsonify({'error': 'Internal server error', 'message': str(error)}), 500
 
 # 辅助函数
-def generate_file_id(url=None):
+def generate_task_id(url=None):
     """生成任务ID"""
     if url:
         # 从URL生成稳定的ID，使用URL的哈希值确保相同URL生成相同ID
-        
         # 使用MD5哈希算法对URL进行哈希
         url_hash = hashlib.md5(url.encode('utf-8')).hexdigest()
         # 取哈希值的前16位作为ID
@@ -164,6 +164,10 @@ def generate_file_id(url=None):
     else:
         # 如果没有URL，使用时间戳
         return str(int(time.time() * 1000))
+
+def generate_file_id(url=None):
+    """生成文件ID"""
+    return generate_task_id(url)
 
 def save_result(task_id: str, result: Dict[str, Any]):
     """保存任务结果"""
@@ -227,7 +231,17 @@ def upload_document():
         
         # 保存上传的文件
         filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{file_id}_{filename}")
+        
+        # 检查是否指定了目标路径
+        target_path = request.form.get('target_path')
+        if target_path:
+            # 如果指定了目标路径，确保目录存在
+            os.makedirs(target_path, exist_ok=True)
+            file_path = os.path.join(target_path, filename)
+        else:
+            # 使用默认路径
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
         file.save(file_path)
         
         # 返回文件信息
@@ -248,14 +262,33 @@ def upload_document():
 def parse_uploaded_document(file_id):
     """解析已上传的文档接口"""
     try:
-        # 查找文件
+        # 查找文件 - 检查主上传目录和子目录
         upload_dir = app.config['UPLOAD_FOLDER']
         file_path = None
         
-        # 遍历上传目录查找匹配的文件
-        for filename in os.listdir(upload_dir):
-            if filename.startswith(file_id):
-                file_path = os.path.join(upload_dir, filename)
+        # 定义要搜索的目录列表
+        search_dirs = [upload_dir]
+        
+        # 添加子目录到搜索列表
+        for subdir in os.listdir(upload_dir):
+            subdir_path = os.path.join(upload_dir, subdir)
+            if os.path.isdir(subdir_path):
+                search_dirs.append(subdir_path)
+        
+        # 在所有目录中查找匹配的文件
+        for search_dir in search_dirs:
+            for filename in os.listdir(search_dir):
+                # 首先尝试直接匹配文件ID（为了向后兼容）
+                if filename.startswith(file_id):
+                    file_path = os.path.join(search_dir, filename)
+                    logger.info(f"在目录 {search_dir} 中找到文件: {filename}")
+                    break
+                # 如果没有找到，尝试匹配文件名中包含file_id的情况
+                elif file_id in filename:
+                    file_path = os.path.join(search_dir, filename)
+                    logger.info(f"在目录 {search_dir} 中找到文件: {filename}")
+                    break
+            if file_path:
                 break
         
         if not file_path or not os.path.exists(file_path):
@@ -380,14 +413,33 @@ def parse_uploaded_document(file_id):
 def generate_test_cases_for_document(file_id):
     """为已上传的文档生成测试用例"""
     try:
-        # 查找文件
+        # 查找文件 - 检查主上传目录和子目录
         upload_dir = app.config['UPLOAD_FOLDER']
         file_path = None
         
-        # 遍历上传目录查找匹配的文件
-        for filename in os.listdir(upload_dir):
-            if filename.startswith(file_id):
-                file_path = os.path.join(upload_dir, filename)
+        # 定义要搜索的目录列表
+        search_dirs = [upload_dir]
+        
+        # 添加子目录到搜索列表
+        for subdir in os.listdir(upload_dir):
+            subdir_path = os.path.join(upload_dir, subdir)
+            if os.path.isdir(subdir_path):
+                search_dirs.append(subdir_path)
+        
+        # 在所有目录中查找匹配的文件
+        for search_dir in search_dirs:
+            for filename in os.listdir(search_dir):
+                # 首先尝试直接匹配文件ID（为了向后兼容）
+                if filename.startswith(file_id):
+                    file_path = os.path.join(search_dir, filename)
+                    logger.info(f"在目录 {search_dir} 中找到文件: {filename}")
+                    break
+                # 如果没有找到，尝试匹配文件名中包含file_id的情况
+                elif file_id in filename:
+                    file_path = os.path.join(search_dir, filename)
+                    logger.info(f"在目录 {search_dir} 中找到文件: {filename}")
+                    break
+            if file_path:
                 break
         
         if not file_path or not os.path.exists(file_path):
@@ -516,14 +568,33 @@ def analyze_test_results_for_document(file_id):
 def full_test_workflow_for_document(file_id):
     """为已上传的文档执行完整的测试工作流程"""
     try:
-        # 查找文件
+        # 查找文件 - 检查主上传目录和子目录
         upload_dir = app.config['UPLOAD_FOLDER']
         file_path = None
         
-        # 遍历上传目录查找匹配的文件
-        for filename in os.listdir(upload_dir):
-            if filename.startswith(file_id):
-                file_path = os.path.join(upload_dir, filename)
+        # 定义要搜索的目录列表
+        search_dirs = [upload_dir]
+        
+        # 添加子目录到搜索列表
+        for subdir in os.listdir(upload_dir):
+            subdir_path = os.path.join(upload_dir, subdir)
+            if os.path.isdir(subdir_path):
+                search_dirs.append(subdir_path)
+        
+        # 在所有目录中查找匹配的文件
+        for search_dir in search_dirs:
+            for filename in os.listdir(search_dir):
+                # 首先尝试直接匹配文件ID（为了向后兼容）
+                if filename.startswith(file_id):
+                    file_path = os.path.join(search_dir, filename)
+                    logger.info(f"在目录 {search_dir} 中找到文件: {filename}")
+                    break
+                # 如果没有找到，尝试匹配文件名中包含file_id的情况
+                elif file_id in filename:
+                    file_path = os.path.join(search_dir, filename)
+                    logger.info(f"在目录 {search_dir} 中找到文件: {filename}")
+                    break
+            if file_path:
                 break
         
         if not file_path or not os.path.exists(file_path):
@@ -2126,55 +2197,39 @@ def list_parsed_docs():
         docs_list = []
         
         for task_id, doc_info in api_docs.items():
-            # 提取API信息
+            # 获取文档基本信息
+            filename = doc_info.get('filename', '')
+            created_at = doc_info.get('created_at', '')
+            
+            # 计算API数量
             api_data = doc_info.get('api_data', {})
+            api_count = 0
             
             # 检查是否为完整解析器的数据格式（包含name, method, path等扁平结构）
             if 'name' in api_data or 'method' in api_data:
-                # 完整解析器的扁平数据格式 - 只返回基本信息，不返回详细参数和响应
-                api_info = {
-                    'id': task_id,
-                    'method': api_data.get('method', 'GET'),
-                    'path': api_data.get('path', '/api/unknown'),
-                    'summary': api_data.get('summary', ''),
-                    'description': api_data.get('description', ''),
-                    'tags': api_data.get('tags', []) if isinstance(api_data.get('tags'), list) else [],
-                    # 移除详细的参数和响应信息，只保留计数
-                    'parameters_count': len(api_data.get('request', {}).get('headers', [])) + 
-                                      len(api_data.get('request', {}).get('query_params', [])) + 
-                                      len(api_data.get('request', {}).get('path_params', [])),
-                    'responses_count': len(api_data.get('responses', [])),
-                    'has_request_body': bool(api_data.get('request', {}).get('body')),
-                    'task_id': task_id
-                }
-                docs_list.append(api_info)
-            
+                # 完整解析器的扁平数据格式
+                api_count = 1  # 这种格式每个文档代表一个API
             else:
-                # 传统OpenAPI格式 - 只返回基本信息，不返回详细参数和响应
+                # 传统OpenAPI格式
                 paths = api_data.get('paths', {})
                 for path, path_item in paths.items():
                     for method, api_detail in path_item.items():
                         if method.upper() in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
-                            api_info = {
-                                'id': f"{method.lower()}_{path.replace('/', '_').replace('{', '').replace('}', '').replace(':', '_')}",
-                                'method': method.upper(),
-                                'path': path,
-                                'summary': api_detail.get('summary', ''),
-                                'description': api_detail.get('description', ''),
-                                'tags': api_detail.get('tags', []),
-                                # 移除详细的参数和响应信息，只保留计数
-                                'parameters_count': len(api_detail.get('parameters', [])),
-                                'responses_count': len(api_detail.get('responses', {})),
-                                'has_request_body': bool(api_detail.get('requestBody')),
-                                'task_id': task_id
-                            }
-                            docs_list.append(api_info)
+                            api_count += 1
+            
+            # 添加到文档列表
+            docs_list.append({
+                'task_id': task_id,
+                'filename': filename,
+                'created_at': created_at,
+                'api_count': api_count
+            })
         
         # 更新缓存
-        docs_list_cache = docs_list
+        docs_list_cache = {'docs': docs_list}
         docs_list_cache_time = current_time
         
-        return jsonify(docs_list)
+        return jsonify({'docs': docs_list})
     
     except Exception as e:
         logger.error(f"获取API文档列表失败: {str(e)}")
