@@ -130,6 +130,11 @@ FEISHU_ERROR_CODES = {
         "description": "接收者 ID 无效或不存在",
         "suggestion": "请检查 receive_id 是否正确，确保该 ID 在当前环境中存在且有效。如果是 open_id，请确保使用正确的 open_id 格式"
     },
+    190005: {
+        "http_status": 429,
+        "description": "应用请求频率超限",
+        "suggestion": "当前请求过于频繁，已达到API限流阈值。建议：1) 降低请求频率，在测试用例之间添加适当的延迟；2) 检查是否有其他进程同时调用相同接口；3) 等待一段时间后重试"
+    },
 }
 
 

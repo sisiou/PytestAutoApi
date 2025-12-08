@@ -5,8 +5,6 @@
 智能自动化测试平台后端API服务
 提供RESTful API接口支持前端交互
 """
-
-import os
 import sys
 import json
 import time
@@ -14,35 +12,45 @@ import logging
 import yaml
 import uuid
 import hashlib
+import subprocess
+from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+import tempfile
+import traceback
+
 # 导入智能自动化平台模块
 from utils.smart_auto.api_parser import APIParser, APIParserFactory
-from utils.smart_auto.test_generator import generate_test_cases
+from utils.smart_auto.test_generator import TestCaseGenerator, generate_test_cases
 from utils.smart_auto.coverage_scorer import CoverageScorer
 from utils.smart_auto.api_case_generator import APICaseGenerator
 from utils.smart_auto.dependency_analyzer import DependencyAnalyzer
+
 # 导入文档上传处理器
 from utils.smart_auto.document_upload_handler import document_upload_handler
+
 # 导入飞书解析模块
 from utils.parse.feishu_parse import transform_feishu_url, download_json
 from utils.parse.ai import (
-            generate_openapi_yaml, 
-            generate_api_relation_file, 
-            generate_business_scene_file,
-            generate_file_fingerprint, 
-            get_output_path,
-            process_url_with_ai,
-            _normalize_url,
-            _create_file_key_from_url
-        )
+    generate_openapi_yaml,
+    generate_api_relation_file,
+    generate_business_scene_file,
+    generate_file_fingerprint,
+    get_output_path,
+    process_url_with_ai,
+    _normalize_url,
+    _create_file_key_from_url
+)
 from utils.parse.split_openai import integrate_with_upload_api
 from utils.parse.relation_to_group import integrate_with_group_api
 import tempfile
 import traceback
+
+
+
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
@@ -2545,6 +2553,7 @@ def generate_test_cases():
 # -*- coding: utf-8 -*-
 
 
+
 class Test{case.api_method.title()}{case.api_path.replace('/', '_').replace('{', '_').replace('}', '_')}:
     def test_{case.case_id}(self):
         url = "{case.host}{case.api_path}"
@@ -3694,6 +3703,558 @@ def delete_multiapi_document(file_id):
         }), 500
 
 # 9. 静态文件服务
+# 7. 飞书测试接口
+@app.route('/api/feishu/run-all-tests', methods=['POST'])
+def run_all_feishu_tests():
+    """执行 run_all_feishu_tests.py 脚本"""
+    try:
+        # 生成任务ID
+        task_id = generate_task_id()
+        
+        # 获取项目根目录
+        project_root = Path(__file__).parent
+        script_path = project_root / "utils" / "other_tools" / "run_all_feishu_tests.py"
+        
+        if not script_path.exists():
+            return jsonify({
+                'error': '脚本文件不存在',
+                'message': f'未找到脚本: {script_path}'
+            }), 404
+        
+        logger.info(f"开始执行脚本: {script_path}")
+        
+        # 执行脚本
+        # 设置环境变量，强制使用 UTF-8 编码（解决 Windows GBK 编码问题）
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'  # 强制 Python 使用 UTF-8 编码
+        env['PYTHONUTF8'] = '1'  # Python 3.7+ 支持，强制 UTF-8
+        
+        # 使用 UTF-8 编码，并设置 errors='replace' 来处理编码错误
+        # 设置 stdin=subprocess.DEVNULL 防止脚本等待输入而阻塞
+        process = subprocess.Popen(
+            [sys.executable, str(script_path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,  # 防止脚本等待输入
+            text=True,
+            cwd=str(project_root),
+            encoding='utf-8',
+            errors='replace',  # 遇到编码错误时用替换字符代替
+            env=env  # 传递环境变量
+        )
+        
+        # 等待执行完成（可以设置超时时间）
+        stdout = ''
+        stderr = ''
+        return_code = -1
+        try:
+            stdout, stderr = process.communicate(timeout=600)  # 10分钟超时
+            return_code = process.returncode
+        except subprocess.TimeoutExpired:
+            process.kill()
+            try:
+                stdout, stderr = process.communicate()
+            except Exception as e:
+                logger.error(f"获取超时后的输出失败: {e}")
+                stdout = f"执行超时，无法获取完整输出: {str(e)}"
+                stderr = ""
+            return_code = -1
+            return jsonify({
+                'task_id': task_id,
+                'error': '执行超时',
+                'message': '脚本执行超过10分钟，已终止',
+                'return_code': return_code,
+                'stdout': stdout[:1000] if stdout else '',  # 限制输出长度
+                'stderr': stderr[:1000] if stderr else ''
+            }), 500
+        except Exception as e:
+            logger.error(f"执行脚本时出错: {e}")
+            try:
+                process.kill()
+            except:
+                pass
+            return jsonify({
+                'task_id': task_id,
+                'error': '执行脚本时出错',
+                'message': str(e),
+                'return_code': return_code
+            }), 500
+        
+        # 保存执行结果
+        result = {
+            'task_id': task_id,
+            'script': str(script_path),
+            'return_code': return_code,
+            'stdout': stdout,
+            'stderr': stderr,
+            'created_at': datetime.now().isoformat()
+        }
+        save_result(task_id, result)
+        
+        # ========== 新增：检测并启动Allure报告服务器 ==========
+        allure_url = None
+        allure_process = None
+        
+        # 检查多个可能的Allure结果目录
+        possible_allure_dirs = [
+            project_root / "allure-results",
+            project_root / "report" / "tmp",
+            project_root / "reports" / "allure-results",
+            project_root / "test-results" / "allure"
+        ]
+        
+        allure_results_dir = None
+        for dir_path in possible_allure_dirs:
+            if dir_path.exists() and any(dir_path.iterdir()):
+                allure_results_dir = dir_path
+                logger.info(f"找到Allure结果目录: {allure_results_dir}")
+                break
+        
+        if allure_results_dir:
+            try:
+                # 动态查找可用端口（从9999开始尝试）
+                allure_port = find_available_port(9999, 10)
+                if allure_port:
+                    # 获取本机IP地址
+                    local_ip = get_local_ip()
+                    
+                    # 启动Allure服务器（异步，不阻塞）
+                    allure_process = start_allure_server_async(
+                        allure_results_dir, 
+                        port=allure_port, 
+                        host='0.0.0.0'
+                    )
+                    
+                    if allure_process:
+                        allure_url = f"http://{local_ip}:{allure_port}"
+                        logger.info(f"Allure报告服务器已启动: {allure_url}")
+                    else:
+                        logger.warning("启动Allure服务器失败")
+                else:
+                    logger.warning("找不到可用端口启动Allure报告")
+            except Exception as e:
+                logger.error(f"启动Allure报告失败: {e}")
+        else:
+            logger.warning("未找到Allure测试结果目录")
+        # ========== 新增代码结束 ==========
+        
+        # 返回完整输出（限制长度避免响应过大）
+        max_output_length = 5000  # 增加到5000字符
+        
+        response_data = {
+            'task_id': task_id,
+            'return_code': return_code,
+            'stdout': stdout[-max_output_length:] if len(stdout) > max_output_length else stdout,
+            'stderr': stderr[-max_output_length:] if len(stderr) > max_output_length else stderr,
+            'stdout_length': len(stdout),
+            'stderr_length': len(stderr)
+        }
+        
+        # ========== 新增：添加Allure信息到响应 ==========
+        if allure_url:
+            response_data['allure_report'] = {
+                'url': allure_url,
+                'status': 'running',
+                'port': allure_port if 'allure_port' in locals() else None,
+                'pid': allure_process.pid if allure_process else None
+            }
+        # ========== 新增代码结束 ==========
+        
+        if return_code == 0:
+            response_data['message'] = '脚本执行成功'
+            if allure_url:
+                response_data['message'] += f'，Allure报告地址: {allure_url}'
+            return jsonify(response_data)
+        else:
+            # 即使返回码不为0，也返回200状态码，但包含错误信息
+            # 这样前端可以根据 return_code 判断是否成功
+            response_data['error'] = '脚本执行完成，但有错误或警告'
+            response_data['message'] = f'脚本返回码: {return_code}（0表示成功，非0表示有错误或警告）'
+            
+            # 尝试从输出中提取关键错误信息
+            if stderr:
+                # 查找常见的错误关键词
+                error_keywords = ['错误', 'Error', 'Exception', 'Traceback', '失败', 'Failed']
+                error_lines = [line for line in stderr.split('\n') 
+                             if any(keyword in line for keyword in error_keywords)]
+                if error_lines:
+                    response_data['error_summary'] = error_lines[-10:]  # 最后10行错误信息
+            
+            # 也从 stdout 中查找错误信息（有些错误可能输出到 stdout）
+            if stdout:
+                error_keywords = ['错误', 'Error', 'Exception', 'Traceback', '失败', 'Failed']
+                error_lines = [line for line in stdout.split('\n') 
+                             if any(keyword in line for keyword in error_keywords)]
+                if error_lines:
+                    if 'error_summary' not in response_data:
+                        response_data['error_summary'] = []
+                    response_data['error_summary'].extend(error_lines[-10:])
+            
+            return jsonify(response_data)
+    
+    except Exception as e:
+        logger.error(f"执行 run_all_feishu_tests.py 失败: {str(e)}")
+        return jsonify({
+            'error': '执行脚本失败',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/feishu/generate-and-test', methods=['POST'])
+def generate_and_test_feishu():
+    """执行 run_feishu_generator_and_tests.py 脚本，带文件夹参数"""
+    try:
+        # 获取请求参数
+        data = request.json or {}
+        folder_name = data.get('folder', '')
+        
+        if not folder_name:
+            return jsonify({
+                'error': '缺少必要参数',
+                'message': '请提供 folder 参数（例如: calendar）'
+            }), 400
+        
+        # 生成任务ID
+        task_id = generate_task_id()
+        
+        # 获取项目根目录
+        project_root = Path(__file__).parent
+        script_path = project_root / "run_feishu_generator_and_tests.py"
+        
+        if not script_path.exists():
+            return jsonify({
+                'error': '脚本文件不存在',
+                'message': f'未找到脚本: {script_path}'
+            }), 404
+        
+        # 构建文件夹路径：uploads/scene/{folder_name}
+        folder_path = f"uploads/scene/{folder_name}"
+        full_folder_path = project_root / folder_path
+        
+        # 检查文件夹是否存在
+        if not full_folder_path.exists():
+            return jsonify({
+                'error': '文件夹不存在',
+                'message': f'未找到文件夹: {folder_path}'
+            }), 404
+        
+        logger.info(f"开始执行脚本: {script_path} --folder {folder_path}")
+        
+        # 执行脚本
+        # 设置环境变量，强制使用 UTF-8 编码（解决 Windows GBK 编码问题）
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'  # 强制 Python 使用 UTF-8 编码
+        env['PYTHONUTF8'] = '1'  # Python 3.7+ 支持，强制 UTF-8
+        env['NON_INTERACTIVE'] = '1'  # 标记为非交互式模式，脚本不会启动 Allure 服务器（由 API 启动）
+        
+        # 使用 UTF-8 编码，并设置 errors='replace' 来处理编码错误
+        # 设置 stdin=subprocess.DEVNULL 防止脚本等待输入而阻塞
+        process = subprocess.Popen(
+            [sys.executable, str(script_path), '--folder', folder_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,  # 防止脚本等待输入
+            text=True,
+            cwd=str(project_root),
+            encoding='utf-8',
+            errors='replace',  # 遇到编码错误时用替换字符代替
+            env=env  # 传递环境变量
+        )
+        
+        # 等待执行完成（可以设置超时时间）
+        stdout = ''
+        stderr = ''
+        return_code = -1
+        try:
+            stdout, stderr = process.communicate(timeout=600)  # 10分钟超时
+            return_code = process.returncode
+        except subprocess.TimeoutExpired:
+            process.kill()
+            try:
+                stdout, stderr = process.communicate()
+            except Exception as e:
+                logger.error(f"获取超时后的输出失败: {e}")
+                stdout = f"执行超时，无法获取完整输出: {str(e)}"
+                stderr = ""
+            return_code = -1
+            return jsonify({
+                'task_id': task_id,
+                'error': '执行超时',
+                'message': '脚本执行超过10分钟，已终止',
+                'return_code': return_code,
+                'folder': folder_name,
+                'folder_path': folder_path,
+                'stdout': stdout[-2000:] if stdout else '',
+                'stderr': stderr[-2000:] if stderr else ''
+            }), 500
+        except Exception as e:
+            logger.error(f"执行脚本时出错: {e}")
+            try:
+                process.kill()
+            except:
+                pass
+            return jsonify({
+                'task_id': task_id,
+                'error': '执行脚本时出错',
+                'message': str(e),
+                'folder': folder_name,
+                'folder_path': folder_path,
+                'return_code': return_code
+            }), 500
+        
+        # 保存执行结果
+        result = {
+            'task_id': task_id,
+            'script': str(script_path),
+            'folder': folder_name,
+            'folder_path': folder_path,
+            'return_code': return_code,
+            'stdout': stdout,
+            'stderr': stderr,
+            'created_at': datetime.now().isoformat()
+        }
+        save_result(task_id, result)
+        
+        # ========== 修改：启动 Allure 报告服务器（后台运行） ==========
+        allure_url = None
+        allure_process = None
+        
+        # 检查多个可能的Allure结果目录
+        possible_allure_dirs = [
+            project_root / "allure-results",
+            project_root / "report" / "tmp",
+            project_root / "reports" / "allure-results",
+            project_root / "test-results" / "allure",
+            project_root / folder_path / "allure-results"  # 特定文件夹下的结果
+        ]
+        
+        allure_results_dir = None
+        for dir_path in possible_allure_dirs:
+            if dir_path.exists() and any(dir_path.iterdir()):
+                allure_results_dir = dir_path
+                logger.info(f"找到Allure结果目录: {allure_results_dir}")
+                break
+        
+        if allure_results_dir:
+            try:
+                # 动态查找可用端口（从9999开始尝试）
+                allure_port = find_available_port(9999, 10)
+                if allure_port:
+                    # 获取本机IP地址
+                    local_ip = get_local_ip()
+                    
+                    # 启动Allure服务器（异步，不阻塞）
+                    allure_process = start_allure_server_async(
+                        allure_results_dir, 
+                        port=allure_port, 
+                        host='0.0.0.0'
+                    )
+                    
+                    if allure_process:
+                        allure_url = f"http://{local_ip}:{allure_port}"
+                        logger.info(f"Allure报告服务器已启动: {allure_url}")
+                    else:
+                        logger.warning("启动Allure服务器失败")
+                else:
+                    logger.warning("找不到可用端口启动Allure报告")
+            except Exception as e:
+                logger.error(f"启动Allure报告失败: {e}")
+        else:
+            logger.warning(f"未找到Allure测试结果目录，检查了: {possible_allure_dirs}")
+        # ========== 修改代码结束 ==========
+        
+        # 返回完整输出（限制长度避免响应过大）
+        max_output_length = 5000  # 增加到5000字符
+        
+        response_data = {
+            'task_id': task_id,
+            'folder': folder_name,
+            'folder_path': folder_path,
+            'return_code': return_code,
+            'stdout': stdout[-max_output_length:] if len(stdout) > max_output_length else stdout,
+            'stderr': stderr[-max_output_length:] if len(stderr) > max_output_length else stderr,
+            'stdout_length': len(stdout),
+            'stderr_length': len(stderr)
+        }
+        
+        # ========== 修改：添加 Allure 报告信息 ==========
+        if allure_url:
+            response_data['allure_report'] = {
+                'url': allure_url,
+                'status': 'running',
+                'port': allure_port if 'allure_port' in locals() else None,
+                'pid': allure_process.pid if allure_process else None
+            }
+        # ========== 修改代码结束 ==========
+        
+        if return_code == 0:
+            response_data['message'] = '脚本执行成功'
+            if allure_url:
+                response_data['message'] += f'，Allure报告地址: {allure_url}'
+            return jsonify(response_data)
+        else:
+            # 即使返回码不为0，也返回200状态码，但包含错误信息
+            # 这样前端可以根据 return_code 判断是否成功
+            response_data['error'] = '脚本执行完成，但有错误或警告'
+            response_data['message'] = f'脚本返回码: {return_code}（0表示成功，非0表示有错误或警告）'
+            
+            # 尝试从输出中提取关键错误信息
+            if stderr:
+                # 查找常见的错误关键词
+                error_keywords = ['错误', 'Error', 'Exception', 'Traceback', '失败', 'Failed']
+                error_lines = [line for line in stderr.split('\n') 
+                             if any(keyword in line for keyword in error_keywords)]
+                if error_lines:
+                    response_data['error_summary'] = error_lines[-10:]  # 最后10行错误信息
+            
+            # 也从 stdout 中查找错误信息（有些错误可能输出到 stdout）
+            if stdout:
+                error_keywords = ['错误', 'Error', 'Exception', 'Traceback', '失败', 'Failed']
+                error_lines = [line for line in stdout.split('\n') 
+                             if any(keyword in line for keyword in error_keywords)]
+                if error_lines:
+                    if 'error_summary' not in response_data:
+                        response_data['error_summary'] = []
+                    response_data['error_summary'].extend(error_lines[-10:])
+            
+            return jsonify(response_data)
+    
+    except Exception as e:
+        logger.error(f"执行 run_feishu_generator_and_tests.py 失败: {str(e)}")
+        return jsonify({
+            'error': '执行脚本失败',
+            'message': str(e)
+        }), 500
+
+
+# ========== 新增辅助函数 ==========
+import socket
+import threading
+
+def find_available_port(start_port=9999, max_attempts=10):
+    """查找可用的端口"""
+    for port in range(start_port, start_port + max_attempts):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(('127.0.0.1', port))
+                s.close()
+                return port
+            except socket.error:
+                continue
+    return None
+
+def get_local_ip():
+    """获取本机IP地址"""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except:
+        return "127.0.0.1"
+
+def start_allure_server_async(results_dir, port=9999, host='127.0.0.1'):
+    """异步启动Allure报告服务器"""
+    
+    def run_allure():
+        try:
+            # 生成报告到临时目录
+            import tempfile
+            import time
+            
+            # 创建临时目录用于报告
+            temp_report_dir = tempfile.mkdtemp(prefix="allure_report_")
+            
+            # 生成报告
+            generate_cmd = [
+                'allure', 'generate', str(results_dir),
+                '-o', temp_report_dir,
+                '--clean'
+            ]
+            
+            # 执行生成命令
+            logger.info(f"生成Allure报告: {' '.join(generate_cmd)}")
+            gen_process = subprocess.run(
+                generate_cmd,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            
+            if gen_process.returncode != 0:
+                logger.error(f"生成Allure报告失败: {gen_process.stderr}")
+                return
+            
+            # 启动服务
+            serve_cmd = [
+                'allure', 'serve', str(results_dir),
+                '-p', str(port),
+                '-h', host
+            ]
+            
+            logger.info(f"启动Allure服务器: {' '.join(serve_cmd)}")
+            
+            # 启动服务器（这会阻塞线程）
+            process = subprocess.Popen(
+                serve_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                encoding='utf-8'
+            )
+            
+            # 等待一段时间确保服务器启动
+            time.sleep(3)
+            
+            # 检查进程是否还在运行
+            if process.poll() is not None:
+                # 进程已退出，读取错误信息
+                stdout, stderr = process.communicate()
+                logger.error(f"Allure服务器启动失败: {stderr}")
+                return None
+            
+            logger.info(f"Allure报告服务器已启动: http://{host}:{port}")
+            logger.info(f"进程PID: {process.pid}")
+            
+            # 保存进程对象以便后续管理
+            return process
+            
+        except Exception as e:
+            logger.error(f"启动Allure服务器时出错: {e}")
+            return None
+    
+    # 在新线程中启动Allure服务器
+    thread = threading.Thread(target=run_allure)
+    thread.daemon = True  # 设置为守护线程，主程序退出时自动结束
+    thread.start()
+    
+    # 等待一下确保线程启动
+    import time
+    time.sleep(2)
+    
+    # 由于线程是异步的，我们无法直接返回进程对象
+    # 这里我们可以通过检查端口是否被占用来判断服务器是否启动成功
+    
+    # 检查端口是否被占用（即服务器是否启动）
+    for _ in range(5):  # 尝试5次，每次等待1秒
+        time.sleep(1)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex((host, port)) == 0:
+                logger.info(f"端口 {port} 已被占用，Allure服务器可能已启动")
+                # 我们无法返回实际的进程对象，但可以返回一个占位符
+                class AllureProcess:
+                    def __init__(self, port):
+                        self.pid = -1  # 未知PID
+                        self.port = port
+                    
+                    def __repr__(self):
+                        return f"AllureProcess(port={self.port})"
+                
+                return AllureProcess(port)
+    
+    logger.warning(f"端口 {port} 未被占用，Allure服务器可能启动失败")
+    return None
+# 8. 静态文件服务
 @app.route('/')
 def index():
     """提供前端主页"""
@@ -3719,4 +4280,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     logger.info(f"启动智能自动化测试平台API服务器，端口: {args.port}")
-    app.run(host=args.host, port=args.port, debug=args.debug)
+    app.run(host=args.host, port=args.port, debug=args.debug,use_reloader=False)
+

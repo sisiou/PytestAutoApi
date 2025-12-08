@@ -31,7 +31,7 @@ from utils.read_files_tools.swagger_for_yaml import SwaggerForYaml
 from utils.read_files_tools.case_automatic_control import TestCaseAutomaticGeneration
 
 # ================= 手动配置区域 =================
-OPENAPI_PATH = Path("interfacetest/openapi_server-docs_calendar-v4_calendar_create_f6e6999f.yaml")
+OPENAPI_PATH = Path("uploads/openapi/openapi_server-docs_calendar-v4_calendar_create_f6e6999f.yaml")
 DEFAULT_APP_ID = "cli_a9ac1b6a23b99bc2"
 DEFAULT_APP_SECRET = "kfPsUJmZiCco8DyGGslAufc7tTuNjiVe"
 # =================================================

@@ -30,7 +30,7 @@ from utils.read_files_tools.case_automatic_control import TestCaseAutomaticGener
 from utils.other_tools.allure_config_helper import ensure_allure_properties_file
 
 # ================ 配置 ================
-OPENAPI_PATH = Path("interfacetest/openapi_server-docs_im-v1_message_create_b287d163.yaml")
+OPENAPI_PATH = Path("uploads/openapi/openapi_server-docs_im-v1_message_create_b287d163.yaml")
 DEFAULT_APP_ID = "cli_a9ac1b6a23b99bc2"
 DEFAULT_APP_SECRET = "kfPsUJmZiCco8DyGGslAufc7tTuNjiVe"
 DEFAULT_RECEIVE_ID_TYPE = "user_id"
@@ -279,10 +279,10 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                 scene_content3_body["msg_type"] = "interactive"
                 scene_content3_body["content"] = '{"elements":[{"tag":"markdown","content":"这是一个测试卡片消息"}]}'
                 
-                # TC_CONTENT_004: 图片消息-正常内容
-                scene_content4_body = copy.deepcopy(base_body)
-                scene_content4_body["msg_type"] = "image"
-                scene_content4_body["content"] = '{"image_key": "$cache{redis:image_key}"}'
+                # TC_CONTENT_004: 图片消息-正常内容 (已删除，因为图片上传接口失败)
+                # scene_content4_body = copy.deepcopy(base_body)
+                # scene_content4_body["msg_type"] = "image"
+                # scene_content4_body["content"] = '{"image_key": "$cache{redis:image_key}"}'
                 
                 # TC_CONTENT_003 (重复): 卡片消息内容超长（边界值）- 超过30KB
                 scene_content3_long_body = copy.deepcopy(base_body)
@@ -333,13 +333,13 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                 # 使用 open_id 对应的 receive_id
                 scene_combine2_body["receive_id"] = RECEIVE_ID_MAP.get("open_id", DEFAULT_RECEIVE_ID)
                 
-                # TC_COMBINE_003: union_id+图片消息+有uuid
-                scene_combine3_body = copy.deepcopy(base_body)
-                scene_combine3_body["msg_type"] = "image"
-                scene_combine3_body["content"] = '{"image_key": "$cache{redis:image_key}"}'
-                scene_combine3_body["uuid"] = "test-uuid-003"
-                # 使用 union_id 对应的 receive_id
-                scene_combine3_body["receive_id"] = RECEIVE_ID_MAP.get("union_id", DEFAULT_RECEIVE_ID)
+                # TC_COMBINE_003: union_id+图片消息+有uuid (已删除，因为图片上传接口失败)
+                # scene_combine3_body = copy.deepcopy(base_body)
+                # scene_combine3_body["msg_type"] = "image"
+                # scene_combine3_body["content"] = '{"image_key": "$cache{redis:image_key}"}'
+                # scene_combine3_body["uuid"] = "test-uuid-003"
+                # # 使用 union_id 对应的 receive_id
+                # scene_combine3_body["receive_id"] = RECEIVE_ID_MAP.get("union_id", DEFAULT_RECEIVE_ID)
                 
                 # 最终清理：确保所有场景的 body 都不包含 None 值
                 def clean_none_values(data):
@@ -355,9 +355,11 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                     scene_auth1_body, scene_param1_body, scene_param2_body, scene_param3_body,
                     scene_param4_body, scene_param5_body, scene_receiver2_body,
                     scene_content1_body, scene_content2_body, scene_content3_body,
-                    scene_content4_body, scene_content3_long_body, scene_content4_mismatch_body,
+                    # scene_content4_body,  # 已删除：图片消息-正常内容
+                    scene_content3_long_body, scene_content4_mismatch_body,
                     scene_limit1_first_body, scene_limit1_second_body, scene_limit2_body,
-                    scene_combine1_body, scene_combine2_body, scene_combine3_body
+                    scene_combine1_body, scene_combine2_body
+                    # scene_combine3_body  # 已删除：union_id+图片消息+有uuid
                 ]
                 for scene_body in all_scenes:
                     clean_none_values(scene_body)
@@ -375,7 +377,7 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                 invalid_token_headers["Authorization"] = "Bearer invalid_token_12345"
                 
                 # 创建所有场景的headers列表
-                all_headers = [create_headers() for _ in range(19)]  # 19个场景
+                all_headers = [create_headers() for _ in range(17)]  # 17个场景（已删除2个图片消息用例）
                 
                 # 构建YAML数据，根据测试用例表生成所有场景
                 yaml_data = {
@@ -525,33 +527,33 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                         "assert": {"status_code": 200},
                         "sql": None,
                     },
-                    # TC_CONTENT_004: 图片消息-正常内容
-                    f"11{base_path}": {
-                        "host": self._host,
-                        "url": final_url,
-                        "method": k,
-                        "detail": "TC_CONTENT_004 - 图片消息-正常内容",
-                        "headers": all_headers[9],
-                        "requestType": request_type,
-                        "is_run": None,
-                        "data": scene_content4_body,
-                        "dependence_case": True,
-                        "dependence_case_data": [
-                            {
-                                "case_id": "01_open-apis_im_v1_images",
-                                "dependent_data": [
-                                    {
-                                        "dependent_type": "response",
-                                        "jsonpath": "$.data.image_key",
-                                        "set_cache": "redis:image_key",
-                                        "replace_key": None
-                                    }
-                                ]
-                            }
-                        ],
-                        "assert": {"status_code": 200},
-                        "sql": None,
-                    },
+                    # TC_CONTENT_004: 图片消息-正常内容 (已删除，因为图片上传接口失败)
+                    # f"11{base_path}": {
+                    #     "host": self._host,
+                    #     "url": final_url,
+                    #     "method": k,
+                    #     "detail": "TC_CONTENT_004 - 图片消息-正常内容",
+                    #     "headers": all_headers[9],
+                    #     "requestType": request_type,
+                    #     "is_run": None,
+                    #     "data": scene_content4_body,
+                    #     "dependence_case": True,
+                    #     "dependence_case_data": [
+                    #         {
+                    #             "case_id": "01_open-apis_im_v1_images",
+                    #             "dependent_data": [
+                    #                 {
+                    #                     "dependent_type": "response",
+                    #                     "jsonpath": "$.data.image_key",
+                    #                     "set_cache": "redis:image_key",
+                    #                     "replace_key": None
+                    #                 }
+                    #             ]
+                    #         }
+                    #     ],
+                    #     "assert": {"status_code": 200},
+                    #     "sql": None,
+                    # },
                     # TC_CONTENT_003 (重复): 卡片消息内容超长
                     # 注意：根据实际测试，飞书API可能允许更大的内容，此用例可能返回200
                     # 如果实际API行为允许，可以调整断言或移除此用例
@@ -560,7 +562,7 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                         "url": final_url,
                         "method": k,
                         "detail": "TC_CONTENT_003 - 卡片消息内容超长（边界值）",
-                        "headers": all_headers[10],
+                        "headers": all_headers[9],
                         "requestType": request_type,
                         "is_run": None,
                         "data": scene_content3_long_body,
@@ -576,7 +578,7 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                         "url": final_url,
                         "method": k,
                         "detail": "TC_CONTENT_004 - 消息类型与内容不匹配",
-                        "headers": all_headers[11],
+                        "headers": all_headers[10],
                         "requestType": request_type,
                         "is_run": None,
                         "data": scene_content4_mismatch_body,
@@ -590,7 +592,7 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                         "url": final_url,
                         "method": k,
                         "detail": "TC_LIMIT_001 - 消息去重-相同UUID重复发送（第一次）",
-                        "headers": all_headers[12],
+                        "headers": all_headers[11],
                         "requestType": request_type,
                         "is_run": None,
                         "data": scene_limit1_first_body,
@@ -604,7 +606,7 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                         "url": final_url,
                         "method": k,
                         "detail": "TC_LIMIT_001 - 消息去重-相同UUID重复发送（第二次）",
-                        "headers": all_headers[13],
+                        "headers": all_headers[12],
                         "requestType": request_type,
                         "is_run": None,
                         "data": scene_limit1_second_body,
@@ -622,7 +624,7 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                         "url": final_url,
                         "method": k,
                         "detail": "TC_LIMIT_002 - UUID长度超过50字符限制（边界值）",
-                        "headers": all_headers[14],
+                        "headers": all_headers[13],
                         "requestType": request_type,
                         "is_run": None,
                         "data": scene_limit2_body,
@@ -636,7 +638,7 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                         "url": f"{base_url}?receive_id_type=user_id",
                         "method": k,
                         "detail": "TC_COMBINE_001 - user_id+文本消息+无uuid",
-                        "headers": all_headers[15],
+                        "headers": all_headers[14],
                         "requestType": request_type,
                         "is_run": None,
                         "data": scene_combine1_body,
@@ -650,7 +652,7 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                         "url": f"{base_url}?receive_id_type=open_id",
                         "method": k,
                         "detail": "TC_COMBINE_002 - open_id+卡片消息+有uuid",
-                        "headers": all_headers[16],
+                        "headers": all_headers[15],
                         "requestType": request_type,
                         "is_run": None,
                         "data": scene_combine2_body,
@@ -658,33 +660,33 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                         "assert": {"status_code": 200},
                         "sql": None,
                     },
-                    # TC_COMBINE_003: union_id+图片消息+有uuid
-                    f"19{base_path}": {
-                        "host": self._host,
-                        "url": f"{base_url}?receive_id_type=union_id",
-                        "method": k,
-                        "detail": "TC_COMBINE_003 - union_id+图片消息+有uuid",
-                        "headers": all_headers[17],
-                        "requestType": request_type,
-                        "is_run": None,
-                        "data": scene_combine3_body,
-                        "dependence_case": True,
-                        "dependence_case_data": [
-                            {
-                                "case_id": "01_open-apis_im_v1_images",
-                                "dependent_data": [
-                                    {
-                                        "dependent_type": "response",
-                                        "jsonpath": "$.data.image_key",
-                                        "set_cache": "redis:image_key",
-                                        "replace_key": None
-                                    }
-                                ]
-                            }
-                        ],
-                        "assert": {"status_code": 200},
-                        "sql": None,
-                    },
+                    # TC_COMBINE_003: union_id+图片消息+有uuid (已删除，因为图片上传接口失败)
+                    # f"19{base_path}": {
+                    #     "host": self._host,
+                    #     "url": f"{base_url}?receive_id_type=union_id",
+                    #     "method": k,
+                    #     "detail": "TC_COMBINE_003 - union_id+图片消息+有uuid",
+                    #     "headers": all_headers[17],
+                    #     "requestType": request_type,
+                    #     "is_run": None,
+                    #     "data": scene_combine3_body,
+                    #     "dependence_case": True,
+                    #     "dependence_case_data": [
+                    #         {
+                    #             "case_id": "01_open-apis_im_v1_images",
+                    #             "dependent_data": [
+                    #                 {
+                    #                     "dependent_type": "response",
+                    #                     "jsonpath": "$.data.image_key",
+                    #                     "set_cache": "redis:image_key",
+                    #                     "replace_key": None
+                    #                 }
+                    #             ]
+                    #         }
+                    #     ],
+                    #     "assert": {"status_code": 200},
+                    #     "sql": None,
+                    # },
                 }
                 # 确保 file_path 包含 open-apis 前缀，以生成正确的 YAML 文件路径和 case_id
                 file_path_for_yaml = key if key.startswith("/open-apis") else "/open-apis" + key
@@ -709,7 +711,7 @@ class FeishuMessageSendGeneratorV2:
             print(f"   请先运行: python utils/other_tools/feishu_image_upload_generator.py")
             print(f"   生成文件: {image_yaml}")
             print("\n   然后运行图片上传测试用例，获取 image_key 并存入 Redis")
-            print("   之后才能运行发送图片消息的测试用例（TC_CONTENT_004, TC_COMBINE_003）")
+            print("   注意: 发送图片消息的测试用例（TC_CONTENT_004, TC_COMBINE_003）已删除")
             response = input("\n是否继续生成消息发送用例？(y/n): ")
             if response.lower() != 'y':
                 print("已取消")
@@ -888,11 +890,9 @@ class FeishuMessageSendGeneratorV2:
         print(f"YAML: {self.yaml_out}")
         print(f"TEST: {self.test_path}")
         print("\n重要提示:")
-        print("1. 第18个用例（TC_COMBINE_002）使用 open_id，receive_id 已设置为对应的 open_id 值")
-        print("2. 第19个用例（TC_COMBINE_003）使用 union_id，receive_id 已设置为对应的 union_id 值")
-        print("3. 发送图片消息的用例（TC_CONTENT_004, TC_COMBINE_003）需要先运行图片上传用例")
-        print("   运行命令: pytest test_case/open-apis/im/v1/test_images.py -v")
-        print("   这会获取 image_key 并存入 Redis，供后续用例使用")
+        print("1. 第17个用例（TC_COMBINE_002）使用 open_id，receive_id 已设置为对应的 open_id 值")
+        print("2. 发送图片消息的用例（TC_CONTENT_004, TC_COMBINE_003）已删除，因为图片上传接口失败")
+        print("3. 如需测试图片消息，请先修复图片上传接口问题")
 
     def run_all(self):
         try:

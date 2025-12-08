@@ -244,11 +244,18 @@ class DependentCase:
                                 if i.dependent_type == DependentType.RESPONSE.value:
                                     try:
                                         response_data = json.loads(res.response_data)
-                                        # 检查飞书 API 响应，如果 code != 0，记录警告
+                                        # 检查飞书 API 响应，如果 code != 0，说明依赖用例执行失败，直接抛出错误
                                         if isinstance(response_data, dict) and response_data.get("code") != 0:
+                                            error_code = response_data.get('code')
+                                            error_msg = response_data.get('msg', '')
                                             WARNING.logger.warning(
-                                                f"依赖用例 {_case_id} 执行失败: code={response_data.get('code')}, "
-                                                f"msg={response_data.get('msg')}。响应: {res.response_data[:200]}"
+                                                f"依赖用例 {_case_id} 执行失败: code={error_code}, "
+                                                f"msg={error_msg}。响应: {res.response_data[:200]}"
+                                            )
+                                            raise ValueNotFoundError(
+                                                f"依赖用例 {_case_id} 执行失败，无法提取数据。"
+                                                f"错误码: {error_code}, 错误信息: {error_msg}。"
+                                                f"请检查依赖用例是否正确执行。"
                                             )
                                     except json.JSONDecodeError as e:
                                         WARNING.logger.warning(

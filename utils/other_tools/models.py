@@ -69,8 +69,8 @@ class Assert(BaseModel):
 class DependentData(BaseModel):
     dependent_type: Text
     jsonpath: Text
-    set_cache: Optional[Text]
-    replace_key: Optional[Text]
+    set_cache: Optional[Text] = None
+    replace_key: Optional[Text] = None
 
 
 class DependentCaseData(BaseModel):
@@ -87,16 +87,16 @@ class ParamPrepare(BaseModel):
 
 class SendRequest(BaseModel):
     dependent_type: Text
-    jsonpath: Optional[Text]
-    cache_data: Optional[Text]
-    set_cache: Optional[Text]
-    replace_key: Optional[Text]
+    jsonpath: Optional[Text] = None
+    cache_data: Optional[Text] = None
+    set_cache: Optional[Text] = None
+    replace_key: Optional[Text] = None
 
 
 class TearDown(BaseModel):
     case_id: Text
-    param_prepare: Optional[List["ParamPrepare"]]
-    send_request: Optional[List["SendRequest"]]
+    param_prepare: Optional[List["ParamPrepare"]] = None
+    send_request: Optional[List["SendRequest"]] = None
 
 
 class CurrentRequestSetCache(BaseModel):
@@ -116,14 +116,14 @@ class TestCase(BaseModel):
     is_run: Union[None, bool, Text] = None
     data: Any = None
     dependence_case: Union[None, bool] = False
-    dependence_case_data: Optional[Union[None, List["DependentCaseData"], Text]] = None
-    sql: List = None
-    setup_sql: List = None
+    dependence_case_data: Optional[Union[List["DependentCaseData"], Text, None]] = None
+    sql: Optional[List] = None
+    setup_sql: Optional[List] = None
     status_code: Optional[int] = None
     teardown_sql: Optional[List] = None
     teardown: Union[List["TearDown"], None] = None
-    current_request_set_cache: Optional[List["CurrentRequestSetCache"]]
-    sleep: Optional[Union[int, float]]
+    current_request_set_cache: Optional[List["CurrentRequestSetCache"]] = None
+    sleep: Optional[Union[int, float]] = None
 
 
 class ResponseData(BaseModel):
@@ -140,8 +140,8 @@ class ResponseData(BaseModel):
     assert_data: Dict
     res_time: Union[int, float]
     status_code: int
-    teardown: List["TearDown"] = None
-    teardown_sql: Union[None, List]
+    teardown: Optional[List["TearDown"]] = None
+    teardown_sql: Optional[List] = None
     body: Any
 
 

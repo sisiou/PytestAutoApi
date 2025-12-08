@@ -140,12 +140,22 @@ class RequestControl:
         # 兼容又要上传文件，又要上传其他类型参数
         self.file_data_exit(file_data)
         _data = self.__yaml_case.data
-        for key, value in ast.literal_eval(cache_regular(str(_data)))['file'].items():
+        data_dict = ast.literal_eval(cache_regular(str(_data)))
+        if 'file' not in data_dict:
+            raise ValueError(f"文件上传接口缺少 'file' 字段。数据: {_data}")
+        
+        for key, value in data_dict['file'].items():
             file_path = ensure_path_sep("\\Files\\" + value)
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"文件不存在: {file_path}。请确保文件存在于 Files 目录下。")
             file_data[key] = (value, open(file_path, 'rb'), 'application/octet-stream')
             _files.append(file_data)
             # allure中展示该附件
             allure_attach(source=file_path, name=value, extension=value)
+        
+        if not file_data:
+            raise ValueError("文件上传接口未找到任何文件。请检查 YAML 配置中的 file 字段。")
+        
         multipart = self.multipart_data(file_data)
         # ast.literal_eval(cache_regular(str(_headers)))['Content-Type'] = multipart.content_type
         self.__yaml_case.headers['Content-Type'] = multipart.content_type
@@ -229,14 +239,31 @@ class RequestControl:
         """处理 requestType 为 file 类型"""
         multipart = self.upload_file()
         yaml_data = multipart[2]
-        _headers = multipart[2].headers
-        _headers = self.check_headers_str_null(_headers)
+        # 直接从 yaml_data 获取 headers，避免 check_headers_str_null 重新解析导致丢失正确的 Content-Type
+        _headers = yaml_data.headers
+        # 确保 headers 是字典类型
+        if not isinstance(_headers, dict):
+            _headers = self.check_headers_str_null(_headers)
+            final_headers = ast.literal_eval(cache_regular(str(_headers)))
+        else:
+            # 如果已经是字典，直接使用，但需要确保所有值都是字符串
+            final_headers = {}
+            for key, value in _headers.items():
+                if not isinstance(value, str):
+                    final_headers[key] = str(value)
+                else:
+                    final_headers[key] = value
+        
+        # 强制使用 multipart 生成的正确 Content-Type（包含 boundary）
+        # 这必须在最后设置，确保覆盖 YAML 中可能存在的没有 boundary 的 Content-Type
+        final_headers['Content-Type'] = multipart[0].content_type
+        
         res = requests.request(
             method=method,
             url=cache_regular(yaml_data.url),
             data=multipart[0],
             params=multipart[1],
-            headers=ast.literal_eval(cache_regular(str(_headers))),
+            headers=final_headers,
             verify=False,
             **kwargs
         )

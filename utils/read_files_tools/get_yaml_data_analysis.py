@@ -37,40 +37,33 @@ class CaseData:
         :return:
         """
         dates = GetYamlData(self.file_path).get_yaml_data()
-        # 添加调试代码
-        print(f"Debug: dates type = {type(dates)}, dates = {dates}")
         case_lists = []
         for key, values in dates.items():
             # 公共配置中的数据，与用例数据不同，需要单独处理
-            if key != 'case_common' and isinstance(values, dict):
-                # 检查是否是测试用例数据（包含method字段），跳过OpenAPI规范文件中的非用例数据
-                # 进一步验证：确保是真正的测试用例，而不是OpenAPI规范中的其他字典字段
-                if 'method' in values and 'url' in values and 'requestType' in values:
-                    # 添加调试代码
-                    print(f"Debug: key = {key}, values type = {type(values)}, values = {values}")
-                    case_date = {
-                        'method': self.get_case_method(case_id=key, case_data=values),
-                        'is_run': self.get_is_run(key, values),
-                        'url': self.get_case_host(case_id=key, case_data=values),
-                        'detail': self.get_case_detail(case_id=key, case_data=values),
-                        'headers': self.get_headers(case_id=key, case_data=values),
-                        'requestType': self.get_request_type(key, values),
-                        'data': self.get_case_dates(key, values),
-                        'dependence_case': self.get_dependence_case(key, values),
-                        'dependence_case_data': self.get_dependence_case_data(key, values),
-                        "current_request_set_cache": self.get_current_request_set_cache(values),
-                        "sql": self.get_sql(key, values),
-                        "assert_data": self.get_assert(key, values),
-                        "setup_sql": self.setup_sql(values),
-                        "teardown": self.tear_down(values),
-                        "teardown_sql": self.teardown_sql(values),
-                        "sleep": self.time_sleep(values),
-                    }
-                    if case_id_switch is True:
-                        case_lists.append({key: TestCase(**case_date).dict()})
-                    else:
-                        # 正则处理，如果用例中有需要读取缓存中的数据，则优先读取缓存
-                        case_lists.append(TestCase(**case_date).dict())
+            if key != 'case_common':
+                case_date = {
+                    'method': self.get_case_method(case_id=key, case_data=values),
+                    'is_run': self.get_is_run(key, values),
+                    'url': self.get_case_host(case_id=key, case_data=values),
+                    'detail': self.get_case_detail(case_id=key, case_data=values),
+                    'headers': self.get_headers(case_id=key, case_data=values),
+                    'requestType': self.get_request_type(key, values),
+                    'data': self.get_case_dates(key, values),
+                    'dependence_case': self.get_dependence_case(key, values),
+                    'dependence_case_data': self.get_dependence_case_data(key, values),
+                    "current_request_set_cache": self.get_current_request_set_cache(values),
+                    "sql": self.get_sql(key, values),
+                    "assert_data": self.get_assert(key, values),
+                    "setup_sql": self.setup_sql(values),
+                    "teardown": self.tear_down(values),
+                    "teardown_sql": self.teardown_sql(values),
+                    "sleep": self.time_sleep(values),
+                }
+                if case_id_switch is True:
+                    case_lists.append({key: TestCase(**case_date).dict()})
+                else:
+                    # 正则处理，如果用例中有需要读取缓存中的数据，则优先读取缓存
+                    case_lists.append(TestCase(**case_date).dict())
         return case_lists
 
     def get_case_host(
@@ -124,12 +117,12 @@ class CaseData:
             ) from exc
 
     @classmethod
-    def get_current_request_set_cache(cls, case_data: Dict) -> Dict:
+    def get_current_request_set_cache(cls, case_data: Dict) -> Union[Dict, None]:
         """将当前请求的用例数据存入缓存"""
         try:
             return case_data['current_request_set_cache']
         except KeyError:
-            ...
+            return None
 
     def get_case_detail(
             self,

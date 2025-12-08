@@ -158,24 +158,47 @@ class FeishuUnifiedGenerator:
         # 输出目录配置
         self.data_output_dir = data_output_dir  # YAML 文件输出目录
         self.test_output_dir = test_output_dir  # 测试代码输出目录
+        # 记录本次生成的所有 YAML 文件路径
+        self.generated_yaml_files: List[Path] = []
         # 默认值配置（可以从模块级别常量获取）
         self.default_receive_id_type = DEFAULT_RECEIVE_ID_TYPE
         self.default_receive_id = DEFAULT_RECEIVE_ID
         self.receive_id_map = RECEIVE_ID_MAP  # ID 类型映射表
         
-        # 依赖关系 JSON 文件路径（默认在 folder_path 的父目录下查找）
+        # 依赖关系 JSON 文件路径
         if relation_json_path:
             self.relation_json_path = Path(relation_json_path)
         else:
-            # 默认查找 folder_path 父目录下的 api_relation_*.json 文件
-            parent_dir = self.folder_path.parent
-            relation_files = list(parent_dir.glob("api_relation_*.json"))
-            if relation_files:
-                self.relation_json_path = relation_files[0]
-                print(f"[INFO] 找到依赖关系文件: {self.relation_json_path}")
+            # 优先查找 uploads/relation/ 目录下的 api_relation_*.json 文件
+            # 如果 folder_path 在 uploads/scene/ 下，则从 uploads/relation/ 查找
+            relation_json_path = None
+            if "uploads" in str(self.folder_path):
+                # 如果路径包含 uploads，尝试从 uploads/relation/ 查找
+                uploads_root = self.folder_path
+                # 向上查找 uploads 根目录
+                while uploads_root.name != "uploads" and uploads_root.parent != uploads_root:
+                    uploads_root = uploads_root.parent
+                if uploads_root.name == "uploads":
+                    relation_dir = uploads_root / "relation"
+                    if relation_dir.exists():
+                        relation_files = list(relation_dir.glob("api_relation_*.json"))
+                        if relation_files:
+                            relation_json_path = relation_files[0]
+                            print(f"[INFO] 从 uploads/relation/ 找到依赖关系文件: {relation_json_path}")
+            
+            # 如果还没找到，尝试在 folder_path 的父目录下查找
+            if not relation_json_path:
+                parent_dir = self.folder_path.parent
+                relation_files = list(parent_dir.glob("api_relation_*.json"))
+                if relation_files:
+                    relation_json_path = relation_files[0]
+                    print(f"[INFO] 从父目录找到依赖关系文件: {relation_json_path}")
+            
+            if relation_json_path:
+                self.relation_json_path = relation_json_path
             else:
                 self.relation_json_path = None
-                print(f"[WARN] 未找到依赖关系文件，将在父目录 {parent_dir} 下查找 api_relation_*.json")
+                print(f"[WARN] 未找到依赖关系文件，已尝试从 uploads/relation/ 和父目录查找")
         self.api_relations: Dict = {}
         self._load_api_relations()
         
@@ -1075,6 +1098,9 @@ class FeishuUnifiedGenerator:
                             request_type = "FILE"
                             case_data = file_upload_data if file_upload_data else {}
                             query_params = {}  # 文件上传接口通常没有查询参数
+                            # 为文件上传接口添加 Content-Type header（代码执行时会自动替换为包含 boundary 的正确值）
+                            if "Content-Type" not in headers:
+                                headers["Content-Type"] = "multipart/form-data"
                         else:
                             # 分离查询参数和请求体参数（传入依赖字段信息）
                             query_params, case_data, receive_id_type_value = self._separate_query_and_body_params(v, dependent_fields)
@@ -1285,6 +1311,9 @@ class FeishuUnifiedGenerator:
             with output_path.open("w", encoding="utf-8") as f:
                 yaml.dump(yaml_data, f)
                 f.write('\n')
+            
+            # 记录生成的 YAML 文件路径
+            self.generated_yaml_files.append(output_path)
             
             print(f"[OK] 已生成 YAML 文件: {output_path.absolute()}")
         except Exception as e:

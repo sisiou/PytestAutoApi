@@ -44,18 +44,27 @@ from utils.read_files_tools.yaml_control import GetYamlData
 class TestCaseDependencyResolver:
     """测试用例依赖关系解析器"""
     
-    def __init__(self, data_output_dir: str = "open-apis2"):
+    def __init__(self, data_output_dir: str = "open-apis2", generated_yaml_files: List[Path] = None):
         self.data_output_dir = Path(data_output_dir)
         self.test_cases: Dict[str, Dict] = {}  # {case_id: test_case_data}
         self.dependency_graph: Dict[str, List[str]] = {}  # {case_id: [dependent_case_ids]}
+        self.generated_yaml_files = generated_yaml_files or []  # 本次生成的 YAML 文件列表
         
     def load_test_cases(self) -> None:
-        """加载所有测试用例"""
+        """加载测试用例（如果指定了 generated_yaml_files，则只加载这些文件）"""
         if not self.data_output_dir.exists():
             print(f"[WARN] 数据目录不存在: {self.data_output_dir}")
             return
         
-        yaml_files = list(self.data_output_dir.rglob("*.yaml"))
+        # 如果指定了生成的 YAML 文件列表，只加载这些文件
+        if self.generated_yaml_files:
+            yaml_files = [Path(f) for f in self.generated_yaml_files if Path(f).exists()]
+            print(f"[INFO] 只加载本次生成的 {len(yaml_files)} 个 YAML 文件")
+        else:
+            # 否则加载所有 YAML 文件
+            yaml_files = list(self.data_output_dir.rglob("*.yaml"))
+            print(f"[INFO] 加载所有 YAML 文件（共 {len(yaml_files)} 个）")
+        
         if not yaml_files:
             print(f"[WARN] 在 {self.data_output_dir} 中未找到 YAML 文件")
             return
@@ -240,9 +249,14 @@ class FeishuGeneratorAndTestRunner:
         try:
             # 创建依赖解析器
             data_output_dir = getattr(self.generator, 'data_output_dir', 'open-apis2')
-            self.dependency_resolver = TestCaseDependencyResolver(data_output_dir=data_output_dir)
+            # 获取本次生成的 YAML 文件列表
+            generated_yaml_files = getattr(self.generator, 'generated_yaml_files', [])
+            self.dependency_resolver = TestCaseDependencyResolver(
+                data_output_dir=data_output_dir,
+                generated_yaml_files=generated_yaml_files
+            )
             
-            # 加载测试用例
+            # 加载测试用例（只加载本次生成的）
             self.dependency_resolver.load_test_cases()
             
             if not self.dependency_resolver.test_cases:
@@ -485,6 +499,57 @@ def pytest_collection_modifyitems(items):
             print(f"⚠ 警告: 生成 Allure 报告时出错: {e}")
             print("   请确认已安装 allure 命令行工具")
     
+    def _check_allure_available(self) -> bool:
+        """检查 Allure 命令是否可用"""
+        import subprocess
+        try:
+            # 尝试运行 allure --version 来检查是否可用
+            result = subprocess.run(
+                ["allure", "--version"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5
+            )
+            return result.returncode == 0
+        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+            return False
+    
+    def step5_start_allure_server(self) -> None:
+        """步骤5: 启动 Allure 报告服务器（与 run.py 保持一致）"""
+        print("\n" + "=" * 60)
+        print("步骤 5/5: 启动 Allure 报告服务器")
+        print("=" * 60)
+        
+        # 检查是否在非交互式环境中运行（如通过 API 调用）
+        import os
+        import sys
+        if os.environ.get('NON_INTERACTIVE') == '1' or not sys.stdin.isatty():
+            print("检测到非交互式环境，跳过启动 Allure 服务器")
+            print("Allure 报告已生成在: ./report/html")
+            print("如需查看报告，请访问: ./report/html/index.html")
+            return
+        
+        # 与 run.py 保持一致：直接启动 Allure 服务器，不进行预检查
+        # 如果 Allure 未安装，os.system 会返回错误码，但不会抛出异常
+        print("Allure 报告将在浏览器中自动打开")
+        print("访问地址: http://127.0.0.1:9999")
+        print("按 Ctrl+C 可停止服务器\n")
+        
+        # 程序运行之后，自动启动报告，如果不想启动报告，可注释这段代码
+        # 与 run.py 第 74 行保持一致
+        result = os.system("allure serve ./report/tmp -h 127.0.0.1 -p 9999")
+        
+        # 如果启动失败（返回码非0），给出提示
+        if result != 0:
+            print(f"\n⚠ 警告: 启动 Allure 服务器失败（返回码: {result}）")
+            print("   请确认已安装 allure 命令行工具")
+            print("   Windows: 下载并安装 https://github.com/allure-framework/allure2/releases")
+            print("   或使用: scoop install allure")
+            print("   Mac: brew install allure")
+            print("   Linux: 参考 https://docs.qameta.io/allure/#_get_started")
+            print("\n   报告已生成在: ./report/html/index.html")
+            print("   可以直接打开该文件查看报告")
+    
     def run_all(self) -> int:
         """执行完整流程"""
         try:
@@ -511,6 +576,9 @@ def pytest_collection_modifyitems(items):
             
             # 步骤4: 生成报告
             self.step4_generate_report()
+            
+            # 步骤5: 启动 Allure 服务器（如果不是非交互式模式）
+            self.step5_start_allure_server()
             
             # 输出总结
             print("\n" + "=" * 60)
