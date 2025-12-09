@@ -619,7 +619,7 @@ def process_url_with_ai(url, output_dir, force_regenerate=False):
     使用AI处理URL并生成OpenAPI、关联关系和业务场景文件
     
     Args:
-        url (str): 要处理的URL，可以是飞书文档URL或其他API文档URL
+        url (str): 要处理的飞书URL
         output_dir (str): 输出目录
         force_regenerate (bool): 是否强制重新生成所有文件，即使已存在
     
