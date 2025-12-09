@@ -36,13 +36,14 @@ from utils.read_files_tools.swagger_for_yaml import SwaggerForYaml
 from utils.read_files_tools.case_automatic_control import TestCaseAutomaticGeneration
 
 # ================= 手动配置区域 =================
-# 为避免多处修改，这里提供默认的 app_id 和 app_secret
-# 如果环境变量或 feishu_token_updater.py 没有配置，将回落到这里
-DEFAULT_APP_ID = "cli_a9ac1b6a23b99bc2"
-DEFAULT_APP_SECRET = "kfPsUJmZiCco8DyGGslAufc7tTuNjiVe"
+DEFAULT_APP_ID = os.getenv("FEISHU_APP_ID")
+DEFAULT_APP_SECRET = os.getenv("FEISHU_APP_SECRET")
+DEFAULT_USER_ID = os.getenv("FEISHU_USER_ID")
+
+
 # 可选：根据需要覆盖 receive_id_type / receive_id（也可通过环境变量注入）
 DEFAULT_RECEIVE_ID_TYPE = "user_id"
-DEFAULT_RECEIVE_ID = "49e646d6"
+DEFAULT_RECEIVE_ID = DEFAULT_USER_ID  # 使用配置文件中的user_id
 # =================================================
 
 class FeishuMessageSendGenerator:

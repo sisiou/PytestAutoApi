@@ -964,11 +964,11 @@ async function generateTestCases() {
     try {
         // 准备请求数据
         const requestData = {
-            file_id: docTaskId
+            base_name: docTaskId
         };
         
         // 调用后端API生成测试用例
-        const response = await fetch(API_CONFIG.buildUrl('/api/generate_test_cases'), {
+        const response = await fetch(API_CONFIG.buildUrl('/api/feishu/generate-test-cases'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -984,7 +984,7 @@ async function generateTestCases() {
         const result = await response.json();
         
         // 显示成功消息
-        showSmartTestNotification(`测试用例生成成功！共生成 ${result.test_cases_count || 0} 个测试用例`, 'success');
+        showSmartTestNotification(`测试用例生成成功！`, 'success');
         
         // 关闭API详情模态框
         const modalElement = document.getElementById('apiDetailModal');
@@ -1554,7 +1554,12 @@ function parseDocument(fileId) {
         loadApiData();
         
         // 通知成功
-        showSmartTestNotification('文档解析成功', 'success');
+        showSmartTestNotification('文档解析成功，页面即将刷新...', 'success');
+        
+        // 1秒后刷新页面
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
     })
     .catch(error => {
         console.error('解析失败:', error);

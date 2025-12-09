@@ -323,7 +323,9 @@ async function executeTestCasesForFile(fileId, fileName) {
         console.log('执行测试用例响应:', data);
         
         if (data.success) {
-            showNotification(`成功执行 ${fileName} 的测试用例`, 'success');
+            // 提取并显示通过率信息
+            const passRate = data.pass_rate || data.passRate || '未知';
+            showNotification(`测试用例执行完成，通过率: ${passRate}`, 'info');
             
             // 刷新测试用例列表，显示执行结果
             loadTestCases();
@@ -2391,13 +2393,13 @@ function generateTestCases(taskId) {
     // 调用后端API生成测试用例
     const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
     
-    fetch(`${baseUrl}/api/generate_test_cases`, {
+    fetch(`${baseUrl}/api/feishu/generate-test-cases`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            file_id: taskId
+            base_name: taskId
         })
     })
     .then(response => {
@@ -2409,8 +2411,8 @@ function generateTestCases(taskId) {
     .then(data => {
         hideLoading();
         
-        if (data.success) {
-            showNotification(data.message || '测试用例生成成功', 'success');
+        if (data.generation_success) {
+            showNotification('测试用例生成成功', 'success');
             
             // 重新加载测试用例列表
             loadTestCases();
@@ -2495,7 +2497,9 @@ function executeTestCases(taskId) {
         hideLoading();
         
         if (data.success) {
-            showNotification(data.message || '测试用例执行成功', 'success');
+            // 提取并显示通过率信息
+            const passRate = data.pass_rate || data.passRate || '未知';
+            showNotification(`测试用例执行完成，通过率: ${passRate}`, 'info');
             
             // 重新加载测试用例列表
             loadTestCases();
@@ -2503,7 +2507,8 @@ function executeTestCases(taskId) {
             // 更新测试用例统计
             updateTestCasesStats();
         } else {
-            showNotification(data.error || '执行测试用例失败', 'error');
+            // 只显示错误信息，不显示"执行测试用例失败"
+            showNotification(data.error || '执行过程中出现问题', 'error');
         }
     })
     .catch(error => {

@@ -841,13 +841,11 @@ function generateTestCases() {
     // 调用后端API生成测试用例
     const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
     
-    // 使用 generate_test_cases_by_file_id 接口
-    const generateUrl = `${baseUrl}/api/generate_test_cases`;
+    // 使用 feishu/generate-test-cases 接口
+    const generateUrl = `${baseUrl}/api/feishu/generate-test-cases`;
     
     const requestBody = {
-        file_id: apiDocSelect.value,
-        test_types: selectedTypes,
-        doc_type: docType  // 添加文档类型信息
+        base_name: apiDocSelect.value
     };
     
     fetch(generateUrl, {
@@ -867,10 +865,10 @@ function generateTestCases() {
         console.log('测试用例生成结果:', data);
         
         // 处理成功响应
-        if (data.success === true) {
+        if (data.generation_success === true) {
             // 刷新测试用例列表
             loadTestCases();
-            showNotification(`成功生成 ${data.test_cases_count || 0} 个测试用例`, 'success');
+            showNotification('测试用例生成成功', 'success');
         } else {
             showNotification('生成测试用例失败: ' + (data.error || '未知错误'), 'error');
         }

@@ -1,0 +1,8 @@
+// Vite client stub for development server compatibility
+// This file is a placeholder to prevent 404 errors when using Python HTTP server
+// instead of the Vite development server
+
+console.log('Vite client stub loaded');
+
+// Export empty module to prevent import errors
+export default {};

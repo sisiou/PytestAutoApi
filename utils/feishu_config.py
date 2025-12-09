@@ -1,75 +1,88 @@
 """
-飞书API配置管理工具
+飞书配置模块
+提供飞书API相关的配置信息
 """
-import os
-import yaml
-import logging
 
-logger = logging.getLogger(__name__)
+import os
+import time
+import requests
+from typing import Dict, Any, Optional
+
 
 class FeishuConfig:
-    """飞书配置管理类"""
+    """飞书配置类"""
     
-    def __init__(self, config_path=None):
-        """
-        初始化配置
-        :param config_path: 配置文件路径，默认为项目根目录下的config/feishu_config.yaml
-        """
-        if config_path is None:
-            # 获取项目根目录
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            config_path = os.path.join(project_root, "config", "feishu_config.yaml")
+    def __init__(self):
+        self.app_id = os.getenv("FEISHU_APP_ID", "")
+        self.app_secret = os.getenv("FEISHU_APP_SECRET", "")
+        self.tenant_access_token = os.getenv("FEISHU_TENANT_ACCESS_TOKEN", "")
+        self.base_url = os.getenv("FEISHU_BASE_URL", "https://open.feishu.cn")
         
-        self.config_path = config_path
-        self.config = self._load_config()
-    
-    def _load_config(self):
-        """加载配置文件"""
+        # 令牌缓存相关
+        self.token_cache = None
+        self.token_expire_time = 0
+        self.feishu_api_timeout = 10
+        
+    def get_tenant_access_token(self) -> Optional[str]:
+        """获取 tenant_access_token，支持自动刷新"""
+        if requests is None:
+            print("[ERROR] 错误: 需要安装 requests 库才能获取 token")
+            return None
+        
+        # 检查缓存
+        current_time = time.time()
+        if self.token_cache and current_time < self.token_expire_time:
+            return self.token_cache
+        
+        # 如果没有配置app_id和app_secret，尝试使用环境变量中的token
+        if not self.app_id or not self.app_secret:
+            if self.tenant_access_token:
+                return self.tenant_access_token
+            print("[ERROR] 未配置FEISHU_APP_ID和FEISHU_APP_SECRET")
+            return None
+        
+        url = f"{self.base_url}/open-apis/auth/v3/tenant_access_token/internal"
+        headers = {"Content-Type": "application/json; charset=utf-8"}
+        payload = {"app_id": self.app_id, "app_secret": self.app_secret}
+        
         try:
-            with open(self.config_path, 'r', encoding='utf-8') as f:
-                return yaml.safe_load(f)
-        except Exception as e:
-            logger.error(f"加载配置文件失败: {e}")
-            return {}
+            resp = requests.post(url, json=payload, headers=headers, timeout=self.feishu_api_timeout)
+            resp.raise_for_status()
+            data = resp.json()
+            if data.get("code") == 0:
+                token = data.get("tenant_access_token")
+                expire = data.get("expire", 0)
+                # 缓存token（提前5分钟过期）
+                self.token_cache = token
+                self.token_expire_time = current_time + expire - 300
+                print(f"[OK] 成功获取 tenant_access_token (过期时间: {expire} 秒)")
+                return token
+            print(f"[ERROR] 获取 token 失败: code={data.get('code')} msg={data.get('msg')}")
+            return None
+        except Exception as exc:
+            print(f"[ERROR] 获取 token 出错: {exc}")
+            return None
     
-    def get_app_id(self):
-        """获取App ID"""
-        return self.config.get('feishu', {}).get('app_id', '')
+    def get_authorization(self) -> str:
+        """获取授权头，支持自动刷新令牌"""
+        token = self.get_tenant_access_token()
+        if token:
+            return f"Bearer {token}"
+        return ""
     
-    def get_app_secret(self):
-        """获取App Secret"""
-        return self.config.get('feishu', {}).get('app_secret', '')
-    
-    def get_authorization(self):
-        """获取Authorization令牌"""
-        return self.config.get('feishu', {}).get('authorization', '')
-    
-    def get_base_url(self):
-        """获取API基础URL"""
-        return self.config.get('api', {}).get('base_url', 'https://open.feishu.cn/open-apis')
-    
-    def get_timeout(self):
-        """获取请求超时时间"""
-        return self.config.get('api', {}).get('timeout', 30)
-    
-    def get_default_receive_id_type(self):
-        """获取默认接收者ID类型"""
-        return self.config.get('test', {}).get('default_receive_id_type', 'open_id')
-    
-    def get_default_receive_id(self):
-        """获取默认接收者ID"""
-        return self.config.get('test', {}).get('default_receive_id', 'ou_xxx')
-    
-    def get_headers(self):
-        """获取默认请求头"""
+    def get_config(self) -> Dict[str, Any]:
+        """获取完整配置"""
         return {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.get_authorization()}"
+            "app_id": self.app_id,
+            "app_secret": self.app_secret,
+            "tenant_access_token": self.tenant_access_token,
+            "base_url": self.base_url
         }
     
-    def reload(self):
-        """重新加载配置文件"""
-        self.config = self._load_config()
+    def is_configured(self) -> bool:
+        """检查是否已配置"""
+        return bool(self.app_id and self.app_secret)
 
-# 创建全局配置实例
+
+# 全局配置实例
 feishu_config = FeishuConfig()

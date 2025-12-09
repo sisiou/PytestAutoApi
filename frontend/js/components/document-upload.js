@@ -357,7 +357,12 @@ function parseDocument(fileId) {
         // 显示解析结果
         showParseResults(data);
         
-        Notification.success('文档解析成功');
+        Notification.success('文档解析成功，页面即将刷新...');
+        
+        // 1秒后刷新页面
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
     })
     .catch(error => {
         console.error('解析文档失败:', error);
@@ -1140,7 +1145,7 @@ function handleUrlInput(url) {
         showParseResults(apiDoc);
         
         // 通知成功
-        Notification.success('从URL获取并解析OpenAPI文档成功');
+        Notification.success('从URL获取并解析OpenAPI文档成功，页面即将刷新...');
         
         // 显示URL获取结果
         if (urlFetchResult) {
@@ -1148,13 +1153,14 @@ function handleUrlInput(url) {
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle me-2"></i>
                     成功获取并解析OpenAPI 3.0.0文档：${apiDoc.info?.title || '未知API'}
+                    <br><small class="text-info">页面将在1秒后自动刷新...</small>
                 </div>
             `;
             
-            // 3秒后清除提示
+            // 延迟1秒后刷新页面，确保最新数据加载
             setTimeout(() => {
-                urlFetchResult.innerHTML = '';
-            }, 3000);
+                window.location.reload();
+            }, 1000);
         }
     })
     .catch(error => {
@@ -1251,7 +1257,7 @@ function handleFeishuUrl(url) {
         }
         
         // 通知成功
-        Notification.success('成功获取并解析飞书开放平台API文档');
+        Notification.success('成功获取并解析飞书开放平台API文档，页面即将刷新...');
         
         // 显示URL获取结果
         if (urlFetchResult) {
@@ -1270,14 +1276,14 @@ function handleFeishuUrl(url) {
                 resultMessage += `<br><small class="text-success">✓ 业务场景已生成</small>`;
             }
             
-            resultMessage += '</div>';
+            resultMessage += `<br><small class="text-info">页面将在1秒后自动刷新...</small></div>`;
             
             urlFetchResult.innerHTML = resultMessage;
             
-            // 5秒后清除提示
+            // 延迟1秒后刷新页面，确保最新数据加载
             setTimeout(() => {
-                urlFetchResult.innerHTML = '';
-            }, 5000);
+                window.location.reload();
+            }, 1000);
         }
     })
     .catch(error => {

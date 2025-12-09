@@ -26,27 +26,64 @@ except ImportError:
     print("[WARN] openai库未安装，请安装: pip install openai")
 
 # ================= 配置区域 =================
-# 环境变量配置（已硬编码到程序中，不再从环境变量读取）
-DASHSCOPE_API_KEY = "sk-07556b3d48b14933b79b8ef16d85ea11"  # AI API Key
-DEFAULT_AI_MODEL = "deepseek-v3.2"
-DEFAULT_AI_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-DEFAULT_APP_ID = "cli_a9ac1b6a23b99bc2"  # 飞书应用App ID
-DEFAULT_APP_SECRET = "kfPsUJmZiCco8DyGGslAufc7tTuNjiVe"  # 飞书应用App Secret
-DEFAULT_AI_TIMEOUT = 120  # AI API调用超时时间（秒，减少以加快响应）
-DEFAULT_MAX_TOKENS = 1300  # 最大token数（进一步减少以加快响应）
-# 接收者ID配置（供测试用例使用）
-DEFAULT_RECEIVE_ID_TYPE = "user_id"
-DEFAULT_RECEIVE_ID = "49e646d6"
+# 从环境变量读取所有配置
+import os
+from dotenv import load_dotenv
+
+# 加载.env文件
+# 尝试从项目根目录加载.env文件
+project_root = Path(__file__).parent.parent.parent
+env_path = project_root / '.env'
+load_dotenv(env_path)
+
+# 从环境变量读取AI配置
+DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY")  # AI API Key
+DEFAULT_AI_MODEL = os.getenv("DEFAULT_AI_MODEL", "deepseek-v3.2")
+DEFAULT_AI_BASE_URL = os.getenv("DEFAULT_AI_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+DEFAULT_AI_TIMEOUT = int(os.getenv("DEFAULT_AI_TIMEOUT", "120"))  # AI API调用超时时间（秒）
+DEFAULT_MAX_TOKENS = int(os.getenv("DEFAULT_MAX_TOKENS", "1300"))  # 最大token数
+
+# 从环境变量读取飞书应用配置
+DEFAULT_APP_ID = os.getenv("FEISHU_APP_ID")  # 飞书应用App ID
+DEFAULT_APP_SECRET = os.getenv("FEISHU_APP_SECRET")  # 飞书应用App Secret
+DEFAULT_USER_ID = os.getenv("FEISHU_USER_ID")  # 飞书用户ID
+# 导入feishu_config以使用自动刷新令牌
+try:
+    # 尝试从项目根目录导入
+    import sys
+    from pathlib import Path
+    project_root = Path(__file__).parent.parent.parent
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    
+    from utils.feishu_config import feishu_config
+    DEFAULT_AUTHORIZATION = feishu_config.get_authorization()  # 使用自动刷新的令牌
+except ImportError:
+    DEFAULT_AUTHORIZATION = os.getenv("FEISHU_AUTHORIZATION")  # 飞书授权码（备用方案）
+
+# 从环境变量读取API配置
+FEISHU_API_BASE_URL = os.getenv("FEISHU_API_BASE_URL", "https://open.feishu.cn/open-apis")
+FEISHU_API_TIMEOUT = int(os.getenv("FEISHU_API_TIMEOUT", "30"))
+
+# 从环境变量读取接收者ID配置
+DEFAULT_RECEIVE_ID_TYPE = os.getenv("DEFAULT_RECEIVE_ID_TYPE")
+DEFAULT_RECEIVE_ID = os.getenv("DEFAULT_RECEIVE_ID")
+
+# 从环境变量读取真实资源示例
+DEFAULT_CALENDAR_ID = os.getenv("DEFAULT_CALENDAR_ID")
+DEFAULT_IMAGE_KEY = os.getenv("DEFAULT_IMAGE_KEY")
+
+# 接收者ID映射（可从环境变量读取JSON字符串，否则使用默认值）
+
+    
 RECEIVE_ID_MAP = {
-    "user_id": "49e646d6",  # 默认 user_id
-    "open_id": "ou_0d83637fb561cdc1e0562991339c713b",  # open_id 格式示例
-    "union_id": "on_17df3bf51632401d3ab42d6c7a6e32d8",  # union_id 格式示例
-    "email": "user@example.com",  # email 格式示例
-    "chat_id": "oc_5ad11d72b830411d72b836c20",  # chat_id 格式示例
+    "user_id": os.getenv("DEFAULT_USER_ID"),  # 默认 user_id
+    "open_id": os.getenv("FEISHU_OPEN_ID"),  # open_id 格式示例
+    "union_id": os.getenv("FEISHU_UNION_ID"),  # union_id 格式示例
+    "email": os.getenv("DEFAULT_EMAIL"),  # email 格式示例
+    "chat_id": os.getenv("FEISHU_CHAT_ID"),  # chat_id 格式示例
 }
-# 真实资源示例（避免AI乱造）
-DEFAULT_CALENDAR_ID = "feishu.cn_n70twE6UCeE9lLJ2uGZ8Mc@group.calendar.feishu.cn"
-DEFAULT_IMAGE_KEY = "img_v3_02sq_d5656db0-8bda-4594-9009-a7c4a81eb15g"
+
 # ===========================================
 
 @dataclass
@@ -69,18 +106,23 @@ class UniversalAITestGenerator:
     """通用AI测试用例生成器（专注于异常值和边界值）"""
     
     def __init__(self, api_key: str = None, model: str = None, base_url: str = None,
-                 app_id: str = None, app_secret: str = None, timeout: int = None, max_tokens: int = None):
-        # 优先级：传入参数 > 硬编码默认值（不再从环境变量读取）
+                 app_id: str = None, app_secret: str = None, user_id: str = None, 
+                 authorization: str = None, timeout: int = None, max_tokens: int = None):
+        # 优先级：传入参数 > 环境变量配置
         self.api_key = api_key or DASHSCOPE_API_KEY
         self.model = model or DEFAULT_AI_MODEL
         self.base_url = base_url or DEFAULT_AI_BASE_URL
         self.app_id = app_id or DEFAULT_APP_ID
         self.app_secret = app_secret or DEFAULT_APP_SECRET
+        self.user_id = user_id or DEFAULT_USER_ID
+        self.authorization = authorization or DEFAULT_AUTHORIZATION
         self.timeout = timeout or DEFAULT_AI_TIMEOUT
         self.max_tokens = max_tokens or DEFAULT_MAX_TOKENS
         self.receive_id_type = DEFAULT_RECEIVE_ID_TYPE
-        self.receive_id = DEFAULT_RECEIVE_ID
+        self.receive_id = DEFAULT_RECEIVE_ID or self.user_id or "test_user_id"
         self.receive_id_map = RECEIVE_ID_MAP
+        self.feishu_api_base_url = FEISHU_API_BASE_URL
+        self.feishu_api_timeout = FEISHU_API_TIMEOUT
         
         self.client = None
         self.ai_available = False
@@ -121,12 +163,12 @@ class UniversalAITestGenerator:
         if self.token_cache and current_time < self.token_expire_time:
             return self.token_cache
         
-        url = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
+        url = f"{self.feishu_api_base_url}/auth/v3/tenant_access_token/internal"
         headers = {"Content-Type": "application/json; charset=utf-8"}
         payload = {"app_id": self.app_id, "app_secret": self.app_secret}
         
         try:
-            resp = requests.post(url, json=payload, headers=headers, timeout=10)
+            resp = requests.post(url, json=payload, headers=headers, timeout=self.feishu_api_timeout)
             resp.raise_for_status()
             data = resp.json()
             if data.get("code") == 0:
@@ -741,8 +783,10 @@ class UniversalAITestGenerator:
                 missing_fields.append(f"{field_name} (使用默认文本内容)")
             elif field_type == "string":
                 if "id" in field_name.lower():
-                    updated_data[field_name] = self.receive_id
-                    missing_fields.append(f"{field_name} (使用默认ID: {self.receive_id})")
+                    # 使用self.receive_id，如果为None则使用默认值
+                    receive_id = self.receive_id or self.user_id or "test_user_id"
+                    updated_data[field_name] = receive_id
+                    missing_fields.append(f"{field_name} (使用默认ID: {receive_id})")
                 else:
                     updated_data[field_name] = f"test_{field_name}"
                     missing_fields.append(f"{field_name} (使用测试值: test_{field_name})")
@@ -1206,7 +1250,8 @@ class UniversalAITestGenerator:
             return []
     
     def generate_pytest_file(self, api_info: Dict[str, Any], test_cases: List[TestCase],
-                            output_dir: str = "tests", base_name: str = None) -> str:
+                            output_dir: str = "test_code", base_name: str = None, 
+                            base_dir: str = "uploads", skip_if_exists: bool = True) -> str:
         """生成pytest测试文件"""
         
         # 生成类名
@@ -1221,9 +1266,16 @@ class UniversalAITestGenerator:
         else:
             file_name = f"test_{operation_id.lower()}_normal_exception.py"
         
-        file_path = Path(output_dir) / file_name
+        # 构建完整输出路径，包含base_dir
+        full_output_dir = Path(base_dir) / output_dir
+        file_path = full_output_dir / file_name
         
-        # 如果文件已存在，添加时间戳避免覆盖
+        # 检查文件是否已存在
+        if skip_if_exists and file_path.exists():
+            print(f"[INFO] 测试文件已存在，跳过生成: {file_path}")
+            return str(file_path)
+        
+        # 如果文件已存在且skip_if_exists为False，添加时间戳避免覆盖
         if file_path.exists():
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             file_stem = file_path.stem
@@ -1232,7 +1284,7 @@ class UniversalAITestGenerator:
             print(f"[INFO] 文件已存在，使用新文件名: {file_path.name}")
         
         # 确保目录存在
-        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        full_output_dir.mkdir(parents=True, exist_ok=True)
         
         # 构建测试文件内容
         test_content = self._build_test_file_content(api_info, test_cases, class_name)
@@ -1245,14 +1297,18 @@ class UniversalAITestGenerator:
         return str(file_path)
 
     def generate_yaml_cases(self, api_info: Dict[str, Any], test_cases: List[TestCase],
-                            output_dir: str = "tests_yaml", base_name: str = None) -> str:
+                            output_dir: str = "tests_yaml", base_name: str = None, base_dir: str = "uploads") -> str:
         """生成 YAML 测试用例文件（不生成pytest代码）"""
         operation_id = api_info.get("operation_id", "api")
         file_stem = base_name or operation_id
         file_name = f"cases_{file_stem}.yaml"
+        base_path = Path(base_dir)
         out_dir = Path(output_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
-        file_path = out_dir / file_name
+        file_path = base_path / out_dir / file_name
+        
+        # 确保文件的完整路径目录存在
+        file_path.parent.mkdir(parents=True, exist_ok=True)
 
         # 仅保留核心字段，便于后续自定义运行
         data = []
@@ -1274,7 +1330,8 @@ class UniversalAITestGenerator:
         return str(file_path)
 
     def convert_yaml_to_pytest(self, base_name: str, yaml_path: str,
-                               base_dir: str = "uploads", output_dir: str = "tests") -> Dict[str, Any]:
+                               base_dir: str = "uploads", output_dir: str = "tests",
+                               skip_if_exists: bool = True) -> Dict[str, Any]:
         """
         将已生成的 YAML 用例转换为 pytest 测试文件，不调用大模型。
         步骤：
@@ -1338,7 +1395,9 @@ class UniversalAITestGenerator:
         if not test_cases:
             return {"error": "YAML文件中未找到有效的测试用例"}
 
-        test_file = self.generate_pytest_file(api_info, test_cases, output_dir, base_name=base_name)
+        test_file = self.generate_pytest_file(api_info, test_cases, output_dir, base_name=base_name, base_dir=base_dir, skip_if_exists=skip_if_exists)
+        
+        print(f"[OK] 已生成pytest文件: {test_file}")
 
         return {
             "base_name": base_name,
@@ -1784,7 +1843,6 @@ from typing import Dict, Any
                         body_data_str = json.dumps(body_data_dict, ensure_ascii=False, indent=12) if body_data_dict else "None"
                     except:
                         # 如果解析失败，使用字符串替换（最后手段）
-                        import re
                         body_data_str = re.sub(rf'"{re.escape(field)}"\s*:\s*[^,}}]+[,}}]?', '', body_data_str)
                         body_data_str = re.sub(rf'"{re.escape(field.lower())}"\s*:\s*[^,}}]+[,}}]?', '', body_data_str)
                     break
@@ -1916,7 +1974,7 @@ from typing import Dict, Any
         return "\n".join(assertions)
     
     def generate_all(self, base_name: str, base_dir: str = "uploads", 
-                    output_dir: str = "tests", output_format: str = "yaml") -> Dict[str, Any]:
+                    output_dir: str = "test_code", output_format: str = "yaml") -> Dict[str, Any]:
         """生成所有测试用例
         
         output_format: yaml（默认）| pytest
@@ -1959,12 +2017,12 @@ from typing import Dict, Any
         test_file = None
         config_file = None
         
-        # 步骤5: 输出测试文件
+        # 步骤5: 输出测试用例文件
         print("\n5. 输出测试用例文件")
         if output_format == "pytest":
-            test_file = self.generate_pytest_file(api_info, test_cases, output_dir, base_name=base_name)
+            test_file = self.generate_pytest_file(api_info, test_cases, output_dir, base_name=base_name, base_dir=base_dir)
             print("\n6. 生成配置文件")
-            config_file = self._generate_config_file(output_dir)
+            config_file = self._generate_config_file(Path(base_dir) / output_dir)
         else:
             test_file = self.generate_yaml_cases(api_info, test_cases, output_dir, base_name=base_name)
         
@@ -2031,7 +2089,13 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.normal)
 '''
         
-        config_file = Path(output_dir) / "conftest.py"
+        # 确保output_dir是Path对象
+        output_path = Path(output_dir)
+        config_file = output_path / "conftest.py"
+        
+        # 确保目录存在
+        output_path.mkdir(parents=True, exist_ok=True)
+        
         with open(config_file, 'w', encoding='utf-8') as f:
             f.write(config_content)
         
@@ -2051,13 +2115,17 @@ def main():
     parser.add_argument("--app-id", help="飞书应用App ID")
     parser.add_argument("--app-secret", help="飞书应用App Secret")
     parser.add_argument("--ai-api-key", help="AI API Key（可选）")
-    parser.add_argument("--output-dir", default="tests", help="输出目录")
+    parser.add_argument("--output-dir", default="test_code", help="输出目录")
     parser.add_argument("--output-format", default="yaml", choices=["yaml", "pytest"],
                        help="输出格式：yaml（默认，仅生成用例yaml）或 pytest（生成pytest文件）")
     parser.add_argument("--yaml-to-py", action="store_true",
                        help="使用已有的YAML用例转换为pytest文件，不调用AI")
     parser.add_argument("--yaml-path",
                        help="当指定 --yaml-to-py 时，需要提供YAML用例文件路径")
+    parser.add_argument("--skip-if-exists", action="store_true", default=True,
+                       help="如果测试文件已存在，则跳过生成（默认启用）")
+    parser.add_argument("--force-regenerate", action="store_true",
+                       help="强制重新生成测试文件，即使已存在")
     
     args = parser.parse_args()
     
@@ -2073,11 +2141,16 @@ def main():
         if not args.yaml_path:
             print("[ERROR] 使用 --yaml-to-py 时必须提供 --yaml-path")
             sys.exit(1)
+        
+        # 确定是否跳过已存在的文件
+        skip_if_exists = args.skip_if_exists and not args.force_regenerate
+        
         result = generator.convert_yaml_to_pytest(
             base_name=args.base_name,
             yaml_path=args.yaml_path,
             base_dir=args.base_dir,
-            output_dir=args.output_dir
+            output_dir=args.output_dir,
+            skip_if_exists=skip_if_exists
         )
         if "error" in result:
             print(f"[ERROR] 转换失败: {result['error']}")

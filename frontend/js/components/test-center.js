@@ -624,6 +624,15 @@ function fetchSmartApiFromUrl(event) {
                         fetchButton.innerHTML = '<i class="fas fa-download me-2"></i>获取文档';
                     }
                 }
+                
+                // 自动刷新页面，确保最新数据加载
+                console.log('文档获取成功，准备刷新页面...');
+                showSmartTestNotification('文档获取成功，页面即将刷新...', 'info');
+                
+                // 延迟1秒后刷新页面，给用户时间看到成功消息
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             }, 500);
         })
         .catch(error => {
@@ -674,7 +683,12 @@ function parseSmartApiDocContent(content, fileName, fileSize, isFromUrl = false)
         hideUploadProgress();
         // 根据来源显示不同的成功消息
         if (isFromUrl) {
-            showSmartTestNotification('API文档获取成功', 'success');
+            showSmartTestNotification('API文档获取成功，页面即将刷新...', 'success');
+            
+            // 延迟1秒后刷新页面，确保最新数据加载
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         } else {
             showSmartTestNotification('API文档上传成功', 'success');
         }
@@ -2982,7 +2996,20 @@ function saveThreeDocuments(docId, originalDocs) {
                 })
                 .then(response => response.json())
                 .then(data => {
-                    return { docType, success: data.success, message: data.message };
+                    if (data.success) {
+                        return { docType, success: true, message: data.message };
+                    } else {
+                        // 显示更详细的错误信息
+                        let errorMessage = `${data.error}`;
+                        if (data.message) {
+                            errorMessage += `\n详情: ${data.message}`;
+                        }
+                        if (data.suggestion) {
+                            errorMessage += `\n建议: ${data.suggestion}`;
+                        }
+                        
+                        return { docType, success: false, message: errorMessage };
+                    }
                 })
                 .catch(error => {
                     console.error(`保存${docType}文档失败:`, error);
@@ -3071,8 +3098,8 @@ function editDocument(docType, docId) {
                             })
                         })
                         .then(response => response.json())
-                        .then(updateData => {
-                            if (updateData.success) {
+                        .then(data => {
+                            if (data.success) {
                                 showSmartTestNotification('文档更新成功', 'success');
                                 // 关闭模态框
                                 const modalInstance = bootstrap.Modal.getInstance(modal);
@@ -3080,7 +3107,26 @@ function editDocument(docType, docId) {
                                 // 刷新文档列表
                                 loadUploadedDocuments();
                             } else {
-                                showSmartTestNotification('文档更新失败: ' + updateData.message, 'error');
+                                // 显示更详细的错误信息
+                                let errorMessage = `文档更新失败: ${data.error}`;
+                                if (data.message) {
+                                    errorMessage += `\n详情: ${data.message}`;
+                                }
+                                if (data.suggestion) {
+                                    errorMessage += `\n建议: ${data.suggestion}`;
+                                }
+                                
+                                // 如果可以自动修复，提供修复选项
+                                if (data.can_auto_fix) {
+                                    if (confirm(`${errorMessage}\n\n是否尝试自动修复？`)) {
+                                        // 这里可以添加自动修复逻辑
+                                        // 目前先提示用户手动修复
+                                        showSmartTestNotification('自动修复功能开发中，请手动修复格式问题', 'info');
+                                        return;
+                                    }
+                                }
+                                
+                                showSmartTestNotification(errorMessage, 'error');
                             }
                         })
                         .catch(error => {
@@ -3150,7 +3196,7 @@ function generateTestCases(taskId) {
     showLoading('正在生成测试用例...');
     
     const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
-    const apiUrl = baseUrl + '/api/generate_test_cases';
+    const apiUrl = baseUrl + '/api/feishu/generate-test-cases';
     
     fetch(apiUrl, {
         method: 'POST',
@@ -3158,19 +3204,19 @@ function generateTestCases(taskId) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            file_id: taskId
+            base_name: taskId
         })
     })
     .then(response => response.json())
     .then(data => {
         hideLoading();
-        if (data.success) {
+        if (data.generation_success) {
             showSmartTestNotification('测试用例生成成功', 'success');
             // 刷新测试用例列表
             loadTestCases();
             updateTestCasesStats();
         } else {
-            showSmartTestNotification('测试用例生成失败: ' + data.message, 'error');
+            showSmartTestNotification('测试用例生成失败: ' + (data.error || data.message), 'error');
         }
     })
     .catch(error => {
@@ -3190,7 +3236,7 @@ function executeTestCases(taskId) {
     showLoading('正在执行测试用例...');
     
     const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
-    const apiUrl = baseUrl + '/api/execute_test_cases';
+    const apiUrl = baseUrl + '/api/feishu/execute-test-cases';
     
     fetch(apiUrl, {
         method: 'POST',
@@ -3198,19 +3244,22 @@ function executeTestCases(taskId) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            file_id: taskId
+            base_name: taskId
         })
     })
     .then(response => response.json())
     .then(data => {
         hideLoading();
         if (data.success) {
-            showSmartTestNotification('测试用例执行成功', 'success');
+            // 提取并显示通过率信息
+            const passRate = data.pass_rate || data.passRate || '未知';
+            showSmartTestNotification(`测试用例执行完成，通过率: ${passRate}`, 'info');
             // 刷新测试用例列表
             loadTestCases();
             updateTestCasesStats();
         } else {
-            showSmartTestNotification('测试用例执行失败: ' + data.message, 'error');
+            // 只显示错误信息，不显示"执行测试用例失败"
+            showSmartTestNotification(data.error || data.message || '执行过程中出现问题', 'error');
         }
     })
     .catch(error => {
@@ -4008,7 +4057,7 @@ function generateMultiApiTestCases(documentId) {
     
     // 调用后端API生成测试用例
     const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
-    const apiUrl = `${baseUrl}/api/multiapi/testcases/generate/${documentId}`;
+    const apiUrl = `${baseUrl}/api/feishu/generate-test-cases`;
     
     showLoading('正在生成多接口文档测试用例...');
     
@@ -4016,13 +4065,16 @@ function generateMultiApiTestCases(documentId) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+            base_name: documentId
+        })
     })
     .then(response => response.json())
     .then(data => {
         hideLoading();
         
-        if (data.success) {
+        if (data.generation_success) {
             showSmartTestNotification('多接口文档测试用例生成成功', 'success');
             // 刷新测试用例列表
             loadTestCases();
@@ -4043,7 +4095,7 @@ function executeMultiApiTestCases(documentId) {
     
     // 调用后端API执行测试用例
     const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
-    const apiUrl = `${baseUrl}/api/multiapi/testcases/execute/${documentId}`;
+    const apiUrl = `${baseUrl}/api/feishu/execute-test-cases`;
     
     showLoading('正在执行多接口文档测试用例...');
     
@@ -4051,18 +4103,24 @@ function executeMultiApiTestCases(documentId) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+            base_name: documentId
+        })
     })
     .then(response => response.json())
     .then(data => {
         hideLoading();
         
         if (data.success) {
-            showSmartTestNotification('多接口文档测试用例执行成功', 'success');
+            // 提取并显示通过率信息
+            const passRate = data.pass_rate || data.passRate || '未知';
+            showSmartTestNotification(`多接口文档测试用例执行完成，通过率: ${passRate}`, 'info');
             // 刷新测试报告列表
             loadTestReports();
         } else {
-            showSmartTestNotification('执行测试用例失败: ' + (data.error || data.message), 'error');
+            // 只显示错误信息，不显示"执行测试用例失败"
+            showSmartTestNotification(data.error || data.message || '执行过程中出现问题', 'error');
         }
     })
     .catch(error => {
@@ -4724,7 +4782,7 @@ function useEventDelegation() {
 async function handleGenerateTestCasesRequest(baseName, generateBtn, originalText) {
     // 获取 API 基础 URL 和端点
     const apiBaseUrl = window.API_CONFIG?.BASE_URL || 'http://127.0.0.1:5000';
-    const endpoint = '/api/feishu/generate-ai-test-cases';
+    const endpoint = '/api/feishu/generate-test-cases';
     const apiUrl = apiBaseUrl + endpoint;
     
     // 详细的控制台输出

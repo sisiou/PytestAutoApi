@@ -36,18 +36,21 @@ from utils.other_tools.allure_config_helper import ensure_allure_properties_file
 
 
 # ================= 配置区域 =================
-DEFAULT_APP_ID = "cli_a9ac1b6a23b99bc2"
-DEFAULT_APP_SECRET = "kfPsUJmZiCco8DyGGslAufc7tTuNjiVe"
-# ===========================================
+DEFAULT_APP_ID = os.getenv("FEISHU_APP_ID")
+DEFAULT_APP_SECRET = os.getenv("FEISHU_APP_SECRET")
+DEFAULT_USER_ID = os.getenv("FEISHU_USER_ID")
+
+
 DEFAULT_RECEIVE_ID_TYPE = "user_id"
-DEFAULT_RECEIVE_ID = "49e646d6"
+DEFAULT_RECEIVE_ID = DEFAULT_USER_ID  # 使用配置文件中的user_id
 RECEIVE_ID_MAP = {
-    "user_id": "49e646d6",  # 默认 user_id
+    "user_id": DEFAULT_USER_ID,  # 使用配置文件中的user_id
     "open_id": "ou_0d83637fb561cdc1e0562991339c713b",  # open_id 格式示例
     "union_id": "on_17df3bf51632401d3ab42d6c7a6e32d8",  # union_id 格式示例
     "email": "user@example.com",  # email 格式示例
     "chat_id": "oc_5ad11d72b830411d72b836c20",  # chat_id 格式示例
 }
+# ===========================================
 class OpenAPIFileInfo:
     """OpenAPI 文件信息"""
     def __init__(self, file_path: Path, order: int):
