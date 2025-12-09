@@ -42,6 +42,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化测试工作流
     initTestWorkflow();
+    
+    // 确保多接口文档标签页默认加载一次数据
+    setTimeout(() => {
+        // 检查是否已经加载过多接口文档数据
+        if (!multiApiDocuments || multiApiDocuments.length === 0) {
+            console.log('页面初始化时加载多接口文档数据');
+            loadMultiApiDocuments();
+        }
+    }, 1000);
 });
 
 // 初始化测试中心 - 智能测试功能专用
@@ -2652,28 +2661,9 @@ function viewDocument(docType, docId) {
             document.getElementById('docDetailId').textContent = data.data.file_id;
             
             document.getElementById('docDetailCreatedAt').textContent = new Date().toLocaleString(); // API没有返回创建时间，使用当前时间
-            document.getElementById('docDetailApiCount').textContent = data.data.api_count || 0;
+            document.getElementById('docDetailApiCount').textContent = 1; // 单接口文档API数量固定为1
             
-            // 填充API端点列表
-            const endpointsList = document.getElementById('docEndpointsList');
-            endpointsList.innerHTML = '';
-            
-            if (data.data.endpoints && data.data.endpoints.length > 0) {
-                data.data.endpoints.forEach(endpoint => {
-                    const endpointItem = document.createElement('div');
-                    endpointItem.className = 'list-group-item list-group-item-action';
-                    endpointItem.innerHTML = `
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">${endpoint.method} ${endpoint.path}</h6>
-                            <small>${endpoint.operation_id || ''}</small>
-                        </div>
-                        <p class="mb-1">${endpoint.summary || endpoint.description || ''}</p>
-                    `;
-                    endpointsList.appendChild(endpointItem);
-                });
-            } else {
-                endpointsList.innerHTML = '<div class="list-group-item">无API端点数据</div>';
-            }
+            // API端点列表已移除，不再显示
             
             // 处理所有文档类型的内容
             results.forEach(result => {
@@ -3295,7 +3285,7 @@ function loadMultiApiDocuments() {
     const apiUrl = baseUrl + '/api/multiapi/documents';
     console.log('多接口文档API URL:', apiUrl);
     
-    fetch(apiUrl)
+    return fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
             console.log('获取多接口文档列表响应:', data);
@@ -3306,7 +3296,8 @@ function loadMultiApiDocuments() {
             }
             
             // 处理响应数据
-            const documents = data.data || [];
+            // 后端返回格式: { success: true, data: { documents: [...], count: N } }
+            const documents = data.success && data.data && data.data.documents ? data.data.documents : [];
             
             if (documents.length === 0) {
                 // 显示无文档消息
@@ -3320,8 +3311,16 @@ function loadMultiApiDocuments() {
                     noMultiApiDocsMessage.style.display = 'none';
                 }
                 
-                // 保存到全局变量
-                multiApiDocuments = documents;
+                // 保存到全局变量，转换格式以匹配前端期望
+                multiApiDocuments = documents.map(doc => ({
+                    file_id: doc.file_id,  // 保留原始file_id
+                    document_id: doc.file_id,  // 将file_id映射为document_id
+                    document_name: doc.file_name,
+                    api_count: doc.api_count,
+                    upload_time: doc.upload_time,
+                    status: doc.status,
+                    editable: doc.editable
+                }));
                 
                 // 添加文档到表格
                 documents.forEach(doc => {
@@ -3330,12 +3329,12 @@ function loadMultiApiDocuments() {
                     
                     // 文档ID
                     const idCell = document.createElement('td');
-                    idCell.textContent = doc.document_id || '未知ID';
+                    idCell.textContent = doc.file_id || '未知ID';
                     row.appendChild(idCell);
                     
                     // 文档名称
                     const nameCell = document.createElement('td');
-                    nameCell.textContent = doc.document_name || '未知名称';
+                    nameCell.textContent = doc.file_name || '未知名称';
                     row.appendChild(nameCell);
                     
                     // 接口数量
@@ -3360,28 +3359,28 @@ function loadMultiApiDocuments() {
                     viewBtn.className = 'btn btn-sm btn-outline-primary me-1';
                     viewBtn.innerHTML = '<i class="fas fa-eye"></i> 查看';
                     viewBtn.addEventListener('click', () => {
-                        viewMultiApiDocument(doc.document_id);
+                        viewMultiApiDocument(doc.file_id);
                     });
                     
                     const generateBtn = document.createElement('button');
                     generateBtn.className = 'btn btn-sm btn-outline-success me-1';
                     generateBtn.innerHTML = '<i class="fas fa-code"></i> 生成测试用例';
                     generateBtn.addEventListener('click', () => {
-                        generateTestCases(doc.document_id);
+                        generateMultiApiTestCases(doc.file_id);
                     });
                     
                     const executeBtn = document.createElement('button');
                     executeBtn.className = 'btn btn-sm btn-outline-info me-1';
                     executeBtn.innerHTML = '<i class="fas fa-play"></i> 执行测试用例';
                     executeBtn.addEventListener('click', () => {
-                        executeTestCases(doc.document_id);
+                        executeMultiApiTestCases(doc.file_id);
                     });
                     
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'btn btn-sm btn-outline-danger';
                     deleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
                     deleteBtn.addEventListener('click', () => {
-                        deleteMultiApiDocument(doc.document_id);
+                        deleteMultiApiDocument(doc.file_id);
                     });
                     
                     actionsCell.appendChild(viewBtn);
@@ -3393,6 +3392,8 @@ function loadMultiApiDocuments() {
                     multiApiTableBody.appendChild(row);
                 });
             }
+            
+            return multiApiDocuments; // 返回加载的数据
         })
         .catch(error => {
             console.error('加载多接口文档失败:', error);
@@ -3401,74 +3402,573 @@ function loadMultiApiDocuments() {
             if (multiApiTableBody) {
                 multiApiTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">加载多接口文档失败: ' + error.message + '</td></tr>';
             }
+            
+            throw error; // 重新抛出错误，以便调用者可以处理
         });
+}
+
+// 直接操作DOM显示模态框的函数
+function showModalDirectly(modal) {
+    try {
+        console.log('尝试直接操作DOM显示模态框');
+        
+        // 确保模态框有正确的类和样式
+        modal.classList.add('show');
+        modal.style.display = 'block';
+        modal.style.visibility = 'visible';
+        modal.style.opacity = '1';
+        
+        // 确保body有modal-open类
+        document.body.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+        
+        // 创建或更新backdrop
+        let backdrop = document.getElementById('multiApiDocDetailModal-backdrop');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.id = 'multiApiDocDetailModal-backdrop';
+            document.body.appendChild(backdrop);
+        } else {
+            backdrop.classList.add('show');
+        }
+        
+        // 确保backdrop在最上层
+        backdrop.style.zIndex = '1055';
+        modal.style.zIndex = '1056';
+        
+        // 清除旧的事件监听器，避免重复添加
+        const closeButtons = modal.querySelectorAll('[data-bs-dismiss="modal"]');
+        closeButtons.forEach(button => {
+            // 克隆按钮以移除所有事件监听器
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+        });
+        
+        // 重新获取关闭按钮并添加事件监听器
+        const newCloseButtons = modal.querySelectorAll('[data-bs-dismiss="modal"]');
+        newCloseButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('点击关闭按钮，关闭模态框');
+                hideModalDirectly(modal);
+            });
+        });
+        
+        // 移除旧的backdrop点击事件监听器
+        const newBackdrop = document.getElementById('multiApiDocDetailModal-backdrop');
+        const newBackdropClone = newBackdrop.cloneNode(true);
+        newBackdrop.parentNode.replaceChild(newBackdropClone, newBackdrop);
+        
+        // 添加新的backdrop点击事件监听器
+        document.getElementById('multiApiDocDetailModal-backdrop').addEventListener('click', function() {
+            console.log('点击backdrop，关闭模态框');
+            hideModalDirectly(modal);
+        });
+        
+        // 添加ESC键关闭模态框
+        const escHandler = function(e) {
+            if (e.key === 'Escape') {
+                console.log('按下ESC键，关闭模态框');
+                hideModalDirectly(modal);
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+        
+        console.log('直接操作DOM显示模态框成功');
+    } catch (domError) {
+        console.error('直接操作DOM显示模态框也失败:', domError);
+        showSmartTestNotification('无法显示文档详情，请刷新页面重试', 'error');
+    }
+}
+
+// 直接操作DOM隐藏模态框的函数
+function hideModalDirectly(modal) {
+    try {
+        // 移除模态框的显示类和样式
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+        modal.style.visibility = 'hidden';
+        modal.style.opacity = '0';
+        
+        // 恢复body的样式
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        
+        // 移除backdrop
+        const backdrop = document.getElementById('multiApiDocDetailModal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+        
+        console.log('直接操作DOM隐藏模态框成功');
+    } catch (error) {
+        console.error('隐藏模态框失败:', error);
+    }
+}
+
+// 获取HTTP方法对应的颜色
+function getMethodColor(method) {
+    const methodColors = {
+        'get': 'success',
+        'post': 'primary',
+        'put': 'warning',
+        'delete': 'danger',
+        'patch': 'info',
+        'head': 'secondary',
+        'options': 'secondary'
+    };
+    return methodColors[method.toLowerCase()] || 'secondary';
 }
 
 // 查看多接口文档详情
 function viewMultiApiDocument(documentId) {
     console.log('查看多接口文档详情:', documentId);
+    console.log('当前multiApiDocuments状态:', multiApiDocuments);
     
-    // 查找文档数据
-    const document = multiApiDocuments.find(doc => doc.document_id === documentId);
-    if (!document) {
-        showSmartTestNotification('未找到指定的多接口文档', 'error');
-        return;
-    }
-    
-    // 显示文档详情模态框
-    const modal = document.getElementById('multiApiDocDetailModal');
-    if (!modal) {
-        console.error('未找到多接口文档详情模态框');
-        return;
-    }
-    
-    // 填充文档基本信息
-    const docIdElement = document.getElementById('multiApiDocId');
-    const docNameElement = document.getElementById('multiApiDocName');
-    const docApiCountElement = document.getElementById('multiApiDocApiCount');
-    const docUploadTimeElement = document.getElementById('multiApiDocUploadTime');
-    
-    if (docIdElement) docIdElement.textContent = document.document_id || '未知ID';
-    if (docNameElement) docNameElement.textContent = document.document_name || '未知名称';
-    if (docApiCountElement) docApiCountElement.textContent = document.api_count || 0;
-    if (docUploadTimeElement) {
-        const uploadDate = new Date(document.upload_time);
-        docUploadTimeElement.textContent = uploadDate.toLocaleString();
-    }
-    
-    // 填充接口列表
-    const apiListElement = document.getElementById('multiApiDocApiList');
-    if (apiListElement && document.apis) {
-        apiListElement.innerHTML = '';
-        
-        document.apis.forEach(api => {
-            const apiItem = document.createElement('div');
-            apiItem.className = 'card mb-2';
-            
-            const apiHeader = document.createElement('div');
-            apiHeader.className = 'card-header d-flex justify-content-between align-items-center';
-            apiHeader.innerHTML = `
-                <span><strong>${api.method || 'GET'}</strong> ${api.path || api.url || '/'}</span>
-                <span class="badge bg-primary">${api.status || '200'}</span>
-            `;
-            
-            const apiBody = document.createElement('div');
-            apiBody.className = 'card-body';
-            apiBody.innerHTML = `
-                <p class="mb-1"><strong>描述:</strong> ${api.description || '无描述'}</p>
-                <p class="mb-1"><strong>参数:</strong> ${api.parameters ? JSON.stringify(api.parameters) : '无参数'}</p>
-                <p class="mb-0"><strong>响应:</strong> ${api.responses ? JSON.stringify(api.responses) : '无响应定义'}</p>
-            `;
-            
-            apiItem.appendChild(apiHeader);
-            apiItem.appendChild(apiBody);
-            apiListElement.appendChild(apiItem);
+    // 检查multiApiDocuments是否已加载
+    if (!multiApiDocuments || multiApiDocuments.length === 0) {
+        console.log('multiApiDocuments未加载，尝试加载...');
+        loadMultiApiDocuments().then(() => {
+            console.log('multiApiDocuments加载完成，重新调用viewMultiApiDocument');
+            viewMultiApiDocument(documentId);
+        }).catch(error => {
+            console.error('加载multiApiDocuments失败:', error);
+            showSmartTestNotification('加载多接口文档列表失败: ' + error.message, 'error');
         });
+        return;
     }
     
-    // 显示模态框
-    const modalInstance = new bootstrap.Modal(modal);
-    modalInstance.show();
+    // 确保多接口文档标签页是激活状态
+    const multiApiTab = document.getElementById('multiapi-docs-tab');
+    if (multiApiTab && !multiApiTab.classList.contains('active')) {
+        console.log('激活多接口文档标签页');
+        multiApiTab.click();
+    }
+    
+    // 检查模态框是否存在
+    const modal = document.getElementById('multiApiDocDetailModal');
+    console.log('模态框检查:', modal);
+    
+    if (!modal) {
+        console.error('未找到多接口文档详情模态框，尝试重新加载');
+        showSmartTestNotification('正在重新加载页面，请稍候...', 'info');
+        
+        // 尝试重新加载页面
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+        return;
+    }
+    
+    // 使用直接拼接URL的方式，避免undefined问题
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const docUrl = `${baseUrl}/api/multiapi/document/${documentId}`;
+    const relationsUrl = `${baseUrl}/api/multiapi/relation/${documentId}`;
+    
+    console.log('多接口文档详情API URL:', docUrl);
+    console.log('多接口文档关联关系API URL:', relationsUrl);
+    
+    // 获取文档内容和关联关系
+    Promise.all([
+        fetch(docUrl).then(response => response.json()),
+        fetch(relationsUrl).then(response => response.json())
+    ])
+    .then(([docData, relationsData]) => {
+        console.log('文档数据:', docData);
+        console.log('关联关系数据:', relationsData);
+        
+        // 查找文档信息
+        let globalDoc = null;
+        
+        // 先尝试通过file_id查找
+        globalDoc = multiApiDocuments.find(doc => doc.file_id === documentId);
+        
+        // 如果没找到，再尝试通过document_id查找
+        if (!globalDoc) {
+            globalDoc = multiApiDocuments.find(doc => doc.document_id === documentId);
+        }
+        
+        console.log('找到的全局文档信息:', globalDoc);
+        
+        // 填充文档基本信息
+        const docIdElement = document.getElementById('multiApiDocId');
+        const docNameElement = document.getElementById('multiApiDocName');
+        const docApiCountElement = document.getElementById('multiApiDocApiCount');
+        const docUploadTimeElement = document.getElementById('multiApiDocUploadTime');
+        
+        // 同时填充详情显示区域的元素
+        const detailDocIdElement = document.getElementById('detailMultiApiDocId');
+        const detailDocNameElement = document.getElementById('detailMultiApiDocName');
+        const detailDocUploadTimeElement = document.getElementById('detailMultiApiDocUploadTime');
+        
+        console.log('DOM元素检查结果:');
+        console.log('docIdElement:', docIdElement);
+        console.log('docNameElement:', docNameElement);
+        console.log('docApiCountElement:', docApiCountElement);
+        console.log('docUploadTimeElement:', docUploadTimeElement);
+        console.log('detailDocIdElement:', detailDocIdElement);
+        console.log('detailDocNameElement:', detailDocNameElement);
+        console.log('detailDocUploadTimeElement:', detailDocUploadTimeElement);
+        
+        // 填充多接口文档解析部分的元素
+        if (docIdElement) {
+            docIdElement.textContent = documentId;
+        }
+        
+        if (docNameElement) {
+            docNameElement.textContent = globalDoc ? globalDoc.document_name : '未知文档';
+        }
+        
+        if (docApiCountElement) {
+            docApiCountElement.textContent = globalDoc ? globalDoc.api_count || 0 : 0;
+        }
+        
+        if (docUploadTimeElement) {
+            if (globalDoc && globalDoc.upload_time) {
+                const uploadDate = new Date(globalDoc.upload_time);
+                docUploadTimeElement.textContent = uploadDate.toLocaleString();
+            } else {
+                docUploadTimeElement.textContent = '未知时间';
+            }
+        } else {
+            console.error('未找到上传时间元素 multiApiDocUploadTime');
+        }
+        
+        // 填充详情显示区域的元素
+        if (detailDocIdElement) {
+            detailDocIdElement.textContent = documentId;
+        }
+        
+        if (detailDocNameElement) {
+            detailDocNameElement.textContent = globalDoc ? globalDoc.document_name : '未知文档';
+        }
+        
+        if (detailDocUploadTimeElement) {
+            if (globalDoc && globalDoc.upload_time) {
+                const uploadDate = new Date(globalDoc.upload_time);
+                detailDocUploadTimeElement.textContent = uploadDate.toLocaleString();
+            } else {
+                detailDocUploadTimeElement.textContent = '未知时间';
+            }
+        } else {
+            console.error('未找到上传时间元素 detailMultiApiDocUploadTime');
+        }
+        
+        // 解析API内容
+        let apiContent = {};
+        try {
+            if (docData.success && docData.data && docData.data.content) {
+                const contentStr = docData.data.content;
+                console.log('原始API内容:', contentStr.substring(0, 200));
+                
+                // 尝试解析为YAML格式
+                try {
+                    apiContent = jsyaml.load(contentStr);
+                    console.log('YAML解析成功，API内容:', apiContent);
+                    console.log('API paths:', apiContent.paths);
+                } catch (yamlError) {
+                    console.warn('YAML解析失败，尝试JSON解析:', yamlError);
+                    // 如果YAML解析失败，尝试JSON解析
+                    apiContent = JSON.parse(contentStr);
+                    console.log('JSON解析成功，API内容:', apiContent);
+                    console.log('API paths:', apiContent.paths);
+                }
+            } else {
+                console.log('文档数据结构:', docData);
+            }
+        } catch (e) {
+            console.error('解析API内容失败:', e);
+        }
+        
+        // 显示API列表
+        const apiListContainer = document.getElementById('multiApiDocApiList');
+        const detailApiListContainer = document.getElementById('multiApiEndpointsList');
+        console.log('API列表容器:', apiListContainer);
+        console.log('详情API列表容器:', detailApiListContainer);
+        
+        // 清空两个容器
+        if (apiListContainer) {
+            apiListContainer.innerHTML = '';
+        }
+        if (detailApiListContainer) {
+            detailApiListContainer.innerHTML = '';
+        }
+        
+        if (apiContent.paths) {
+            console.log('开始渲染API列表，paths数量:', Object.keys(apiContent.paths).length);
+            Object.keys(apiContent.paths).forEach(path => {
+                const methods = apiContent.paths[path];
+                Object.keys(methods).forEach(method => {
+                    const methodInfo = methods[method];
+                    
+                    // 为模态框中的API列表创建元素
+                    if (apiListContainer) {
+                        const apiItem = document.createElement('div');
+                        apiItem.className = 'api-item mb-2 p-2 border rounded';
+                        
+                        const methodBadge = document.createElement('span');
+                        methodBadge.className = `badge bg-${getMethodColor(method)} me-2`;
+                        methodBadge.textContent = method.toUpperCase();
+                        
+                        const pathText = document.createElement('span');
+                        pathText.textContent = path;
+                        
+                        apiItem.appendChild(methodBadge);
+                        apiItem.appendChild(pathText);
+                        
+                        if (methodInfo.summary) {
+                            const summaryText = document.createElement('div');
+                            summaryText.className = 'text-muted small mt-1';
+                            summaryText.textContent = methodInfo.summary;
+                            apiItem.appendChild(summaryText);
+                        }
+                        
+                        apiListContainer.appendChild(apiItem);
+                    }
+                    
+                    // 为详情显示区域的API列表创建表格行
+                    if (detailApiListContainer) {
+                        const row = document.createElement('tr');
+                        
+                        const methodCell = document.createElement('td');
+                        const methodBadge = document.createElement('span');
+                        methodBadge.className = `badge bg-${getMethodColor(method)}`;
+                        methodBadge.textContent = method.toUpperCase();
+                        methodCell.appendChild(methodBadge);
+                        
+                        const pathCell = document.createElement('td');
+                        pathCell.textContent = path;
+                        
+                        const descCell = document.createElement('td');
+                        descCell.textContent = methodInfo.summary || '';
+                        
+                        const actionCell = document.createElement('td');
+                        const viewBtn = document.createElement('button');
+                        viewBtn.className = 'btn btn-sm btn-outline-primary';
+                        viewBtn.textContent = '查看';
+                        viewBtn.onclick = () => {
+                            // 这里可以添加查看API详情的逻辑
+                            console.log('查看API详情:', method, path);
+                        };
+                        actionCell.appendChild(viewBtn);
+                        
+                        row.appendChild(methodCell);
+                        row.appendChild(pathCell);
+                        row.appendChild(descCell);
+                        row.appendChild(actionCell);
+                        
+                        detailApiListContainer.appendChild(row);
+                    }
+                });
+            });
+            
+            console.log('API列表渲染完成，模态框子元素数量:', apiListContainer ? apiListContainer.children.length : 0);
+            console.log('API列表渲染完成，详情区域子元素数量:', detailApiListContainer ? detailApiListContainer.children.length : 0);
+        } else {
+            console.log('没有找到API paths，显示空提示');
+            if (apiListContainer) {
+                apiListContainer.innerHTML = '<p class="text-muted">暂无API内容</p>';
+            }
+            if (detailApiListContainer) {
+                const emptyRow = document.createElement('tr');
+                const emptyCell = document.createElement('td');
+                emptyCell.colSpan = 4;
+                emptyCell.className = 'text-center text-muted';
+                emptyCell.textContent = '暂无API内容';
+                emptyRow.appendChild(emptyCell);
+                detailApiListContainer.appendChild(emptyRow);
+            }
+        }
+        
+        if (!apiListContainer) {
+            console.error('未找到API列表容器 multiApiDocApiList');
+        }
+        if (!detailApiListContainer) {
+            console.error('未找到详情API列表容器 multiApiEndpointsList');
+        }
+        
+        // 显示关联关系
+        const relationsListContainer = document.getElementById('multiApiDocRelationList');
+        console.log('关联关系容器:', relationsListContainer);
+        if (relationsListContainer) {
+            relationsListContainer.innerHTML = '';
+            
+            // 适配后端返回的数据结构
+            let relationsArray = [];
+            if (relationsData.success && relationsData.data) {
+                if (relationsData.data.relation_data && relationsData.data.relation_data.related_pairs) {
+                    // 关联关系在related_pairs数组中
+                    relationsArray = relationsData.data.relation_data.related_pairs;
+                } else if (relationsData.data.relation_data && relationsData.data.relation_data.relations) {
+                    // 兼容relations数组的情况
+                    relationsArray = relationsData.data.relation_data.relations;
+                } else if (Array.isArray(relationsData.data)) {
+                    // 如果data直接是数组
+                    relationsArray = relationsData.data;
+                }
+            }
+            
+            if (relationsArray.length > 0) {
+                console.log('开始渲染关联关系，数量:', relationsArray.length);
+                relationsArray.forEach(relation => {
+                    const relationItem = document.createElement('div');
+                    relationItem.className = 'relation-item mb-2 p-2 border rounded';
+                    
+                    const sourceApi = document.createElement('div');
+                    sourceApi.innerHTML = `<strong>源API:</strong> ${relation.source_api_path}`;
+                    
+                    const targetApi = document.createElement('div');
+                    targetApi.innerHTML = `<strong>目标API:</strong> ${relation.target_api_path}`;
+                    
+                    const relationDesc = document.createElement('div');
+                    relationDesc.innerHTML = `<strong>关系描述:</strong> ${relation.relation_desc || '无描述'}`;
+                    
+                    relationItem.appendChild(sourceApi);
+                    relationItem.appendChild(targetApi);
+                    relationItem.appendChild(relationDesc);
+                    
+                    // 如果有关系参数，显示参数详情
+                    if (relation.relation_params && relation.relation_params.length > 0) {
+                        const paramsTitle = document.createElement('div');
+                        paramsTitle.className = 'mt-2 mb-1';
+                        paramsTitle.innerHTML = '<strong>关系参数:</strong>';
+                        relationItem.appendChild(paramsTitle);
+                        
+                        const paramsList = document.createElement('ul');
+                        paramsList.className = 'mb-0 ps-3';
+                        
+                        relation.relation_params.forEach(param => {
+                            const paramItem = document.createElement('li');
+                            paramItem.className = 'small';
+                            paramItem.innerHTML = `${param.source_param} → ${param.target_param} (${param.param_location}, ${param.relation_type})`;
+                            paramsList.appendChild(paramItem);
+                        });
+                        
+                        relationItem.appendChild(paramsList);
+                    }
+                    
+                    relationsListContainer.appendChild(relationItem);
+                });
+                
+                console.log('关联关系渲染完成，子元素数量:', relationsListContainer.children.length);
+                
+                // 如果有关联关系，激活关联关系选项卡
+                const relationTab = document.getElementById('relation-list-tab');
+                if (relationTab) {
+                    const tab = new bootstrap.Tab(relationTab);
+                    tab.show();
+                }
+            } else {
+                console.log('没有关联关系数据，显示空提示');
+                console.log('关联关系数据结构:', relationsData);
+                relationsListContainer.innerHTML = '<p class="text-muted">暂无关联关系</p>';
+            }
+        } else {
+            console.error('未找到关联关系容器 multiApiDocRelationList');
+        }
+        
+        // 同时填充详情区域的关联关系（如果存在）
+        // 注意：详情区域可能没有关联关系显示区域，所以这里只是尝试获取
+        const detailRelationsContainer = document.getElementById('detailMultiApiDocRelationList');
+        if (detailRelationsContainer) {
+            console.log('详情区域关联关系容器:', detailRelationsContainer);
+            detailRelationsContainer.innerHTML = '';
+            
+            // 适配后端返回的数据结构
+            let relationsArray = [];
+            if (relationsData.success && relationsData.data) {
+                if (relationsData.data.relation_data && relationsData.data.relation_data.related_pairs) {
+                    relationsArray = relationsData.data.relation_data.related_pairs;
+                } else if (relationsData.data.relation_data && relationsData.data.relation_data.relations) {
+                    relationsArray = relationsData.data.relation_data.relations;
+                } else if (Array.isArray(relationsData.data)) {
+                    relationsArray = relationsData.data;
+                }
+            }
+            
+            if (relationsArray.length > 0) {
+                console.log('开始渲染详情区域关联关系，数量:', relationsArray.length);
+                relationsArray.forEach(relation => {
+                    const relationItem = document.createElement('div');
+                    relationItem.className = 'relation-item mb-2 p-2 border rounded';
+                    
+                    const sourceApi = document.createElement('div');
+                    sourceApi.innerHTML = `<strong>源API:</strong> ${relation.source_api_path}`;
+                    
+                    const targetApi = document.createElement('div');
+                    targetApi.innerHTML = `<strong>目标API:</strong> ${relation.target_api_path}`;
+                    
+                    const relationDesc = document.createElement('div');
+                    relationDesc.innerHTML = `<strong>关系描述:</strong> ${relation.relation_desc || '无描述'}`;
+                    
+                    relationItem.appendChild(sourceApi);
+                    relationItem.appendChild(targetApi);
+                    relationItem.appendChild(relationDesc);
+                    
+                    // 如果有关系参数，显示参数详情
+                    if (relation.relation_params && relation.relation_params.length > 0) {
+                        const paramsTitle = document.createElement('div');
+                        paramsTitle.className = 'mt-2 mb-1';
+                        paramsTitle.innerHTML = '<strong>关系参数:</strong>';
+                        relationItem.appendChild(paramsTitle);
+                        
+                        const paramsList = document.createElement('ul');
+                        paramsList.className = 'mb-0 ps-3';
+                        
+                        relation.relation_params.forEach(param => {
+                            const paramItem = document.createElement('li');
+                            paramItem.className = 'small';
+                            paramItem.innerHTML = `${param.source_param} → ${param.target_param} (${param.param_location}, ${param.relation_type})`;
+                            paramsList.appendChild(paramItem);
+                        });
+                        
+                        relationItem.appendChild(paramsList);
+                    }
+                    
+                    detailRelationsContainer.appendChild(relationItem);
+                });
+                
+                console.log('详情区域关联关系渲染完成，子元素数量:', detailRelationsContainer.children.length);
+            } else {
+                console.log('没有关联关系数据，显示空提示');
+                detailRelationsContainer.innerHTML = '<p class="text-muted">暂无关联关系</p>';
+            }
+        }
+        
+        // 显示模态框
+        console.log('准备显示模态框');
+        const modalElement = document.getElementById('multiApiDocDetailModal');
+        if (modalElement) {
+            showModalDirectly(modalElement);
+        } else {
+            console.error('未找到模态框元素');
+            showSmartTestNotification('无法显示文档详情，请刷新页面重试', 'error');
+            return;
+        }
+        
+        // 验证模态框是否成功显示
+        setTimeout(() => {
+            const modalElement = document.getElementById('multiApiDocDetailModal');
+            if (modalElement) {
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    console.log('模态框实例存在');
+                } else {
+                    console.log('模态框实例不存在，尝试使用Bootstrap Modal');
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            } else {
+                console.error('模态框元素不存在');
+            }
+        }, 100);
+    })
+    .catch(error => {
+        console.error('获取多接口文档详情失败:', error);
+        showSmartTestNotification('获取多接口文档详情失败: ' + error.message, 'error');
+    });
 }
 
 // 删除多接口文档
@@ -3481,7 +3981,7 @@ function deleteMultiApiDocument(documentId) {
     
     // 调用删除API
     const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
-    const apiUrl = baseUrl + '/api/multiapi/documents/' + documentId;
+    const apiUrl = baseUrl + '/api/multiapi/document/' + documentId;
     
     fetch(apiUrl, {
         method: 'DELETE'
@@ -3493,12 +3993,82 @@ function deleteMultiApiDocument(documentId) {
             // 刷新文档列表
             loadMultiApiDocuments();
         } else {
-            showSmartTestNotification('删除多接口文档失败: ' + data.message, 'error');
+            showSmartTestNotification('删除多接口文档失败: ' + (data.error || data.message), 'error');
         }
     })
     .catch(error => {
         console.error('删除多接口文档失败:', error);
         showSmartTestNotification('删除多接口文档失败: ' + error.message, 'error');
+    });
+}
+
+// 生成多接口文档的测试用例
+function generateMultiApiTestCases(documentId) {
+    console.log('为多接口文档生成测试用例:', documentId);
+    
+    // 调用后端API生成测试用例
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const apiUrl = `${baseUrl}/api/multiapi/testcases/generate/${documentId}`;
+    
+    showLoading('正在生成多接口文档测试用例...');
+    
+    fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        
+        if (data.success) {
+            showSmartTestNotification('多接口文档测试用例生成成功', 'success');
+            // 刷新测试用例列表
+            loadTestCases();
+        } else {
+            showSmartTestNotification('生成测试用例失败: ' + (data.error || data.message), 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('生成测试用例失败:', error);
+        showSmartTestNotification('生成测试用例失败: ' + error.message, 'error');
+    });
+}
+
+// 执行多接口文档的测试用例
+function executeMultiApiTestCases(documentId) {
+    console.log('执行多接口文档测试用例:', documentId);
+    
+    // 调用后端API执行测试用例
+    const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
+    const apiUrl = `${baseUrl}/api/multiapi/testcases/execute/${documentId}`;
+    
+    showLoading('正在执行多接口文档测试用例...');
+    
+    fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        
+        if (data.success) {
+            showSmartTestNotification('多接口文档测试用例执行成功', 'success');
+            // 刷新测试报告列表
+            loadTestReports();
+        } else {
+            showSmartTestNotification('执行测试用例失败: ' + (data.error || data.message), 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('执行测试用例失败:', error);
+        showSmartTestNotification('执行测试用例失败: ' + error.message, 'error');
     });
 }
 
@@ -3596,6 +4166,8 @@ function initTestWorkflow() {
         });
     }
 }
+
+
 
 // 加载工作流文档
 function loadWorkflowDocuments(docType) {

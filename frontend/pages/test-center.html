@@ -790,6 +790,8 @@
                                                             <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
                                                             <p class="text-muted">暂无多接口文档</p>
                                                         </div>
+                                                        
+
                                                     </div>
                                                 </div>
                                                 
@@ -807,15 +809,15 @@
                                                                     <tbody>
                                                                         <tr>
                                                                             <td><strong>文档ID:</strong></td>
-                                                                            <td id="multiApiDocId"></td>
+                                                                            <td id="detailMultiApiDocId"></td>
                                                                         </tr>
                                                                         <tr>
                                                                             <td><strong>文档名称:</strong></td>
-                                                                            <td id="multiApiDocName"></td>
+                                                                            <td id="detailMultiApiDocName"></td>
                                                                         </tr>
                                                                         <tr>
                                                                             <td><strong>上传时间:</strong></td>
-                                                                            <td id="multiApiDocUploadTime"></td>
+                                                                            <td id="detailMultiApiDocUploadTime"></td>
                                                                         </tr>
                                                                     </tbody>
                                                                 </table>
@@ -1779,12 +1781,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="col-md-6">
-                            <h6>API端点列表</h6>
-                            <div id="docEndpointsList" class="list-group" style="max-height: 200px; overflow-y: auto;">
-                                <!-- API端点将通过JavaScript动态生成 -->
-                            </div>
-                        </div>
                     </div>
                     
                     <!-- 文档内容选项卡 -->
@@ -1966,6 +1962,68 @@
         </div>
     </div>
 
+    <!-- 多接口文档详情模态框 -->
+    <div class="modal fade" id="multiApiDocDetailModal" tabindex="-1" aria-labelledby="multiApiDocDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="multiApiDocDetailModalLabel">多接口文档详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 文档基本信息 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label">文档ID:</label>
+                            <div id="multiApiDocId" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">文档名称:</label>
+                            <div id="multiApiDocName" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">API数量:</label>
+                            <div id="multiApiDocApiCount" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">上传时间:</label>
+                            <div id="multiApiDocUploadTime" class="form-control-plaintext"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 文档内容选项卡 -->
+                    <ul class="nav nav-tabs" id="multiApiDocTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="api-list-tab" data-bs-toggle="tab" data-bs-target="#api-list-content" type="button" role="tab" aria-controls="api-list-content" aria-selected="true">API列表</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="relation-list-tab" data-bs-toggle="tab" data-bs-target="#relation-list-content" type="button" role="tab" aria-controls="relation-list-content" aria-selected="false">关联关系</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content mt-3" id="multiApiDocTabsContent">
+                        <!-- API列表内容 -->
+                        <div class="tab-pane fade show active" id="api-list-content" role="tabpanel" aria-labelledby="api-list-tab">
+                            <div id="multiApiDocApiList">
+                                <!-- API列表将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 关联关系内容 -->
+                        <div class="tab-pane fade" id="relation-list-content" role="tabpanel" aria-labelledby="relation-list-tab">
+                            <div id="multiApiDocRelationList">
+                                <!-- 关联关系将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 加载遮罩层 -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
@@ -1982,7 +2040,7 @@
     <script src="../js/config/api-config.js"></script>
     <!-- 自定义JS -->
     <script src="../js/main.js"></script>
-    <script src="../js/components/test-center.js"></script>
+    <script src="../js/components/test-center.js?v=20251209-2"></script>
     
     <!-- 内联脚本：确保编辑器正确初始化 -->
     <script>
@@ -2733,6 +2791,79 @@
             // 存储文档编辑模态框的原始内容
             window.documentEditOriginalContent = '';
             
+            // 手动显示多接口文档详情模态框的函数
+            window.showMultiApiDocDetailModal = function() {
+                const modalElement = document.getElementById('multiApiDocDetailModal');
+                if (!modalElement) {
+                    console.error('找不到多接口文档详情模态框元素');
+                    return;
+                }
+                
+                console.log('手动显示多接口文档详情模态框');
+                
+                // 创建backdrop
+                let backdrop = document.querySelector('.modal-backdrop');
+                if (!backdrop) {
+                    backdrop = document.createElement('div');
+                    backdrop.className = 'modal-backdrop fade show';
+                    document.body.appendChild(backdrop);
+                    console.log('已创建新的backdrop');
+                }
+                
+                // 设置模态框样式
+                modalElement.style.display = 'block';
+                modalElement.classList.add('show');
+                document.body.classList.add('modal-open');
+                document.body.style.overflow = 'hidden';
+                
+                // 触发show.bs.modal事件
+                const showEvent = new CustomEvent('show.bs.modal', { bubbles: true, cancelable: true });
+                modalElement.dispatchEvent(showEvent);
+                
+                // 延迟触发shown.bs.modal事件
+                setTimeout(() => {
+                    const shownEvent = new CustomEvent('shown.bs.modal', { bubbles: true });
+                    modalElement.dispatchEvent(shownEvent);
+                    console.log('多接口文档详情模态框已显示');
+                }, 150);
+            };
+            
+            // 手动隐藏多接口文档详情模态框的函数
+            window.hideMultiApiDocDetailModal = function() {
+                const modalElement = document.getElementById('multiApiDocDetailModal');
+                if (!modalElement) {
+                    console.error('找不到多接口文档详情模态框元素');
+                    return;
+                }
+                
+                console.log('手动隐藏多接口文档详情模态框');
+                
+                // 触发hide.bs.modal事件
+                const hideEvent = new CustomEvent('hide.bs.modal', { bubbles: true, cancelable: true });
+                modalElement.dispatchEvent(hideEvent);
+                
+                // 移除模态框样式
+                modalElement.classList.remove('show');
+                
+                // 延迟隐藏模态框并清理
+                setTimeout(() => {
+                    modalElement.style.display = 'none';
+                    
+                    // 清理backdrop
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                    
+                    // 清理body样式
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    
+                    // 触发hidden.bs.modal事件
+                    const hiddenEvent = new CustomEvent('hidden.bs.modal', { bubbles: true });
+                    modalElement.dispatchEvent(hiddenEvent);
+                    console.log('多接口文档详情模态框已隐藏');
+                }, 150);
+            };
+            
             // 监听文档编辑模态框显示事件，保存原始内容
             const documentEditModal = document.getElementById('documentEditModal');
             if (documentEditModal) {
@@ -2862,6 +2993,70 @@
                         }, 300);
                     });
                 }
+            }
+            
+            // 监听多接口文档详情模态框显示事件
+            const multiApiDocDetailModal = document.getElementById('multiApiDocDetailModal');
+            if (multiApiDocDetailModal) {
+                // 添加显示前事件监听器
+                multiApiDocDetailModal.addEventListener('show.bs.modal', function() {
+                    console.log('多接口文档详情模态框即将显示');
+                });
+                
+                // 添加显示后事件监听器
+                multiApiDocDetailModal.addEventListener('shown.bs.modal', function() {
+                    console.log('多接口文档详情模态框已显示');
+                    
+                    // 检查模态框是否正确显示
+                    setTimeout(function() {
+                        const modalElement = document.getElementById('multiApiDocDetailModal');
+                        if (modalElement) {
+                            console.log('模态框元素存在');
+                            console.log('模态框类名:', modalElement.className);
+                            console.log('模态框样式:', modalElement.style.display);
+                            console.log('模态框是否可见:', modalElement.offsetParent !== null);
+                            
+                            // 确保模态框有正确的样式
+                            if (!modalElement.classList.contains('show')) {
+                                modalElement.classList.add('show');
+                                modalElement.style.display = 'block';
+                            }
+                            
+                            // 检查backdrop是否存在
+                            const backdrop = document.querySelector('.modal-backdrop');
+                            if (backdrop) {
+                                console.log('backdrop存在，类名:', backdrop.className);
+                            } else {
+                                console.log('backdrop不存在');
+                                // 如果backdrop不存在，创建一个
+                                const newBackdrop = document.createElement('div');
+                                newBackdrop.className = 'modal-backdrop fade show';
+                                document.body.appendChild(newBackdrop);
+                                console.log('已创建新的backdrop');
+                            }
+                            
+                            // 确保body有modal-open类
+                            document.body.classList.add('modal-open');
+                        } else {
+                            console.error('找不到模态框元素');
+                        }
+                    }, 100);
+                });
+                
+                // 添加隐藏事件监听器
+                multiApiDocDetailModal.addEventListener('hidden.bs.modal', function() {
+                    console.log('多接口文档详情模态框已隐藏');
+                    
+                    // 清理可能残留的backdrop
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => {
+                        console.log('清理残留的backdrop');
+                        backdrop.remove();
+                    });
+                    
+                    // 清理可能残留的modal-open类
+                    document.body.classList.remove('modal-open');
+                });
             }
             
         });
