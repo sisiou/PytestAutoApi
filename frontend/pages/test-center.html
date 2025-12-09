@@ -575,12 +575,10 @@
                                                 <!-- 输入方式选择标签页 -->
                                                 <ul class="nav nav-tabs mb-4" id="inputMethodTabs" role="tablist">
                                                     <li class="nav-item" role="presentation">
-                                                        <button class="nav-link active" id="text-input-tab" data-bs-toggle="tab" data-bs-target="#text-input" type="button" role="tab" aria-controls="text-input" aria-selected="true">
-                                                            <i class="fas fa-keyboard me-2"></i>直接输入
-                                                        </button>
+
                                                     </li>
                                                     <li class="nav-item" role="presentation">
-                                                        <button class="nav-link" id="file-upload-tab" data-bs-toggle="tab" data-bs-target="#file-upload" type="button" role="tab" aria-controls="file-upload" aria-selected="false">
+                                                        <button class="nav-link active" id="file-upload-tab" data-bs-toggle="tab" data-bs-target="#file-upload" type="button" role="tab" aria-controls="file-upload" aria-selected="true">
                                                             <i class="fas fa-file-upload me-2"></i>多接口文档上传
                                                         </button>
                                                     </li>
@@ -594,7 +592,7 @@
                                                 <!-- 标签页内容 -->
                                                 <div class="tab-content" id="inputMethodTabsContent">
                                                     <!-- 直接输入OpenAPI 3.0.0文档 -->
-                                                    <div class="tab-pane fade show active" id="text-input" role="tabpanel" aria-labelledby="text-input-tab">
+                                                    <div class="tab-pane fade" id="text-input" role="tabpanel" aria-labelledby="text-input-tab">
                                                         <div class="mb-3">
                                                             <label for="apiTextInput" class="form-label">OpenAPI 3.0.0文档内容</label>
                                                             <textarea class="form-control" id="apiTextInput" rows="15" placeholder="在此处粘贴您的OpenAPI 3.0.0文档内容（JSON或YAML格式）..."></textarea>
@@ -612,7 +610,7 @@
                                                     </div>
                                                     
                                                     <!-- 文件上传 -->
-                                                    <div class="tab-pane fade" id="file-upload" role="tabpanel" aria-labelledby="file-upload-tab">
+                                                    <div class="tab-pane fade show active" id="file-upload" role="tabpanel" aria-labelledby="file-upload-tab">
                                                         <div class="upload-container" id="uploadContainer">
                                                             <i class="fas fa-cloud-upload-alt file-icon"></i>
                                                             <h4>拖拽文件到此处或点击选择文件</h4>
