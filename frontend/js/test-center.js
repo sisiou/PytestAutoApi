@@ -1142,32 +1142,6 @@ async function viewDocument(taskId) {
         document.getElementById('docDetailCreatedAt').textContent = formatDateTime(documentData.created_at);
         document.getElementById('docDetailApiCount').textContent = documentData.api_count || 0;
         
-        // 填充API端点列表
-        const endpointsList = document.getElementById('docEndpointsList');
-        endpointsList.innerHTML = '';
-        
-        if (documentData.api_data && documentData.api_data.paths) {
-            const paths = documentData.api_data.paths;
-            Object.keys(paths).forEach(path => {
-                Object.keys(paths[path]).forEach(method => {
-                    const endpoint = document.createElement('div');
-                    endpoint.className = 'list-group-item list-group-item-action';
-                    endpoint.innerHTML = `
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">
-                                <span class="badge bg-${getMethodColor(method)}">${method.toUpperCase()}</span>
-                                ${path}
-                            </h6>
-                        </div>
-                        <small>${paths[path][method].summary || '无描述'}</small>
-                    `;
-                    endpointsList.appendChild(endpoint);
-                });
-            });
-        } else {
-            endpointsList.innerHTML = '<div class="list-group-item">暂无API端点</div>';
-        }
-        
         // 显示OpenAPI规范
         const openApiSpecEditor = document.getElementById('openApiSpecEditor');
         
