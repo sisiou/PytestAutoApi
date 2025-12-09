@@ -31,8 +31,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initSmartTestTab();
     loadSmartTestSavedData();
     
-    // 加载已上传文档列表
-    loadUploadedDocuments();
+    // 加载已上传单接口文档列表
+    loadSingleUploadedDocuments();
     
     // 初始化测试编辑器按钮
     initTestEditorButtons();
@@ -248,24 +248,24 @@ function initSmartTestTab() {
     // 刷新按钮事件监听
     const refreshDocsBtn = document.getElementById('refreshDocsBtn');
     if (refreshDocsBtn) {
-        refreshDocsBtn.addEventListener('click', loadUploadedDocuments);
+        refreshDocsBtn.addEventListener('click', loadSingleUploadedDocuments);
     }
     
     const refreshOpenApiDocsBtn = document.getElementById('refreshOpenApiDocsBtn');
     if (refreshOpenApiDocsBtn) {
-        refreshOpenApiDocsBtn.addEventListener('click', loadUploadedDocuments);
+        refreshOpenApiDocsBtn.addEventListener('click', loadSingleUploadedDocuments);
     }
     
     // 关联关系文档刷新按钮
     const refreshRelationDocsBtn = document.getElementById('refreshRelationDocsBtn');
     if (refreshRelationDocsBtn) {
-        refreshRelationDocsBtn.addEventListener('click', loadUploadedDocuments);
+        refreshRelationDocsBtn.addEventListener('click', loadSingleUploadedDocuments);
     }
     
     // 业务场景文档刷新按钮
     const refreshSceneDocsBtn = document.getElementById('refreshSceneDocsBtn');
     if (refreshSceneDocsBtn) {
-        refreshSceneDocsBtn.addEventListener('click', loadUploadedDocuments);
+        refreshSceneDocsBtn.addEventListener('click', loadSingleUploadedDocuments);
     }
     
     // 多接口文档刷新按钮
@@ -2349,8 +2349,8 @@ function formatFileSize(bytes) {
 }
 
 
-// 加载已上传文档列表
-function loadUploadedDocuments() {
+// 加载已上传单接口文档列表
+function loadSingleUploadedDocuments() {
     console.log('开始加载已上传文档列表');
     
     const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL || 'http://127.0.0.1:5000' : 'http://127.0.0.1:5000';
@@ -2421,6 +2421,11 @@ function loadUploadedDocuments() {
                             viewDocument('openapi', doc.file_id);
                         });
                         
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'btn btn-sm btn-outline-warning me-1';
+                        editBtn.innerHTML = '<i class="fas fa-edit"></i> 编辑';
+                        editBtn.addEventListener('click', () => editThreeDocuments(doc.file_id));
+                        
                         const generateBtn = document.createElement('button');
                         generateBtn.className = 'btn btn-sm btn-outline-success me-1';
                         generateBtn.innerHTML = '<i class="fas fa-code"></i> 生成测试用例';
@@ -2435,20 +2440,15 @@ function loadUploadedDocuments() {
                             executeTestCases(doc.file_id);
                         });
                         
-                        const editBtn = document.createElement('button');
-                        editBtn.className = 'btn btn-sm btn-outline-warning me-1';
-                        editBtn.innerHTML = '<i class="fas fa-edit"></i> 编辑';
-                        editBtn.addEventListener('click', () => editThreeDocuments(doc.file_id));
-                        
                         const deleteBtn = document.createElement('button');
                         deleteBtn.className = 'btn btn-sm btn-outline-danger';
                         deleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
                         deleteBtn.addEventListener('click', () => deleteDocument('openapi', doc.file_id));
                         
                         actionsCell.appendChild(viewBtn);
+                        actionsCell.appendChild(editBtn);
                         actionsCell.appendChild(generateBtn);
                         actionsCell.appendChild(executeBtn);
-                        actionsCell.appendChild(editBtn);
                         actionsCell.appendChild(deleteBtn);
                         row.appendChild(actionsCell);
                         
@@ -3034,7 +3034,7 @@ function saveThreeDocuments(docId, originalDocs) {
                 const modalInstance = bootstrap.Modal.getInstance(modal);
                 modalInstance.hide();
                 // 刷新文档列表
-                loadUploadedDocuments();
+                loadSingleUploadedDocuments();
             } else {
                 const failedDocs = results.filter(r => !r.success).map(r => r.docType).join(', ');
                 showSmartTestNotification(`部分文档保存失败: ${failedDocs}`, 'error');
@@ -3105,7 +3105,7 @@ function editDocument(docType, docId) {
                                 const modalInstance = bootstrap.Modal.getInstance(modal);
                                 modalInstance.hide();
                                 // 刷新文档列表
-                                loadUploadedDocuments();
+                                loadSingleUploadedDocuments();
                             } else {
                                 // 显示更详细的错误信息
                                 let errorMessage = `文档更新失败: ${data.error}`;
@@ -3174,7 +3174,7 @@ function deleteDocument(docType, docId) {
             if (data.success) {
                 showSmartTestNotification(`${docType}文档删除成功`, 'success');
                 // 刷新文档列表
-                loadUploadedDocuments();
+                loadSingleUploadedDocuments();
             } else {
                 showSmartTestNotification(`删除${docType}文档失败: ` + data.message, 'error');
             }
