@@ -78,13 +78,15 @@ CORS(app)  # 启用跨域支持
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB最大文件大小
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MULTI_UPLOAD_FOLDER'] = 'multiuploads'
-app.config['RESULTS_FOLDER'] = 'results'
+app.config['RESULTS_FOLDER'] = 'uploads/results'
 app.config['TEST_CASES_FOLDER'] = 'test_cases'
+app.config['SUGGESTIONS_FOLDER'] = 'suggestions'
 
 # 确保必要的目录存在
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['RESULTS_FOLDER'], exist_ok=True)
 os.makedirs(app.config['TEST_CASES_FOLDER'], exist_ok=True)
+os.makedirs(app.config['SUGGESTIONS_FOLDER'], exist_ok=True)
 
 # 全局变量存储解析结果
 api_docs = {}
@@ -188,11 +190,19 @@ def generate_file_id(url=None):
     """生成文件ID"""
     return generate_task_id(url)
 
-def save_result(task_id: str, result: Dict[str, Any]):
-    """保存任务结果"""
-    result_path = os.path.join(app.config['RESULTS_FOLDER'], f"{task_id}.json")
+def save_result(file_id: str, result: Dict[str, Any]):
+    """保存任务结果
+    
+    Args:
+        file_id: 文件ID，用作文件名
+        result: 结果数据
+    """
+    result_path = os.path.join(app.config['RESULTS_FOLDER'], f"results_{file_id}.json")
+    logger.info(f"使用file_id {file_id} 保存结果到 {result_path}")
+    
     with open(result_path, 'w', encoding='utf-8') as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
+    logger.info(f"结果已保存到 {result_path}")
     return result_path
 
 def load_result(task_id: str) -> Optional[Dict[str, Any]]:
@@ -450,7 +460,7 @@ def parse_uploaded_document(file_id):
         }
         
         # 保存结果
-        save_result(file_id, api_docs[file_id])
+        save_result(f"test_cases_{file_id}", test_cases[file_id])
         
         # 清除文档列表缓存
         clear_docs_list_cache()
@@ -524,7 +534,7 @@ def generate_test_cases_for_document(file_id):
         }
         
         # 保存结果
-        save_result(f"test_cases_{file_id}", test_cases[file_id])
+        save_result(file_id, test_cases[file_id])
         
         return jsonify({
             'success': True,
@@ -568,7 +578,7 @@ def execute_tests_for_document(file_id):
         }
         
         # 保存结果
-        save_result(f"coverage_{file_id}", coverage_reports[file_id])
+        save_result(file_id, coverage_reports[file_id])
         
         return jsonify({
             'success': True,
@@ -612,7 +622,7 @@ def analyze_test_results_for_document(file_id):
         }
         
         # 保存结果
-        save_result(f"suggestions_{file_id}", suggestions[file_id])
+        save_result(file_id, suggestions[file_id])
         
         return jsonify({
             'success': True,
@@ -693,7 +703,7 @@ def full_test_workflow_for_document(file_id):
                 'test_cases': workflow_results['test_cases'],
                 'created_at': datetime.now().isoformat()
             }
-            save_result(f"test_cases_{file_id}", test_cases[file_id])
+            save_result(file_id, test_cases[file_id])
         
         if 'execution_results' in workflow_results:
             coverage_reports[file_id] = {
@@ -701,7 +711,7 @@ def full_test_workflow_for_document(file_id):
                 'execution_results': workflow_results['execution_results'],
                 'created_at': datetime.now().isoformat()
             }
-            save_result(f"coverage_{file_id}", coverage_reports[file_id])
+            save_result(file_id, coverage_reports[file_id])
         
         if 'analysis_results' in workflow_results:
             suggestions[file_id] = {
@@ -709,7 +719,7 @@ def full_test_workflow_for_document(file_id):
                 'analysis_results': workflow_results['analysis_results'],
                 'created_at': datetime.now().isoformat()
             }
-            save_result(f"suggestions_{file_id}", suggestions[file_id])
+            save_result(file_id, suggestions[file_id])
         
         return jsonify({
             'success': True,
@@ -2674,7 +2684,8 @@ class Test{case.api_method.title()}{case.api_path.replace('/', '_').replace('{',
             **test_cases[task_id],
             'test_cases_count': sum(len(cases) for cases in test_cases_data.values())
         }
-        save_result(task_id, result)
+        # 使用filename作为file_id，实现相同文件的结果覆盖
+        save_result(filename, result)
         
         return jsonify({
             'success': True,
@@ -4211,7 +4222,8 @@ def run_all_feishu_tests():
             'stderr': stderr,
             'created_at': datetime.now().isoformat()
         }
-        save_result(task_id, result)
+        # 使用filename作为file_id，实现相同文件的结果覆盖
+        save_result(filename, result)
         
         # ========== 新增：检测并启动Allure报告服务器 ==========
         allure_url = None
@@ -5161,6 +5173,47 @@ def execute_test_cases():
             test_error_lines = extract_error_lines(test_stderr)
             if test_error_lines:
                 response_data['test_error_summary'] = test_error_lines[-10:]
+        
+        # 保存测试结果到results目录
+        try:
+            # 使用base_name作为文件ID，如果为空则使用task_id
+            file_id = base_name if base_name else task_id
+            
+            result_data = {
+                'task_id': task_id,
+                'base_name': base_name,
+                'test_file_path': str(test_path),
+                'result_type': 'test_execution',
+                'test_return_code': test_return_code,
+                'test_success': response_data['test_success'],
+                'metrics': response_data.get('metrics', {}),
+                'message': response_data.get('message', ''),
+                'created_at': datetime.now().isoformat()
+            }
+            
+            # 如果有错误信息，也保存到结果中
+            if 'test_error' in response_data:
+                result_data['test_error'] = response_data['test_error']
+                result_data['test_message'] = response_data['test_message']
+                if 'test_error_summary' in response_data:
+                    result_data['test_error_summary'] = response_data['test_error_summary']
+            
+            # 保存完整输出（截断后的）
+            result_data['test_stdout'] = response_data.get('test_stdout', '')
+            result_data['test_stderr'] = response_data.get('test_stderr', '')
+            
+            # 调用save_result函数保存结果，save_result函数会自动添加results_前缀
+            save_result(file_id, result_data)
+            logger.info(f"测试结果已保存到results目录，文件名: results_{file_id}")
+            
+            # 添加保存信息到响应
+            response_data['result_saved'] = True
+            response_data['result_file'] = f"results_{file_id}.json"
+            
+        except Exception as e:
+            logger.error(f"保存测试结果失败: {str(e)}")
+            response_data['result_saved'] = False
+            response_data['save_error'] = str(e)
         
         return jsonify(response_data)
     
@@ -6421,6 +6474,702 @@ def generate_test_metrics(test_results, test_cases_data, execution_time):
     }
     
     return test_metrics
+
+# 6. 测试结果管理
+def sync_test_results():
+    """同步和累积测试结果数据"""
+    try:
+        # 确保结果目录存在
+        results_dir = app.config['RESULTS_FOLDER']
+        if not os.path.exists(results_dir):
+            return
+        
+        # 创建累积数据文件路径
+        sync_file_path = os.path.join(results_dir, "test_results_sync.json")
+        
+        # 初始化累积数据
+        sync_data = {
+            'last_sync': datetime.now().isoformat(),
+            'total_results': 0,
+            'results': []
+        }
+        
+        # 如果已存在同步文件，先加载它
+        if os.path.exists(sync_file_path):
+            try:
+                with open(sync_file_path, 'r', encoding='utf-8') as f:
+                    existing_sync_data = json.load(f)
+                    # 保留现有的结果数据
+                    sync_data['results'] = existing_sync_data.get('results', [])
+            except Exception as e:
+                logger.warning(f"加载现有同步数据失败: {str(e)}")
+        
+        # 创建一个集合来跟踪已处理的文件，避免重复
+        processed_files = {result.get('file_name', '') for result in sync_data['results']}
+        
+        # 遍历结果目录中的所有JSON文件
+        for filename in os.listdir(results_dir):
+            if filename.endswith('.json') and filename != 'test_results_sync.json':
+                file_path = os.path.join(results_dir, filename)
+                
+                # 跳过已经处理过的文件
+                if filename in processed_files:
+                    continue
+                
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        result_data = json.load(f)
+                    
+                    # 检查是否是测试结果数据
+                    is_test_result = (
+                        filename.startswith('coverage_') or 
+                        filename.startswith('test_results_') or
+                        filename.startswith('suggestions_') or
+                        ('execution_results' in result_data) or
+                        ('analysis_results' in result_data) or
+                        ('total' in result_data and 'passed' in result_data and 'failed' in result_data)
+                    )
+                    
+                    if is_test_result:
+                        # 提取测试结果信息
+                        result_type = 'unknown'
+                        if filename.startswith('coverage_'):
+                            result_type = 'execution'
+                        elif filename.startswith('test_results_'):
+                            result_type = 'test'
+                        elif filename.startswith('suggestions_'):
+                            result_type = 'analysis'
+                        elif 'execution_results' in result_data:
+                            result_type = 'execution'
+                        elif 'analysis_results' in result_data:
+                            result_type = 'analysis'
+                        
+                        # 获取关联的file_id
+                        file_id = result_data.get('file_id', '')
+                        if not file_id and filename.startswith('coverage_'):
+                            file_id = filename[9:]  # 移除'coverage_'前缀
+                        elif not file_id and filename.startswith('test_results_'):
+                            file_id = filename[13:]  # 移除'test_results_'前缀
+                        elif not file_id and filename.startswith('suggestions_'):
+                            file_id = filename[12:]  # 移除'suggestions_'前缀
+                        
+                        # 获取API名称
+                        api_name = result_data.get('api_name', '')
+                        if not api_name and file_id and file_id in api_docs:
+                            api_name = api_docs[file_id].get('filename', file_id)
+                        
+                        # 获取时间戳
+                        timestamp = result_data.get('created_at', '')
+                        if not timestamp:
+                            # 尝试从文件修改时间获取
+                            timestamp = datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()
+                        
+                        # 创建同步记录
+                        sync_record = {
+                            'id': str(uuid.uuid4()),
+                            'file_name': filename,
+                            'file_id': file_id,
+                            'api_name': api_name,
+                            'result_type': result_type,
+                            'timestamp': timestamp,
+                            'data': result_data
+                        }
+                        
+                        # 添加到累积结果
+                        sync_data['results'].append(sync_record)
+                        
+                except Exception as e:
+                    logger.error(f"处理测试结果文件失败 {filename}: {str(e)}")
+        
+        # 更新统计信息
+        sync_data['total_results'] = len(sync_data['results'])
+        sync_data['last_sync'] = datetime.now().isoformat()
+        
+        # 保存同步数据
+        with open(sync_file_path, 'w', encoding='utf-8') as f:
+            json.dump(sync_data, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"测试结果同步完成，共处理 {sync_data['total_results']} 条结果")
+        return sync_data
+        
+    except Exception as e:
+        logger.error(f"测试结果同步失败: {str(e)}")
+        return None
+
+def get_synced_test_results(limit=20, offset=0, result_type=None, file_id=None):
+    """获取同步后的测试结果"""
+    try:
+        # 确保结果目录存在
+        results_dir = app.config['RESULTS_FOLDER']
+        sync_file_path = os.path.join(results_dir, "test_results_sync.json")
+        
+        # 如果同步文件不存在，先执行同步
+        if not os.path.exists(sync_file_path):
+            sync_data = sync_test_results()
+            if not sync_data:
+                return {'results': [], 'total': 0}
+        else:
+            # 检查是否需要重新同步（例如，超过一定时间）
+            with open(sync_file_path, 'r', encoding='utf-8') as f:
+                sync_data = json.load(f)
+            
+            # 检查最后同步时间，如果超过1小时，重新同步
+            last_sync = sync_data.get('last_sync', '')
+            if last_sync:
+                try:
+                    last_sync_time = datetime.fromisoformat(last_sync.replace('Z', '+00:00'))
+                    current_time = datetime.now()
+                    # 如果超过1小时未同步，重新同步
+                    if (current_time - last_sync_time).total_seconds() > 3600:
+                        sync_data = sync_test_results()
+                except Exception as e:
+                    logger.warning(f"解析最后同步时间失败: {str(e)}")
+                    sync_data = sync_test_results()
+        
+        # 获取结果列表
+        results = sync_data.get('results', [])
+        
+        # 应用筛选条件
+        if result_type and result_type != 'all':
+            results = [r for r in results if r.get('result_type') == result_type]
+        
+        if file_id and file_id != 'all':
+            results = [r for r in results if r.get('file_id') == file_id]
+        
+        # 按时间戳排序（最新的在前）
+        results.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+        
+        # 应用分页
+        total = len(results)
+        paginated_results = results[offset:offset+limit]
+        
+        return {
+            'results': paginated_results,
+            'total': total
+        }
+        
+    except Exception as e:
+        logger.error(f"获取同步测试结果失败: {str(e)}")
+        return {'results': [], 'total': 0}
+
+@app.route('/api/test-results', methods=['GET'])
+def get_test_results():
+    """获取历史测试结果列表"""
+    try:
+        # 获取查询参数
+        limit = request.args.get('limit', 20, type=int)
+        offset = request.args.get('offset', 0, type=int)
+        status_filter = request.args.get('status', None)
+        api_filter = request.args.get('api', None)
+        date_filter = request.args.get('date', None)
+        result_type_filter = request.args.get('type', None)
+        file_id_filter = request.args.get('file_id', None)
+        use_synced = request.args.get('synced', 'false').lower() == 'true'
+        
+        # 如果请求使用同步数据，使用同步函数
+        if use_synced:
+            synced_results = get_synced_test_results(limit, offset, result_type_filter, file_id_filter)
+            
+            # 转换同步数据为前端期望的格式
+            formatted_results = []
+            for result in synced_results['results']:
+                data = result.get('data', {})
+                result_type = result.get('result_type', 'unknown')
+                
+                # 根据结果类型提取不同的数据
+                if result_type == 'execution' and 'execution_results' in data:
+                    exec_results = data['execution_results']
+                    total = exec_results.get('total', 0)
+                    passed = exec_results.get('passed', 0)
+                    failed = exec_results.get('failed', 0)
+                    skipped = exec_results.get('skipped', 0)
+                    duration = exec_results.get('duration', 0)
+                    
+                    status = 'unknown'
+                    if failed == 0:
+                        status = 'passed'
+                    elif passed > 0:
+                        status = 'partial'
+                    else:
+                        status = 'failed'
+                    
+                    formatted_results.append({
+                        'id': result.get('id', ''),
+                        'suiteName': data.get('suite_name', '执行结果'),
+                        'apiName': result.get('api_name', ''),
+                        'timestamp': result.get('timestamp', ''),
+                        'status': status,
+                        'totalCases': total,
+                        'passedCases': passed,
+                        'failedCases': failed,
+                        'skippedCases': skipped,
+                        'duration': f"{duration}秒" if duration else '-',
+                        'request': data.get('request', {}),
+                        'response': data.get('response', {}),
+                        'log': data.get('log', ''),
+                        'resultType': result_type,
+                        'fileId': result.get('file_id', ''),
+                        'fileName': result.get('file_name', '')
+                    })
+                    
+                elif result_type == 'analysis' and 'analysis_results' in data:
+                    analysis = data['analysis_results']
+                    
+                    formatted_results.append({
+                        'id': result.get('id', ''),
+                        'suiteName': data.get('suite_name', '分析结果'),
+                        'apiName': result.get('api_name', ''),
+                        'timestamp': result.get('timestamp', ''),
+                        'status': 'analysis',
+                        'totalCases': 0,
+                        'passedCases': 0,
+                        'failedCases': 0,
+                        'skippedCases': 0,
+                        'duration': '-',
+                        'request': {},
+                        'response': analysis,
+                        'log': '',
+                        'resultType': result_type,
+                        'fileId': result.get('file_id', ''),
+                        'fileName': result.get('file_name', '')
+                    })
+                    
+                else:
+                    # 通用格式
+                    formatted_results.append({
+                        'id': result.get('id', ''),
+                        'suiteName': data.get('suite_name', '测试结果'),
+                        'apiName': result.get('api_name', ''),
+                        'timestamp': result.get('timestamp', ''),
+                        'status': 'unknown',
+                        'totalCases': data.get('total', 0),
+                        'passedCases': data.get('passed', 0),
+                        'failedCases': data.get('failed', 0),
+                        'skippedCases': data.get('skipped', 0),
+                        'duration': f"{data.get('duration', 0)}秒" if data.get('duration') else '-',
+                        'request': data.get('request', {}),
+                        'response': data.get('response', {}),
+                        'log': data.get('log', ''),
+                        'resultType': result_type,
+                        'fileId': result.get('file_id', ''),
+                        'fileName': result.get('file_name', '')
+                    })
+            
+            # 应用额外的筛选条件
+            if status_filter and status_filter != 'all':
+                formatted_results = [r for r in formatted_results if r.get('status') == status_filter]
+            
+            if api_filter and api_filter != 'all':
+                formatted_results = [r for r in formatted_results if r.get('apiName') == api_filter]
+            
+            if date_filter and date_filter != 'all':
+                try:
+                    now = datetime.now().date()
+                    filtered_results = []
+                    
+                    for result in formatted_results:
+                        timestamp = result.get('timestamp', '')
+                        if timestamp:
+                            try:
+                                result_date = datetime.fromisoformat(timestamp.replace('Z', '+00:00')).date()
+                                
+                                if date_filter == 'today' and result_date == now:
+                                    filtered_results.append(result)
+                                elif date_filter == 'week':
+                                    week_ago = now.replace(day=now.day-7)
+                                    if result_date >= week_ago:
+                                        filtered_results.append(result)
+                                elif date_filter == 'month':
+                                    month_ago = now.replace(day=now.day-30)
+                                    if result_date >= month_ago:
+                                        filtered_results.append(result)
+                            except Exception as e:
+                                logger.warning(f"解析日期失败: {str(e)}")
+                    
+                    formatted_results = filtered_results
+                except Exception as e:
+                    logger.warning(f"日期筛选失败: {str(e)}")
+            
+            # 应用分页
+            total = len(formatted_results)
+            paginated_results = formatted_results[offset:offset+limit]
+            
+            return jsonify({
+                'success': True,
+                'results': paginated_results,
+                'total': total
+            })
+        
+        # 原有的逻辑（不使用同步数据）
+        # 确保结果目录存在
+        results_dir = app.config['RESULTS_FOLDER']
+        if not os.path.exists(results_dir):
+            return jsonify({
+                'success': True,
+                'results': [],
+                'total': 0
+            })
+        
+        # 收集所有测试结果文件
+        test_results = []
+        
+        # 遍历结果目录中的所有JSON文件
+        for filename in os.listdir(results_dir):
+            if filename.endswith('.json'):
+                file_path = os.path.join(results_dir, filename)
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        result_data = json.load(f)
+                    
+                    # 检查是否是测试结果数据
+                    # 检查文件名前缀是否匹配测试结果模式
+                    if (filename.startswith('coverage_') or 
+                        filename.startswith('test_results_') or
+                        ('execution_results' in result_data) or
+                        ('total' in result_data and 'passed' in result_data and 'failed' in result_data)):
+                        
+                        # 提取测试结果信息
+                        result_id = filename[:-5]  # 移除.json扩展名
+                        timestamp = result_data.get('created_at', result_data.get('timestamp', ''))
+                        
+                        # 尝试从文件名或数据中获取API名称
+                        api_name = result_data.get('api_name', '')
+                        if not api_name and 'file_id' in result_data:
+                            file_id = result_data['file_id']
+                            # 尝试从API文档中获取API名称
+                            if file_id in api_docs:
+                                api_name = api_docs[file_id].get('filename', file_id)
+                        
+                        # 获取测试状态
+                        status = 'unknown'
+                        if 'status' in result_data:
+                            status = result_data['status']
+                        elif 'execution_results' in result_data:
+                            # 从执行结果中计算状态
+                            exec_results = result_data['execution_results']
+                            if isinstance(exec_results, dict):
+                                total = exec_results.get('total', 0)
+                                passed = exec_results.get('passed', 0)
+                                failed = exec_results.get('failed', 0)
+                                
+                                if failed == 0:
+                                    status = 'passed'
+                                elif passed > 0:
+                                    status = 'partial'
+                                else:
+                                    status = 'failed'
+                        elif 'total' in result_data and 'passed' in result_data and 'failed' in result_data:
+                            total = result_data.get('total', 0)
+                            passed = result_data.get('passed', 0)
+                            failed = result_data.get('failed', 0)
+                            
+                            if failed == 0:
+                                status = 'passed'
+                            elif passed > 0:
+                                status = 'partial'
+                            else:
+                                status = 'failed'
+                        
+                        # 获取测试统计
+                        total_cases = 0
+                        passed_cases = 0
+                        failed_cases = 0
+                        skipped_cases = 0
+                        
+                        if 'execution_results' in result_data:
+                            exec_results = result_data['execution_results']
+                            if isinstance(exec_results, dict):
+                                total_cases = exec_results.get('total', 0)
+                                passed_cases = exec_results.get('passed', 0)
+                                failed_cases = exec_results.get('failed', 0)
+                                skipped_cases = exec_results.get('skipped', 0)
+                        elif 'total' in result_data:
+                            total_cases = result_data.get('total', 0)
+                            passed_cases = result_data.get('passed', 0)
+                            failed_cases = result_data.get('failed', 0)
+                            skipped_cases = result_data.get('skipped', 0)
+                        
+                        # 获取执行时长
+                        duration = result_data.get('duration', 0)
+                        
+                        # 创建测试结果对象
+                        test_result = {
+                            'id': result_id,
+                            'suiteName': result_data.get('suite_name', '默认套件'),
+                            'apiName': api_name,
+                            'timestamp': timestamp,
+                            'status': status,
+                            'totalCases': total_cases,
+                            'passedCases': passed_cases,
+                            'failedCases': failed_cases,
+                            'skippedCases': skipped_cases,
+                            'duration': f"{duration}秒" if duration else '-',
+                            'request': result_data.get('request', {}),
+                            'response': result_data.get('response', {}),
+                            'log': result_data.get('log', '')
+                        }
+                        
+                        # 应用筛选条件
+                        include_result = True
+                        
+                        # 状态筛选
+                        if status_filter and status_filter != 'all' and status != status_filter:
+                            include_result = False
+                        
+                        # API筛选
+                        if api_filter and api_filter != 'all' and api_name != api_filter:
+                            include_result = False
+                        
+                        # 日期筛选
+                        if date_filter and date_filter != 'all' and timestamp:
+                            try:
+                                result_date = datetime.fromisoformat(timestamp.replace('Z', '+00:00')).date()
+                                now = datetime.now().date()
+                                
+                                if date_filter == 'today' and result_date != now:
+                                    include_result = False
+                                elif date_filter == 'week':
+                                    week_ago = now.replace(day=now.day-7)
+                                    if result_date < week_ago:
+                                        include_result = False
+                                elif date_filter == 'month':
+                                    month_ago = now.replace(day=now.day-30)
+                                    if result_date < month_ago:
+                                        include_result = False
+                            except Exception as e:
+                                logger.warning(f"解析日期失败: {str(e)}")
+                        
+                        if include_result:
+                            test_results.append(test_result)
+                            
+                except Exception as e:
+                    logger.error(f"加载测试结果失败 {filename}: {str(e)}")
+        
+        # 按时间戳排序（最新的在前）
+        test_results.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        # 应用分页
+        total = len(test_results)
+        paginated_results = test_results[offset:offset+limit]
+        
+        return jsonify({
+            'success': True,
+            'results': paginated_results,
+            'total': total
+        })
+        
+    except Exception as e:
+        logger.error(f"获取测试结果失败: {str(e)}")
+        return jsonify({'error': '获取测试结果失败', 'message': str(e)}), 500
+
+@app.route('/api/test-results/<result_id>', methods=['GET'])
+def get_test_result_detail(result_id):
+    """获取特定测试结果的详细信息"""
+    try:
+        # 确保结果目录存在
+        results_dir = app.config['RESULTS_FOLDER']
+        if not os.path.exists(results_dir):
+            return jsonify({'error': '测试结果不存在'}), 404
+        
+        # 查找测试结果文件
+        file_path = os.path.join(results_dir, f"{result_id}.json")
+        if not os.path.exists(file_path):
+            # 尝试查找带有前缀的文件
+            found = False
+            for filename in os.listdir(results_dir):
+                if filename.endswith('.json') and result_id in filename:
+                    file_path = os.path.join(results_dir, filename)
+                    found = True
+                    break
+            
+            if not found:
+                return jsonify({'error': '测试结果不存在'}), 404
+        
+        # 读取测试结果
+        with open(file_path, 'r', encoding='utf-8') as f:
+            result_data = json.load(f)
+        
+        # 返回详细结果
+        return jsonify({
+            'success': True,
+            'result': result_data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取测试结果详情失败: {str(e)}")
+        return jsonify({'error': '获取测试结果详情失败', 'message': str(e)}), 500
+
+@app.route('/api/test-results/statistics', methods=['GET'])
+def get_test_results_statistics():
+    """获取测试结果统计信息"""
+    try:
+        # 获取所有测试结果
+        all_results = []
+        
+        # 从results目录获取测试执行结果
+        results_dir = app.config['RESULTS_FOLDER']
+        if os.path.exists(results_dir):
+            for filename in os.listdir(results_dir):
+                # 读取所有以coverage_或results_开头的JSON文件
+                if (filename.startswith('coverage_') or filename.startswith('results_')) and filename.endswith('.json'):
+                    file_path = os.path.join(results_dir, filename)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            result_data = json.load(f)
+                            if isinstance(result_data, dict):
+                                # 添加结果类型标识
+                                result_data['result_type'] = result_data.get('result_type', 'execution')
+                                all_results.append(result_data)
+                    except Exception as e:
+                        logger.error(f"读取测试结果文件 {filename} 失败: {str(e)}")
+        
+        # 从suggestions目录获取测试分析结果
+        suggestions_dir = app.config['SUGGESTIONS_FOLDER']
+        if os.path.exists(suggestions_dir):
+            for filename in os.listdir(suggestions_dir):
+                if filename.startswith('suggestions_') and filename.endswith('.json'):
+                    file_path = os.path.join(suggestions_dir, filename)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            result_data = json.load(f)
+                            if isinstance(result_data, dict):
+                                # 添加结果类型标识
+                                result_data['result_type'] = 'analysis'
+                                all_results.append(result_data)
+                    except Exception as e:
+                        logger.error(f"读取分析结果文件 {filename} 失败: {str(e)}")
+        
+        # 计算统计数据
+        total_tests = 0
+        passed_tests = 0
+        failed_tests = 0
+        coverage_percent = 0
+        
+        # 处理执行结果
+        for result in all_results:
+            if result.get('result_type') == 'execution' or result.get('result_type') == 'test_execution':
+                # 尝试从不同的字段获取测试指标
+                metrics = None
+                
+                # 检查是否有metrics字段（实际文件中的字段名）
+                if 'metrics' in result:
+                    metrics = result['metrics']
+                # 检查是否有test_metrics字段
+                elif 'test_metrics' in result:
+                    metrics = result['test_metrics']
+                # 检查是否有summary字段
+                elif 'summary' in result:
+                    metrics = result['summary']
+                # 检查是否有直接的统计字段
+                elif 'total' in result or 'passed' in result or 'failed' in result:
+                    metrics = result
+                
+                if metrics:
+                    total_tests += metrics.get('total', metrics.get('total_tests', 0))
+                    passed_tests += metrics.get('passed', metrics.get('passed_tests', 0))
+                    failed_tests += metrics.get('failed', metrics.get('failed_tests', 0))
+        
+        # 计算平均覆盖率
+        coverage_results = []
+        for result in all_results:
+            if result.get('result_type') == 'execution' or result.get('result_type') == 'test_execution':
+                # 尝试从不同的字段获取覆盖率数据
+                coverage = None
+                
+                # 检查metrics字段
+                if 'metrics' in result and 'coverage' in result['metrics']:
+                    coverage = result['metrics']['coverage']
+                # 检查test_metrics字段
+                elif 'test_metrics' in result and 'coverage' in result['test_metrics']:
+                    coverage = result['test_metrics']['coverage']
+                # 检查summary字段
+                elif 'summary' in result and 'coverage' in result['summary']:
+                    coverage = result['summary']['coverage']
+                # 检查直接字段
+                elif 'coverage' in result:
+                    coverage = result['coverage']
+                
+                if coverage is not None:
+                    coverage_results.append(coverage)
+        
+        if coverage_results:
+            coverage_percent = sum(coverage_results) / len(coverage_results)
+        
+        return jsonify({
+            'success': True,
+            'total_tests': total_tests,
+            'passed_tests': passed_tests,
+            'failed_tests': failed_tests,
+            'coverage_percent': round(coverage_percent, 2)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取测试结果统计信息失败: {str(e)}")
+        return jsonify({'error': '获取测试结果统计信息失败', 'message': str(e)}), 500
+
+@app.route('/api/test-results/sync', methods=['POST'])
+def sync_test_results_endpoint():
+    """手动触发测试结果同步"""
+    try:
+        sync_data = sync_test_results()
+        
+        if sync_data:
+            return jsonify({
+                'success': True,
+                'message': '测试结果同步成功',
+                'total_results': sync_data.get('total_results', 0),
+                'last_sync': sync_data.get('last_sync', '')
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': '测试结果同步失败'
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"测试结果同步失败: {str(e)}")
+        return jsonify({'error': '测试结果同步失败', 'message': str(e)}), 500
+
+@app.route('/api/test-results/export', methods=['GET'])
+def export_test_results():
+    """导出测试结果"""
+    try:
+        import zipfile
+        import io
+        
+        # 确保结果目录存在
+        results_dir = app.config['RESULTS_FOLDER']
+        if not os.path.exists(results_dir):
+            return jsonify({'error': '测试结果目录不存在'}), 404
+        
+        # 创建内存中的ZIP文件
+        zip_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            # 添加所有测试结果文件到ZIP
+            for filename in os.listdir(results_dir):
+                if filename.endswith('.json'):
+                    file_path = os.path.join(results_dir, filename)
+                    zip_file.write(file_path, filename)
+        
+        zip_buffer.seek(0)
+        
+        # 创建响应
+        response = app.response_class(
+            zip_buffer.read(),
+            mimetype='application/zip',
+            direct_passthrough=True
+        )
+        
+        # 设置下载文件名
+        download_name = f"test-results-{datetime.now().strftime('%Y%m%d')}.zip"
+        response.headers.set('Content-Disposition', 'attachment', filename=download_name)
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"导出测试结果失败: {str(e)}")
+        return jsonify({'error': '导出测试结果失败', 'message': str(e)}), 500
 
 # 启动服务器
 if __name__ == '__main__':
