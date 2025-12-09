@@ -1,0 +1,24 @@
+case_common:
+  allureEpic: 即时通讯+卡片服务API
+  allureFeature: 创建卡片实体
+  allureStory: 创建卡片实体
+01_open-apis_cardkit_v1_cards:
+  host: https://open.feishu.cn/open-apis
+  url: /cardkit/v1/cards
+  method: post
+  detail: 测试创建卡片实体
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c9222GGFDLATKFMVFNHW74F7LL276DBYXMHU
+  requestType: json
+  is_run:
+  data:
+    type: card_json
+    data: 请参考下文请求体示例
+  dependence_case: false
+  dependence_case_data:
+  current_request_set_cache:
+  assert:
+    status_code: 200
+  sql:
+

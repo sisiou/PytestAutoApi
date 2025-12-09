@@ -4559,3 +4559,351 @@ function initTestEditorButtons() {
         });
     }
 }
+
+// 初始化生成测试用例按钮
+function initGenerateTestCasesButton() {
+    console.log('开始初始化生成测试用例按钮...');
+    
+    // 使用事件委托，因为按钮可能在模态框中，需要等待DOM完全加载
+    // 方法1：尝试直接查找按钮
+    let generateBtn = document.getElementById('generateTestCasesBtn');
+    
+    if (!generateBtn) {
+        console.warn('首次查找未找到生成测试用例按钮，尝试延迟查找...');
+        // 延迟查找，等待模态框渲染
+        setTimeout(function() {
+            generateBtn = document.getElementById('generateTestCasesBtn');
+            if (generateBtn) {
+                console.log('延迟查找成功，绑定事件');
+                bindGenerateButtonEvent(generateBtn);
+            } else {
+                console.warn('延迟查找仍然失败，使用事件委托');
+                // 使用事件委托，在document上监听点击事件
+                useEventDelegation();
+            }
+        }, 500);
+        return;
+    }
+    
+    console.log('找到按钮，直接绑定事件');
+    bindGenerateButtonEvent(generateBtn);
+}
+
+function bindGenerateButtonEvent(generateBtn) {
+    // 移除可能存在的旧事件监听器
+    const newBtn = generateBtn.cloneNode(true);
+    generateBtn.parentNode.replaceChild(newBtn, generateBtn);
+    generateBtn = newBtn;
+    
+    generateBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('生成测试用例按钮被点击！');
+        
+        // 获取文档名称（从 sceneDocName 获取）
+        const docNameElement = document.getElementById('sceneDocName');
+        if (!docNameElement) {
+            alert('未找到文档名称，请先选择文档');
+            return;
+        }
+        
+        let docName = docNameElement.textContent.trim();
+        if (!docName) {
+            alert('文档名称为空，请先选择文档');
+            return;
+        }
+        
+        // 提取 base_name: 去掉第一个下划线前的部分和文件后缀
+        // 例如: 
+        //   scene_feishu_server-docs_docs_wiki-v2_space_create.json -> feishu_server-docs_docs_wiki-v2_space_create
+        //   openapi_feishu_server-docs_im-v1_message_create.yaml -> feishu_server-docs_im-v1_message_create
+        let baseName = docName;
+        
+        // 去掉文件后缀 (.json, .yaml, .yml 等)
+        const suffixPattern = /\.(json|yaml|yml)$/i;
+        baseName = baseName.replace(suffixPattern, '');
+        
+        // 去掉第一个下划线及其前面的所有内容
+        const firstUnderscoreIndex = baseName.indexOf('_');
+        if (firstUnderscoreIndex !== -1) {
+            baseName = baseName.slice(firstUnderscoreIndex + 1);
+        }
+        
+        if (!baseName) {
+            alert('文档名称无效');
+            return;
+        }
+        
+        // 禁用按钮，防止重复点击
+        generateBtn.disabled = true;
+        const originalText = generateBtn.textContent;
+        generateBtn.textContent = '生成中...';
+        
+        try {
+            await handleGenerateTestCasesRequest(baseName, generateBtn, originalText);
+        } catch (error) {
+            console.error('请求失败:', error);
+            alert('请求失败: ' + error.message);
+            generateBtn.disabled = false;
+            generateBtn.textContent = originalText;
+        }
+    });
+}
+
+// 事件委托方式：在document上监听点击事件
+function useEventDelegation() {
+    console.log('使用事件委托方式绑定生成测试用例按钮');
+    document.addEventListener('click', async function(e) {
+        // 检查点击的是否是生成测试用例按钮
+        if (e.target && e.target.id === 'generateTestCasesBtn') {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('通过事件委托捕获到按钮点击！');
+            
+            const generateBtn = e.target;
+            const originalText = generateBtn.textContent;
+            generateBtn.disabled = true;
+            generateBtn.textContent = '生成中...';
+            
+            // 获取文档名称（从 sceneDocName 获取）
+            const docNameElement = document.getElementById('sceneDocName');
+            if (!docNameElement) {
+                alert('未找到文档名称，请先选择文档');
+                generateBtn.disabled = false;
+                generateBtn.textContent = originalText;
+                return;
+            }
+            
+            let docName = docNameElement.textContent.trim();
+            if (!docName) {
+                alert('文档名称为空，请先选择文档');
+                generateBtn.disabled = false;
+                generateBtn.textContent = originalText;
+                return;
+            }
+            
+            // 提取 base_name: 去掉第一个下划线前的部分和文件后缀
+            // 例如: 
+            //   scene_feishu_server-docs_docs_wiki-v2_space_create.json -> feishu_server-docs_docs_wiki-v2_space_create
+            //   openapi_feishu_server-docs_im-v1_message_create.yaml -> feishu_server-docs_im-v1_message_create
+            let baseName = docName;
+            
+            // 去掉文件后缀 (.json, .yaml, .yml 等)
+            const suffixPattern = /\.(json|yaml|yml)$/i;
+            baseName = baseName.replace(suffixPattern, '');
+            
+            // 去掉第一个下划线及其前面的所有内容
+            const firstUnderscoreIndex = baseName.indexOf('_');
+            if (firstUnderscoreIndex !== -1) {
+                baseName = baseName.slice(firstUnderscoreIndex + 1);
+            }
+            
+            if (!baseName) {
+                alert('文档名称无效');
+                generateBtn.disabled = false;
+                generateBtn.textContent = originalText;
+                return;
+            }
+            
+            // 调用实际的请求处理逻辑
+            try {
+                await handleGenerateTestCasesRequest(baseName, generateBtn, originalText);
+            } catch (error) {
+                console.error('请求失败:', error);
+                alert('请求失败: ' + error.message);
+                generateBtn.disabled = false;
+                generateBtn.textContent = originalText;
+            }
+        }
+    });
+}
+
+// 提取请求处理逻辑为独立函数
+async function handleGenerateTestCasesRequest(baseName, generateBtn, originalText) {
+    // 获取 API 基础 URL 和端点
+    const apiBaseUrl = window.API_CONFIG?.BASE_URL || 'http://127.0.0.1:5000';
+    const endpoint = '/api/feishu/generate-ai-test-cases';
+    const apiUrl = apiBaseUrl + endpoint;
+    
+    // 详细的控制台输出
+    console.log('========== 生成AI测试用例请求信息 ==========');
+    console.log('📋 API配置信息:');
+    console.log('  - API_CONFIG对象:', window.API_CONFIG);
+    console.log('  - BASE_URL:', apiBaseUrl);
+    console.log('  - ENDPOINT:', endpoint);
+    console.log('🔗 完整请求URL:', apiUrl);
+    console.log('📝 请求参数:');
+    console.log('  - base_name:', baseName);
+    console.log('📤 请求方法: POST');
+    console.log('📦 请求体:', JSON.stringify({ base_name: baseName }, null, 2));
+    console.log('==========================================');
+    
+    // 显示加载遮罩
+    if (typeof showLoadingOverlay === 'function') {
+        showLoadingOverlay('正在生成AI测试用例并执行，请稍候...');
+    }
+    
+    // 发送 POST 请求
+    let response;
+    try {
+        response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                base_name: baseName
+            })
+        });
+        console.log('========== 收到响应 ==========');
+        console.log('📥 响应状态码:', response.status);
+        console.log('📥 响应状态文本:', response.statusText);
+        console.log('📥 响应URL:', response.url);
+        console.log('📥 响应头:', Object.fromEntries(response.headers.entries()));
+        console.log('==============================');
+    } catch (networkError) {
+        console.error('网络请求失败:', networkError);
+        if (typeof hideLoadingOverlay === 'function') {
+            hideLoadingOverlay();
+        }
+        alert(`网络请求失败: ${networkError.message}\n\n请检查：\n1. 后端服务是否已启动\n2. 后端地址是否正确: ${apiUrl}\n3. 网络连接是否正常`);
+        generateBtn.disabled = false;
+        generateBtn.textContent = originalText;
+        return;
+    }
+    
+    let result;
+    let responseText = '';
+    try {
+        responseText = await response.text();
+        console.log('📄 原始响应内容:', responseText);
+        result = JSON.parse(responseText);
+        console.log('✅ 解析后的响应数据:', result);
+        console.log('📊 响应数据摘要:');
+        console.log('  - generation_success:', result.generation_success);
+        console.log('  - test_success:', result.test_success);
+        console.log('  - base_name:', result.base_name);
+        console.log('  - test_file_path:', result.test_file_path);
+        console.log('  - generation_return_code:', result.generation_return_code);
+        console.log('  - test_return_code:', result.test_return_code);
+        if (result.metrics) {
+            console.log('  - metrics:', result.metrics);
+        }
+        if (result.message) {
+            console.log('  - message:', result.message);
+        }
+        if (result.test_error_summary) {
+            console.log('  - test_error_summary:', result.test_error_summary);
+        }
+    } catch (parseError) {
+        console.error('解析响应失败:', parseError);
+        if (typeof hideLoadingOverlay === 'function') {
+            hideLoadingOverlay();
+        }
+        alert(`解析响应失败: ${parseError.message}\n\n响应内容: ${responseText?.substring(0, 200) || '无响应内容'}`);
+        generateBtn.disabled = false;
+        generateBtn.textContent = originalText;
+        return;
+    }
+    
+    // 隐藏加载遮罩
+    if (typeof hideLoadingOverlay === 'function') {
+        hideLoadingOverlay();
+    }
+    
+    // 检查生成是否成功
+    const isSuccess = response.ok && result.generation_success;
+    
+    // 构建消息
+    let message = '';
+    
+    if (isSuccess) {
+        message = `✅ AI测试用例生成成功！\n\n`;
+    } else {
+        message = `❌ AI测试用例生成失败\n\n`;
+    }
+    
+    // 显示 message 字段
+    if (result.message) {
+        message += `💬 消息: ${result.message}\n\n`;
+    }
+    
+    // 基本信息
+    if (result.base_name) {
+        message += `📄 Base Name: ${result.base_name}\n`;
+    }
+    if (result.test_file_path) {
+        message += `📁 测试文件路径: ${result.test_file_path}\n`;
+    }
+    if (result.task_id) {
+        message += `🆔 任务ID: ${result.task_id}\n`;
+    }
+    
+    // 显示测试执行结果和指标
+    if (result.metrics && result.metrics.total > 0) {
+        message += `\n📊 测试执行结果：\n`;
+        message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        
+        const metrics = result.metrics;
+        message += `📈 测试指标：\n`;
+        message += `   • 总用例数: ${metrics.total || 0}\n`;
+        message += `   • ✅ 通过: ${metrics.passed || 0}\n`;
+        message += `   • ❌ 失败: ${metrics.failed || 0}\n`;
+        message += `   • ⚠️  中断: ${metrics.broken || 0}\n`;
+        message += `   • ⏭️  跳过: ${metrics.skipped || 0}\n`;
+        message += `   • ❓ 未知: ${metrics.unknown || 0}\n`;
+        
+        if (metrics.duration_ms) {
+            message += `\n⏱️  执行耗时：\n`;
+            message += `   • 毫秒数: ${metrics.duration_ms} ms\n`;
+            if (metrics.duration_human) {
+                message += `   • 可读格式: ${metrics.duration_human}\n`;
+            }
+        }
+        
+        // 计算通过率
+        if (metrics.total && metrics.total > 0) {
+            const passRate = ((metrics.passed || 0) / metrics.total * 100).toFixed(2);
+            message += `\n📊 通过率: ${passRate}%\n`;
+        }
+    } else if (result.test_file_exists) {
+        message += `\n⚠️ 测试文件已生成，但未执行测试或未获取到测试指标\n`;
+    }
+    
+    // 显示测试错误摘要
+    if (result.test_error_summary && result.test_error_summary.length > 0) {
+        message += `\n📋 测试错误摘要:\n`;
+        message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        result.test_error_summary.slice(0, 10).forEach((line, index) => {
+            message += `${index + 1}. ${line}\n`;
+        });
+    }
+    
+    // 显示生成阶段的错误
+    if (!isSuccess) {
+        if (result.error) {
+            message += `\n⚠️ 错误: ${result.error}\n`;
+        }
+        if (result.error_summary && result.error_summary.length > 0) {
+            message += `\n📋 错误详情:\n`;
+            message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+            result.error_summary.slice(0, 5).forEach((line, index) => {
+                message += `${index + 1}. ${line}\n`;
+            });
+        }
+    }
+    
+    alert(message);
+    
+    if (isSuccess) {
+        console.log('生成成功:', result);
+    } else {
+        console.error('生成失败:', result);
+    }
+    
+    // 恢复按钮状态
+    generateBtn.disabled = false;
+    generateBtn.textContent = originalText;
+}

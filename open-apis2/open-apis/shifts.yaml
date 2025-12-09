@@ -1,0 +1,33 @@
+case_common:
+  allureEpic: 考勤管理API
+  allureFeature: 创建班次
+  allureStory: 创建班次
+01_open-apis_shifts:
+  host: https://open.feishu.cn/open-apis/attendance/v1
+  url: /shifts?employee_type=employee_id
+  method: post
+  detail: 测试创建班次
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c9222GGFDLATKFMVFNHW74F7LL276DBYXMHU
+  requestType: json
+  is_run:
+  data:
+    shift_name: 早班
+    punch_times: 1
+    sub_shift_leader_ids:
+    - '456123'
+    is_flexible: false
+    flexible_minutes: 60
+    no_need_off: true
+    punch_time_rule: []
+    day_type: 1
+    late_minutes_as_serious_late: 40
+    id: '6919358778597097404'
+  dependence_case: false
+  dependence_case_data:
+  current_request_set_cache:
+  assert:
+    status_code: 200
+  sql:
+

@@ -1,5 +1,5 @@
 case_common:
-  allureEpic: 即时通讯API
+  allureEpic: 消息发送与管理API
   allureFeature: 发送消息
   allureStory: 发送消息
 01_open-apis_im_v1_messages:
@@ -9,22 +9,16 @@ case_common:
   detail: 测试发送消息
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9222GGFDLATKFMVFNHW74F7LL276DBYXMHU
   requestType: json
   is_run:
   data:
     receive_id: ou_0d83637fb561cdc1e0562991339c713b
-    msg_type: image
-    uuid: 09662319-9568-42bc-a928-7d0c5a9b6d58
-    content: '{"image_key":"$cache{redis:image_key}"}'
-  dependence_case: true
+    msg_type: text
+    uuid: 5d7c27bd-4ecd-4782-b077-91481fd5c3e9
+    content: '{"text":"测试消息"}'
+  dependence_case: false
   dependence_case_data:
-  - case_id: 01_open-apis_im_v1_images
-    dependent_data:
-    - dependent_type: response
-      jsonpath: $.data.image_key
-      set_cache: redis:image_key
-      replace_key: data.content
   current_request_set_cache:
   assert:
     status_code: 200

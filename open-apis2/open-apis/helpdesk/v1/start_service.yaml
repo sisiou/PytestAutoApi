@@ -1,0 +1,28 @@
+case_common:
+  allureEpic: 服务台API
+  allureFeature: 创建服务台对话
+  allureStory: 创建服务台对话
+01_open-apis_helpdesk_v1_start_service:
+  host: https://open.feishu.cn/open-apis
+  url: /helpdesk/v1/start_service
+  method: post
+  detail: 测试创建服务台对话
+  headers:
+    Content-Type:
+    Authorization: Bearer t-g104c9222GGFDLATKFMVFNHW74F7LL276DBYXMHU
+    X-Lark-Helpdesk-Authorization:
+  requestType: json
+  is_run:
+  data:
+    human_service: false
+    appointed_agents:
+    - ou_7dab8a3d3cdcc9da365777c7ad535d62
+    open_id: ou_7dab8a3d3cdcc9da365777c7ad535d62
+    customized_info: 测试自定义字段信息
+  dependence_case: false
+  dependence_case_data:
+  current_request_set_cache:
+  assert:
+    status_code: 200
+  sql:
+

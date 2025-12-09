@@ -1,0 +1,24 @@
+case_common:
+  allureEpic: 审批服务API
+  allureFeature: 创建审批定义
+  allureStory: 创建审批定义
+01_open-apis_approval_v4_approvals:
+  host: https://open.feishu.cn/open-apis
+  url: /approval/v4/approvals
+  method: post
+  detail: 测试创建审批定义
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c9222GGFDLATKFMVFNHW74F7LL276DBYXMHU
+  requestType: json
+  is_run:
+  data:
+    approval_name: '@i18n@approval_name'
+    approval_code: 7C468A54-8745-2245-9675-08B7C63E7A85
+  dependence_case: false
+  dependence_case_data:
+  current_request_set_cache:
+  assert:
+    status_code: 200
+  sql:
+

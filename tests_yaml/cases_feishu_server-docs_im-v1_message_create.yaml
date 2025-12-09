@@ -1,0 +1,57 @@
+- name: 正常场景_典型用例
+  description: 发送文本消息给用户，包含所有必填字段和典型值，使用可选字段uuid。
+  test_type: normal
+  request_data:
+    receive_id_type: user_id
+    receive_id: 49e646d6
+    content: '{"text":"Hello, this is a test message."}'
+    uuid: test-uuid-12345
+    msg_type: text
+  expected_status_code: 200
+  expected_response:
+    code: 0
+    msg: success
+  tags:
+  - normal
+- name: 正常场景_完整字段
+  description: 发送富文本消息给群聊，使用所有字段（必填+可选）。
+  test_type: normal
+  request_data:
+    receive_id_type: chat_id
+    receive_id: oc_5ad11d72b830411d72b836c20
+    content: '{"post":{"zh_cn":{"title":"Title","content":[[{"tag":"text","text":"Content"}]]}}}'
+    uuid: full-field-uuid-abcdef
+    msg_type: text
+  expected_status_code: 200
+  expected_response:
+    code: 0
+    msg: success
+  tags:
+  - normal
+- name: 正常场景_最小字段
+  description: 发送文本消息给用户，仅包含所有必填字段的最小用例。
+  test_type: normal
+  request_data:
+    receive_id_type: user_id
+    receive_id: 49e646d6
+    content: '{"text":"Minimal test."}'
+    msg_type: text
+  expected_status_code: 200
+  expected_response:
+    code: 0
+    msg: success
+  tags:
+  - normal
+- name: 异常场景_缺失必填字段
+  description: 缺失必填字段msg_type，验证参数校验。
+  test_type: exception
+  request_data:
+    receive_id_type: user_id
+    receive_id: 49e646d6
+    content: '{"text":"Missing msg_type."}'
+  expected_status_code: 400
+  expected_response:
+    code: 99992402
+    msg: field validation failed
+  tags:
+  - exception

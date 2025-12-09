@@ -11,6 +11,7 @@ import json
 import time
 import logging
 import yaml
+import time
 import uuid
 import hashlib
 import subprocess
@@ -4462,21 +4463,624 @@ def generate_and_test_feishu():
             'message': str(e)
         }), 500
 
+@app.route('/api/feishu/generate-ai-test-cases', methods=['POST'])
+def generate_ai_test_cases():
+    """执行 universal_ai_test_generator.py 脚本，生成AI测试用例"""
+    try:
+        # 获取请求参数
+        data = request.json or {}
+        base_name = data.get('base_name', '')
+        
+        if not base_name:
+            return jsonify({
+                'error': '缺少必要参数',
+                'message': '请提供 base_name 参数（例如: feishu_cardkit-v1_card_create）'
+            }), 400
+        
+        # 生成任务ID
+        task_id = generate_task_id()
+        
+        # 获取项目根目录
+        project_root = Path(__file__).parent
+        script_path = project_root / "utils" / "other_tools" / "universal_ai_test_generator.py"
+        
+        if not script_path.exists():
+            return jsonify({
+                'error': '脚本文件不存在',
+                'message': f'未找到脚本: {script_path}'
+            }), 404
+        
+        # 构建命令参数（第一步：生成 YAML 用例）
+        base_dir = "uploads"
+        output_dir = "tests"
+        cmd_args_yaml = [
+            sys.executable,
+            str(script_path),
+            '--base-name', base_name,
+            '--base-dir', base_dir,
+            '--output-dir', output_dir,
+            '--output-format', 'yaml'
+        ]
+        
+        logger.info(f"开始生成YAML用例: {' '.join(cmd_args_yaml)}")
+        
+        # 设置环境变量，强制使用 UTF-8 编码（解决 Windows GBK 编码问题）
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'  # 强制 Python 使用 UTF-8 编码
+        env['PYTHONUTF8'] = '1'  # Python 3.7+ 支持，强制 UTF-8
+        env['NON_INTERACTIVE'] = '1'  # 标记为非交互式模式
+        
+        def run_proc(cmd_args):
+            process = subprocess.Popen(
+                cmd_args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.DEVNULL,  # 防止脚本等待输入
+                text=True,
+                cwd=str(project_root),
+                encoding='utf-8',
+                errors='replace',  # 遇到编码错误时用替换字符代替
+                env=env  # 传递环境变量
+            )
+            stdout = ''
+            stderr = ''
+            return_code = -1
+            try:
+                stdout, stderr = process.communicate(timeout=600)  # 10分钟超时
+                return_code = process.returncode
+            except subprocess.TimeoutExpired:
+                process.kill()
+                try:
+                    stdout, stderr = process.communicate()
+                except Exception as e:
+                    logger.error(f"获取超时后的输出失败: {e}")
+                    stdout = f"执行超时，无法获取完整输出: {str(e)}"
+                    stderr = ""
+                return_code = -1
+            except Exception as e:
+                logger.error(f"执行脚本时出错: {e}")
+                try:
+                    process.kill()
+                except:
+                    pass
+                return_code = -1
+                stderr = str(e)
+            return return_code, stdout, stderr
+        
+        return_code, stdout, stderr = run_proc(cmd_args_yaml)
+        if return_code != 0:
+            return jsonify({
+                'task_id': task_id,
+                'error': '执行脚本失败',
+                'message': '生成 YAML 用例失败',
+                'return_code': return_code,
+                'base_name': base_name,
+                'stdout': stdout[-2000:] if stdout else '',
+                'stderr': stderr[-2000:] if stderr else ''
+            }), 500
+        
+        # 第二步：将 YAML 转换为 pytest 脚本（不调用大模型）
+        yaml_file_path = project_root / output_dir / f"cases_{base_name}.yaml"
+        if not yaml_file_path.exists():
+            # 兜底：尝试最近的 cases_*.yaml
+            candidates = list((project_root / output_dir).glob("cases_*.yaml"))
+            if candidates:
+                candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+                yaml_file_path = candidates[0]
+        
+        cmd_args_convert = [
+            sys.executable,
+            str(script_path),
+            '--base-name', base_name,
+            '--base-dir', base_dir,
+            '--output-dir', output_dir,
+            '--yaml-to-py',
+            '--yaml-path', str(yaml_file_path)
+        ]
+        logger.info(f"YAML 转换为 pytest: {' '.join(cmd_args_convert)}")
+        convert_return_code, convert_stdout, convert_stderr = run_proc(cmd_args_convert)
+        if convert_return_code != 0:
+            return jsonify({
+                'task_id': task_id,
+                'error': '转换失败',
+                'message': 'YAML 转 pytest 失败',
+                'return_code': convert_return_code,
+                'base_name': base_name,
+                'stdout': convert_stdout[-2000:] if convert_stdout else '',
+                'stderr': convert_stderr[-2000:] if convert_stderr else ''
+            }), 500
+        
+        # 保存执行结果
+        result = {
+            'task_id': task_id,
+            'script': str(script_path),
+            'base_name': base_name,
+            'base_dir': base_dir,
+            'output_dir': output_dir,
+            'return_code': convert_return_code,
+            'stdout': convert_stdout,
+            'stderr': convert_stderr,
+            'yaml_return_code': return_code,
+            'yaml_stdout': stdout,
+            'yaml_stderr': stderr,
+            'created_at': datetime.now().isoformat()
+        }
+        save_result(task_id, result)
+        
+        # 检查生成的测试文件
+        # 首先尝试从 stdout 中解析生成的文件名
+        test_file_path = None
+        import re
+        if convert_stdout:
+            # 匹配格式: [OK] 生成测试文件: tests\test_xxx_normal_exception.py
+            # 或: [OK] 生成测试文件: tests/test_xxx_normal_exception.py
+            match = re.search(r'生成测试文件:\s*(?:tests[/\\])?test_([\w-]+)_normal_exception\.py', convert_stdout)
+            if match:
+                operation_id = match.group(1)
+                test_file_path = project_root / output_dir / f"test_{operation_id}_normal_exception.py"
+            else:
+                # 尝试匹配完整路径
+                match = re.search(r'生成测试文件:\s*([^\s]+test_[\w-]+_normal_exception\.py)', convert_stdout)
+                if match:
+                    file_path_str = match.group(1).replace('\\', '/')
+                    # 如果是相对路径，从项目根目录开始
+                    if not os.path.isabs(file_path_str):
+                        test_file_path = project_root / file_path_str
+                    else:
+                        test_file_path = Path(file_path_str)
+        
+        # 如果从 stdout 中没找到，尝试搜索最近生成的测试文件
+        if test_file_path is None or not test_file_path.exists():
+            tests_dir = project_root / output_dir
+            if tests_dir.exists():
+                # 查找所有 test_*_normal_exception.py 文件
+                test_files = list(tests_dir.glob("test_*_normal_exception.py"))
+                if test_files:
+                    # 按修改时间排序，取最新的
+                    test_files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+                    test_file_path = test_files[0]
+                    logger.info(f"从目录中找到测试文件: {test_file_path}")
+        
+        # 如果还是没找到，尝试使用 base_name（虽然可能不匹配，但作为最后的尝试）
+        if test_file_path is None or not test_file_path.exists():
+            test_file_path = project_root / output_dir / f"test_{base_name}_normal_exception.py"
+        
+        config_file_path = project_root / output_dir / f"conftest.py"
+        
+        test_file_exists = test_file_path.exists() if test_file_path else False
+        config_file_exists = config_file_path.exists() if config_file_path else False
+        
+        # 构建响应数据
+        response_data = {
+            'task_id': task_id,
+            'base_name': base_name,
+            'base_dir': base_dir,
+            'output_dir': output_dir,
+            'generation_return_code': return_code,
+            'generation_success': return_code == 0,
+            'test_file_exists': test_file_exists,
+            'config_file_exists': config_file_exists,
+            'test_file_path': str(test_file_path) if test_file_exists else None,
+            'config_file_path': str(config_file_path) if config_file_exists else None
+        }
+        
+        # 如果生成失败，添加错误信息摘要
+        if return_code != 0:
+            response_data['error'] = '测试用例生成失败'
+            response_data['message'] = f'脚本返回码: {return_code}（0表示成功，非0表示有错误或警告）'
+            
+            # 尝试从输出中提取关键错误信息
+            if stderr:
+                error_keywords = ['错误', 'Error', 'Exception', 'Traceback', '失败', 'Failed', 'ERROR']
+                error_lines = [line for line in stderr.split('\n') 
+                             if any(keyword in line for keyword in error_keywords)]
+                if error_lines:
+                    response_data['error_summary'] = error_lines[-10:]  # 最后10行错误信息
+            
+            # 也从 stdout 中查找错误信息（有些错误可能输出到 stdout）
+            if stdout:
+                error_keywords = ['错误', 'Error', 'Exception', 'Traceback', '失败', 'Failed', 'ERROR']
+                error_lines = [line for line in stdout.split('\n') 
+                             if any(keyword in line for keyword in error_keywords)]
+                if error_lines:
+                    if 'error_summary' not in response_data:
+                        response_data['error_summary'] = []
+                    response_data['error_summary'].extend(error_lines[-10:])
+            
+            # 限制输出长度，避免响应过大
+            max_output_length = 3000
+            if len(stdout) > max_output_length:
+                response_data['generation_stdout'] = stdout[-max_output_length:]
+                response_data['generation_stdout_length'] = len(stdout)
+            else:
+                response_data['generation_stdout'] = stdout
+            
+            if len(stderr) > max_output_length:
+                response_data['generation_stderr'] = stderr[-max_output_length:]
+                response_data['generation_stderr_length'] = len(stderr)
+            else:
+                response_data['generation_stderr'] = stderr
+            
+            return jsonify(response_data)
+        
+        # 如果生成成功，继续执行测试用例
+        response_data['message'] = 'AI测试用例生成成功'
+        if test_file_exists:
+            response_data['message'] += f'，测试文件已生成: {test_file_path.name}'
+        
+        # ========== 执行生成的测试用例 ==========
+        if test_file_exists:
+            logger.info(f"开始执行测试用例: {test_file_path}")
+            
+            # 对该接口禁用 Allure（防止与其它接口报告混淆）
+            use_allure = False
+            allure_results_dir = None
+            allure_report_dir = None
+            
+            pytest_cmd = [
+                sys.executable, '-m', 'pytest',
+                str(test_file_path),
+                '-v',
+                '--tb=short',
+            ]
+            
+            if use_allure:
+                allure_results_dir = project_root / "allure-results" / task_id
+                allure_results_dir.mkdir(parents=True, exist_ok=True)
+                allure_report_dir = project_root / "report" / "html" / task_id
+                allure_report_dir.parent.mkdir(parents=True, exist_ok=True)
+                pytest_cmd.append(f'--alluredir={allure_results_dir}')
+                pytest_cmd.append('--clean-alluredir')
+            
+            logger.info(f"执行pytest命令: {' '.join(pytest_cmd)}")
+            
+            # 执行pytest
+            test_process = subprocess.Popen(
+                pytest_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.DEVNULL,
+                text=True,
+                cwd=str(project_root),
+                encoding='utf-8',
+                errors='replace',
+                env=env
+            )
+            
+            test_stdout = ''
+            test_stderr = ''
+            test_return_code = -1
+            
+            try:
+                test_stdout, test_stderr = test_process.communicate(timeout=600)  # 10分钟超时
+                test_return_code = test_process.returncode
+            except subprocess.TimeoutExpired:
+                test_process.kill()
+                try:
+                    test_stdout, test_stderr = test_process.communicate()
+                except Exception as e:
+                    logger.error(f"获取测试超时后的输出失败: {e}")
+                    test_stdout = f"测试执行超时，无法获取完整输出: {str(e)}"
+                    test_stderr = ""
+                test_return_code = -1
+                response_data['test_error'] = '测试执行超时'
+                response_data['test_message'] = '测试执行超过10分钟，已终止'
+            except Exception as e:
+                logger.error(f"执行测试时出错: {e}")
+                try:
+                    test_process.kill()
+                except:
+                    pass
+                test_return_code = -1
+                response_data['test_error'] = '执行测试时出错'
+                response_data['test_message'] = str(e)
+            
+            # 保存测试执行结果
+            response_data['test_return_code'] = test_return_code
+            response_data['test_success'] = test_return_code == 0 or test_return_code == 1  # pytest返回1表示有测试失败，但执行成功
+
+            # 将测试输出写到控制台便于排查（截断避免过长）
+            log_tail = 2000
+            if test_stdout:
+                logger.info(f"pytest stdout (tail {log_tail}):\n{test_stdout[-log_tail:]}")
+            if test_stderr:
+                logger.error(f"pytest stderr (tail {log_tail}):\n{test_stderr[-log_tail:]}")
+            
+            # 限制测试输出长度
+            max_output_length = 3000
+            if len(test_stdout) > max_output_length:
+                response_data['test_stdout'] = test_stdout[-max_output_length:]
+                response_data['test_stdout_length'] = len(test_stdout)
+            else:
+                response_data['test_stdout'] = test_stdout
+            
+            if len(test_stderr) > max_output_length:
+                response_data['test_stderr'] = test_stderr[-max_output_length:]
+                response_data['test_stderr_length'] = len(test_stderr)
+            else:
+                response_data['test_stderr'] = test_stderr
+            
+            # ========== 提取指标：只用 pytest 输出，避免引用其他任务的 Allure 数据 ==========
+            metrics = _parse_pytest_output(test_stdout)
+            if metrics:
+                response_data['metrics'] = metrics
+                response_data['message'] += f'，测试执行完成。通过: {metrics.get("passed", 0)}/{metrics.get("total", 0)}'
+                logger.info(f"从 pytest 输出解析到指标: {metrics}")
+            else:
+                response_data['metrics'] = None
+                logger.warning("无法从 pytest 输出中解析测试结果")
+            
+            # 如果仍然没有指标，设置默认值
+            if not response_data.get('metrics'):
+                response_data['metrics'] = {
+                    "total": 0,
+                    "passed": 0,
+                    "failed": 0,
+                    "broken": 0,
+                    "skipped": 0,
+                    "unknown": 0,
+                    "duration_ms": None,
+                    "duration_human": None,
+                }
+            
+            # 如果测试执行失败，添加错误信息摘要
+            if test_return_code not in [0, 1]:  # 0=成功, 1=有失败但执行成功
+                if 'test_error' not in response_data:
+                    response_data['test_error'] = '测试执行失败'
+                    response_data['test_message'] = f'测试返回码: {test_return_code}'
+                
+                # 提取测试错误信息
+                if test_stderr:
+                    error_keywords = ['FAILED', 'ERROR', '失败', 'Error', 'Exception']
+                    error_lines = [line for line in test_stderr.split('\n') 
+                                 if any(keyword in line for keyword in error_keywords)]
+                    if error_lines:
+                        if 'test_error_summary' not in response_data:
+                            response_data['test_error_summary'] = []
+                        response_data['test_error_summary'].extend(error_lines[-10:])
+        else:
+            response_data['test_message'] = '测试文件不存在，跳过测试执行'
+            response_data['metrics'] = None
+        
+        # 限制生成脚本的输出长度
+        max_output_length = 2000
+        if len(stdout) > max_output_length:
+            response_data['generation_stdout'] = stdout[-max_output_length:]
+            response_data['generation_stdout_length'] = len(stdout)
+        else:
+            response_data['generation_stdout'] = stdout
+        
+        if len(stderr) > max_output_length:
+            response_data['generation_stderr'] = stderr[-max_output_length:]
+            response_data['generation_stderr_length'] = len(stderr)
+        else:
+            response_data['generation_stderr'] = stderr
+        
+        return jsonify(response_data)
+    
+    except Exception as e:
+        logger.error(f"执行 universal_ai_test_generator.py 失败: {str(e)}")
+        return jsonify({
+            'error': '执行脚本失败',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/feishu/generate-and-test-single-file', methods=['POST'])
+def generate_and_test_feishu_single_file():
+    """执行 run_feishu_single_file.py 脚本，处理单个文件，只返回指标"""
+    try:
+        # 添加日志，确认接收到请求
+        logger.info(f"收到生成测试用例请求，请求方法: {request.method}, 请求路径: {request.path}")
+        logger.info(f"请求头: {dict(request.headers)}")
+        logger.info(f"请求数据: {request.get_data(as_text=True)}")
+        
+        # 获取请求参数
+        data = request.json or {}
+        logger.info(f"解析后的请求数据: {data}")
+        filename = data.get('filename', '')
+        use_ai = data.get('use_ai', False)  # 是否使用 AI 生成
+        
+        if not filename:
+            logger.warning("缺少 filename 参数")
+            return jsonify({
+                'error': '缺少必要参数',
+                'message': '请提供 filename 参数（例如: createCalendar）'
+            }), 400
+        
+        # 移除可能的 .yaml 后缀（如果用户提供了）
+        if filename.endswith('.yaml') or filename.endswith('.yml'):
+            filename = filename.rsplit('.', 1)[0]
+        
+        # 生成任务ID
+        task_id = generate_task_id()
+        
+        # 获取项目根目录
+        project_root = Path(__file__).parent
+        script_path = project_root / "run_feishu_single_file.py"
+        
+        if not script_path.exists():
+            return jsonify({
+                'error': '脚本文件不存在',
+                'message': f'未找到脚本: {script_path}'
+            }), 404
+        
+        # 构建文件路径：uploads/openapi/openapi_API/{filename}.yaml
+        file_path = f"uploads/openapi/{filename}.yaml"
+        full_file_path = project_root / file_path
+        
+        # 检查文件是否存在
+        if not full_file_path.exists():
+            return jsonify({
+                'error': '文件不存在',
+                'message': f'未找到文件: {file_path}'
+            }), 404
+        
+        # 构建命令参数
+        cmd_args = [sys.executable, str(script_path), '--file', file_path]
+        if use_ai:
+            cmd_args.append('--use-ai')
+            logger.info(f"使用 AI 大模型生成测试用例")
+        
+        logger.info(f"开始执行脚本: {' '.join(cmd_args)}")
+        
+        # 执行脚本
+        # 设置环境变量，强制使用 UTF-8 编码（解决 Windows GBK 编码问题）
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'  # 强制 Python 使用 UTF-8 编码
+        env['PYTHONUTF8'] = '1'  # Python 3.7+ 支持，强制 UTF-8
+        env['NON_INTERACTIVE'] = '1'  # 标记为非交互式模式，脚本不会启动 Allure 服务器
+        
+        # 使用 UTF-8 编码，并设置 errors='replace' 来处理编码错误
+        # 设置 stdin=subprocess.DEVNULL 防止脚本等待输入而阻塞
+        process = subprocess.Popen(
+            cmd_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,  # 防止脚本等待输入
+            text=True,
+            cwd=str(project_root),
+            encoding='utf-8',
+            errors='replace',  # 遇到编码错误时用替换字符代替
+            env=env  # 传递环境变量
+        )
+        
+        # 等待执行完成（可以设置超时时间）
+        stdout = ''
+        stderr = ''
+        return_code = -1
+        try:
+            stdout, stderr = process.communicate(timeout=600)  # 10分钟超时
+            return_code = process.returncode
+        except subprocess.TimeoutExpired:
+            process.kill()
+            try:
+                stdout, stderr = process.communicate()
+            except Exception as e:
+                logger.error(f"获取超时后的输出失败: {e}")
+                stdout = f"执行超时，无法获取完整输出: {str(e)}"
+                stderr = ""
+            return_code = -1
+            return jsonify({
+                'task_id': task_id,
+                'error': '执行超时',
+                'message': '脚本执行超过10分钟，已终止',
+                'return_code': return_code,
+                'filename': filename,
+                'file_path': file_path
+            }), 500
+        except Exception as e:
+            logger.error(f"执行脚本时出错: {e}")
+            try:
+                process.kill()
+            except:
+                pass
+            return jsonify({
+                'task_id': task_id,
+                'error': '执行脚本时出错',
+                'message': str(e),
+                'filename': filename,
+                'file_path': file_path,
+                'return_code': return_code
+            }), 500
+        
+        # 保存执行结果
+        result = {
+            'task_id': task_id,
+            'script': str(script_path),
+            'filename': filename,
+            'file_path': file_path,
+            'return_code': return_code,
+            'stdout': stdout,
+            'stderr': stderr,
+            'created_at': datetime.now().isoformat()
+        }
+        save_result(task_id, result)
+        
+        # 读取 Allure 报告摘要数据（不启动服务器，只读取已生成的报告）
+        summary, summary_path = _find_allure_summary(project_root)
+        
+        # 构建响应数据，只包含指标
+        response_data = {
+            'task_id': task_id,
+            'filename': filename,
+            'file_path': file_path,
+            'return_code': return_code,
+            'success': return_code == 0
+        }
+        
+        # 提取并返回指标
+        if summary:
+            metrics = _extract_allure_metrics(summary)
+            if metrics:
+                response_data['metrics'] = metrics
+                response_data['summary_path'] = summary_path
+            else:
+                response_data['metrics'] = None
+                response_data['message'] = '无法提取指标数据'
+        else:
+            response_data['metrics'] = None
+            response_data['message'] = '未找到 Allure 报告摘要数据'
+        
+        # 如果执行失败，添加错误信息摘要
+        if return_code != 0:
+            response_data['error'] = '脚本执行完成，但有错误或警告'
+            response_data['message'] = f'脚本返回码: {return_code}（0表示成功，非0表示有错误或警告）'
+            
+            # 尝试从输出中提取关键错误信息
+            if stderr:
+                error_keywords = ['错误', 'Error', 'Exception', 'Traceback', '失败', 'Failed']
+                error_lines = [line for line in stderr.split('\n') 
+                             if any(keyword in line for keyword in error_keywords)]
+                if error_lines:
+                    response_data['error_summary'] = error_lines[-10:]  # 最后10行错误信息
+            
+            # 也从 stdout 中查找错误信息（有些错误可能输出到 stdout）
+            if stdout:
+                error_keywords = ['错误', 'Error', 'Exception', 'Traceback', '失败', 'Failed']
+                error_lines = [line for line in stdout.split('\n') 
+                             if any(keyword in line for keyword in error_keywords)]
+                if error_lines:
+                    if 'error_summary' not in response_data:
+                        response_data['error_summary'] = []
+                    response_data['error_summary'].extend(error_lines[-10:])
+        else:
+            response_data['message'] = '脚本执行成功'
+        
+        return jsonify(response_data)
+    
+    except Exception as e:
+        logger.error(f"执行 run_feishu_single_file.py 失败: {str(e)}")
+        return jsonify({
+            'error': '执行脚本失败',
+            'message': str(e)
+        }), 500
+
 
 # ========== 新增辅助函数 ==========
 import socket
 import threading
 
-def _find_allure_summary(project_root: Path):
+def _find_allure_summary(project_root: Path, report_dir: Path = None, results_dir: Path = None):
     """
     查找 Allure 已生成报告的 summary.json，并返回 (数据, 路径)。
+    优先使用本次运行的 report_dir / results_dir，避免不同接口运行的报告互相污染。
     """
-    candidates = [
+    candidates = []
+    if report_dir:
+        candidates.extend([
+            report_dir / "widgets" / "summary.json",
+            report_dir / "data" / "summary.json",
+        ])
+    if results_dir:
+        candidates.append(results_dir / "widgets" / "summary.json")
+        candidates.append(results_dir / "data" / "summary.json")
+    # 兼容旧路径（全局目录，放最后，避免拿到其他任务的报告）
+    candidates.extend([
         project_root / "report" / "html" / "widgets" / "summary.json",
         project_root / "report" / "html" / "data" / "summary.json",
         project_root / "allure-report" / "widgets" / "summary.json",
         project_root / "allure-report" / "data" / "summary.json",
-    ]
+    ])
     for path in candidates:
         try:
             if path.exists():
@@ -4509,6 +5113,87 @@ def _extract_allure_metrics(summary: dict):
         "unknown": unknown,
         "duration_ms": duration,
         "duration_human": duration_human,
+    }
+
+def _parse_pytest_output(stdout: str):
+    """从 pytest 的 stdout 中解析测试结果
+    
+    解析格式如: "1 failed, 2 passed, 1 xfailed in 1.93s"
+    或: "=================== 1 failed, 2 passed, 1 xfailed in 1.93s ===================="
+    """
+    import re
+    
+    if not stdout:
+        return None
+    
+    # 初始化默认值
+    failed = 0
+    passed = 0
+    xfailed = 0
+    skipped = 0
+    error = 0
+    duration_seconds = 0.0
+    
+    # 匹配各种测试结果格式
+    # 格式1: "X failed, Y passed, Z xfailed in N.NNs"
+    # 格式2: "X failed, Y passed, Z skipped in N.NNs"
+    # 格式3: "X failed, Y passed, Z error in N.NNs"
+    
+    # 提取 failed
+    failed_match = re.search(r'(\d+)\s+failed', stdout)
+    if failed_match:
+        failed = int(failed_match.group(1))
+    
+    # 提取 passed
+    passed_match = re.search(r'(\d+)\s+passed', stdout)
+    if passed_match:
+        passed = int(passed_match.group(1))
+    
+    # 提取 xfailed
+    xfailed_match = re.search(r'(\d+)\s+xfailed', stdout)
+    if xfailed_match:
+        xfailed = int(xfailed_match.group(1))
+    
+    # 提取 skipped
+    skipped_match = re.search(r'(\d+)\s+skipped', stdout)
+    if skipped_match:
+        skipped = int(skipped_match.group(1))
+    
+    # 提取 error
+    error_match = re.search(r'(\d+)\s+error', stdout)
+    if error_match:
+        error = int(error_match.group(1))
+    
+    # 提取执行时间
+    time_match = re.search(r'in\s+([\d.]+)\s*s', stdout)
+    if time_match:
+        duration_seconds = float(time_match.group(1))
+    
+    # 如果没有任何匹配，返回 None
+    if passed == 0 and failed == 0 and xfailed == 0 and skipped == 0 and error == 0:
+        return None
+    
+    total = passed + failed + xfailed + skipped + error
+    
+    # 格式化时间
+    if duration_seconds < 1:
+        duration_human = f"{duration_seconds * 1000:.0f}ms"
+    elif duration_seconds < 60:
+        duration_human = f"{duration_seconds:.2f}s"
+    else:
+        minutes = int(duration_seconds // 60)
+        seconds = duration_seconds % 60
+        duration_human = f"{minutes}m {seconds:.2f}s"
+    
+    return {
+        "total": total,
+        "passed": passed,
+        "failed": failed,
+        "broken": error,  # error 通常对应 broken
+        "skipped": skipped + xfailed,  # xfailed 也算作 skipped
+        "unknown": 0,
+        "duration_ms": int(duration_seconds * 1000) if duration_seconds > 0 else None,
+        "duration_human": duration_human if duration_seconds > 0 else None,
     }
 
 def find_available_port(start_port=9999, max_attempts=10):
@@ -5299,15 +5984,20 @@ def generate_test_metrics(test_results, test_cases_data, execution_time):
 
 # 启动服务器
 if __name__ == '__main__':
-    import argparse
+    # 固定服务器配置
+    HOST = '0.0.0.0'  # 固定主机地址（监听所有网络接口）
+    PORT = 5000        # 固定端口
+    DEBUG = True       # 调试模式
     
-    # 解析命令行参数
-    parser = argparse.ArgumentParser(description='启动智能自动化测试平台API服务器')
-    parser.add_argument('--port', type=int, default=5000, help='服务器端口 (默认: 5000)')
-    parser.add_argument('--host', type=str, default='0.0.0.0', help='服务器主机 (默认: 0.0.0.0)')
-    parser.add_argument('--debug', type=bool, default=True, help='调试模式 (默认: True)')
-    args = parser.parse_args()
+    # 固定显示的访问地址（用于日志和前端配置）
+    DISPLAY_HOST = '127.0.0.1'  # 固定显示地址
+    DISPLAY_URL = f'http://{DISPLAY_HOST}:{PORT}'
     
-    logger.info(f"启动智能自动化测试平台API服务器，端口: {args.port}")
-    app.run(host=args.host, port=args.port, debug=args.debug,use_reloader=False)
+    logger.info(f"启动智能自动化测试平台API服务器")
+    logger.info(f"监听地址: {HOST}:{PORT}")
+    logger.info(f"访问地址: {DISPLAY_URL}")
+    logger.info(f"本地访问: http://localhost:{PORT}")
+    
+    # 启动服务器
+    app.run(host=HOST, port=PORT, debug=DEBUG, use_reloader=False)
 

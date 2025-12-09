@@ -9,7 +9,7 @@ case_common:
   detail: TC_CAL_AUTH_001 - 应用身份创建日历
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:
@@ -50,7 +50,7 @@ case_common:
   detail: TC_CAL_PARAM_001 - summary参数-正常长度
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:
@@ -70,7 +70,7 @@ case_common:
   detail: TC_CAL_PARAM_002 - summary参数-超过最大长度
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:
@@ -91,7 +91,7 @@ case_common:
   detail: TC_CAL_PARAM_003 - description参数-正常长度
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:
@@ -111,7 +111,7 @@ case_common:
   detail: TC_CAL_PARAM_004 - description参数-超过最大长度
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:
@@ -132,7 +132,7 @@ case_common:
   detail: TC_CAL_PARAM_005 - permissions参数-有效枚举值-private
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:
@@ -152,7 +152,7 @@ case_common:
   detail: TC_CAL_PARAM_005 - permissions参数-有效枚举值-show_only_free_busy
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:
@@ -172,7 +172,7 @@ case_common:
   detail: TC_CAL_PARAM_005 - permissions参数-有效枚举值-public
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:
@@ -192,7 +192,7 @@ case_common:
   detail: TC_CAL_PARAM_006 - permissions参数-无效枚举值
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:
@@ -213,7 +213,7 @@ case_common:
   detail: TC_CAL_PARAM_007 - color参数-有效范围值
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:
@@ -233,7 +233,7 @@ case_common:
   detail: TC_CAL_BUS_001 - 创建日历使用默认值
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data: {}
@@ -248,7 +248,7 @@ case_common:
   detail: TC_CAL_COMB_001 - 组合1：应用身份+完整参数
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:
@@ -268,7 +268,7 @@ case_common:
   detail: TC_CAL_COMB_003 - 组合3：应用身份+边界值组合
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:
@@ -288,7 +288,7 @@ case_common:
   detail: TC_CAL_LIMIT_001 - Content-Type错误（实际接口接受）
   headers:
     Content-Type: text/plain
-    Authorization: Bearer t-g104c8m7H2TGCJCOPFVWKPEXWGCPRRYW44TPTDQB
+    Authorization: Bearer t-g104c9crCRLHOANIGTV5YLBXKKP7PZ2FVE4UVF3E
   requestType: json
   is_run:
   data:

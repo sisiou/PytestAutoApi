@@ -30,7 +30,8 @@ from utils.read_files_tools.case_automatic_control import TestCaseAutomaticGener
 from utils.other_tools.allure_config_helper import ensure_allure_properties_file
 
 # ================ 配置 ================
-OPENAPI_PATH = Path("uploads/openapi/openapi_server-docs_im-v1_message_create_b287d163.yaml")
+
+OPENAPI_PATH = Path("multiuploads/split_openapi/openapi_API/related_group_2/sendMessage.yaml")
 DEFAULT_APP_ID = "cli_a9ac1b6a23b99bc2"
 DEFAULT_APP_SECRET = "kfPsUJmZiCco8DyGGslAufc7tTuNjiVe"
 DEFAULT_RECEIVE_ID_TYPE = "user_id"

@@ -4,10 +4,10 @@
     "uid" : "5844d3392acae4c2ef3fccbec2180a0e",
     "name" : "创建共享日历",
     "statistic" : {
-      "failed" : 1,
+      "failed" : 0,
       "broken" : 0,
       "skipped" : 0,
-      "passed" : 0,
+      "passed" : 1,
       "unknown" : 0,
       "total" : 1
     }

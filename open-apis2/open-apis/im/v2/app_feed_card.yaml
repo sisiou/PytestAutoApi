@@ -1,0 +1,24 @@
+case_common:
+  allureEpic: 即时通讯API
+  allureFeature: 创建应用消息流卡片
+  allureStory: 创建应用消息流卡片
+01_open-apis_im_v2_app_feed_card:
+  host: https://open.feishu.cn/open-apis
+  url: /im/v2/app_feed_card?user_id_type=open_id
+  method: post
+  detail: 测试创建应用消息流卡片
+  headers:
+    Content-Type: application/json
+    Authorization: Bearer t-g104c9222GGFDLATKFMVFNHW74F7LL276DBYXMHU
+  requestType: json
+  is_run:
+  data:
+    user_ids:
+    - ou_a0553eda9014c201e6969b478895c230
+  dependence_case: false
+  dependence_case_data:
+  current_request_set_cache:
+  assert:
+    status_code: 200
+  sql:
+

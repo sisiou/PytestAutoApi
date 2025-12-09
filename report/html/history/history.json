@@ -1,23 +1,4 @@
 {
-  "23ae347c342e12f3e44650f68fc4996b" : {
-    "statistic" : {
-      "failed" : 0,
-      "broken" : 0,
-      "skipped" : 0,
-      "passed" : 1,
-      "unknown" : 0,
-      "total" : 1
-    },
-    "items" : [ {
-      "uid" : "733237a7b39488c",
-      "status" : "passed",
-      "time" : {
-        "start" : 1765205184557,
-        "stop" : 1765205184855,
-        "duration" : 298
-      }
-    } ]
-  },
   "0148213f502ad8e67012281a3761978d" : {
     "statistic" : {
       "failed" : 0,
@@ -28,12 +9,31 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "d9cc5be0e31f21c9",
+      "uid" : "6b9c89dcf1c2936d",
       "status" : "passed",
       "time" : {
-        "start" : 1765205188922,
-        "stop" : 1765205189427,
-        "duration" : 505
+        "start" : 1765259604099,
+        "stop" : 1765259604479,
+        "duration" : 380
+      }
+    } ]
+  },
+  "23ae347c342e12f3e44650f68fc4996b" : {
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 1,
+      "unknown" : 0,
+      "total" : 1
+    },
+    "items" : [ {
+      "uid" : "232ee29e23df2e8f",
+      "status" : "passed",
+      "time" : {
+        "start" : 1765259599935,
+        "stop" : 1765259600293,
+        "duration" : 358
       }
     } ]
   },
@@ -47,12 +47,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "bf085e8440a769b6",
+      "uid" : "5d10946b4472e702",
       "status" : "passed",
       "time" : {
-        "start" : 1765205190704,
-        "stop" : 1765205191180,
-        "duration" : 476
+        "start" : 1765259605655,
+        "stop" : 1765259606151,
+        "duration" : 496
       }
     } ]
   },
@@ -66,32 +66,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "911e85e8e7ef44cc",
+      "uid" : "dada64658062a29d",
       "status" : "passed",
       "time" : {
-        "start" : 1765205181136,
-        "stop" : 1765205181539,
-        "duration" : 403
-      }
-    } ]
-  },
-  "5493ece2a26e363d1e5e180b124bc72f" : {
-    "statistic" : {
-      "failed" : 1,
-      "broken" : 0,
-      "skipped" : 0,
-      "passed" : 0,
-      "unknown" : 0,
-      "total" : 1
-    },
-    "items" : [ {
-      "uid" : "40029c8fbe7382ea",
-      "status" : "failed",
-      "statusDetails" : "AssertionError: 飞书接口调用失败:\n[错误码 190005] 应用请求频率超限\n排查建议: 当前请求过于频繁，已达到API限流阈值。建议：1) 降低请求频率，在测试用例之间添加适当的延迟；2) 检查是否有其他进程同时调用相同接口；3) 等待一段时间后重试\n原始错误信息: app rate limited",
-      "time" : {
-        "start" : 1765205182191,
-        "stop" : 1765205182403,
-        "duration" : 212
+        "start" : 1765259596005,
+        "stop" : 1765259596483,
+        "duration" : 478
       }
     } ]
   },
@@ -105,12 +85,31 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "8a20c8720a2385fe",
+      "uid" : "881762512b138207",
       "status" : "passed",
       "time" : {
-        "start" : 1765205181954,
-        "stop" : 1765205182182,
-        "duration" : 228
+        "start" : 1765259596967,
+        "stop" : 1765259597129,
+        "duration" : 162
+      }
+    } ]
+  },
+  "5493ece2a26e363d1e5e180b124bc72f" : {
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 1,
+      "unknown" : 0,
+      "total" : 1
+    },
+    "items" : [ {
+      "uid" : "62e07378b0505c37",
+      "status" : "passed",
+      "time" : {
+        "start" : 1765259597136,
+        "stop" : 1765259597510,
+        "duration" : 374
       }
     } ]
   },
@@ -124,12 +123,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "c378cfa1b5bcad52",
+      "uid" : "312b1d2372b1907",
       "status" : "passed",
       "time" : {
-        "start" : 1765205181539,
-        "stop" : 1765205181949,
-        "duration" : 410
+        "start" : 1765259596490,
+        "stop" : 1765259596963,
+        "duration" : 473
       }
     } ]
   },
@@ -143,32 +142,31 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "7e9ab44b623575b8",
+      "uid" : "ee0b0535141ae9c9",
       "status" : "passed",
       "time" : {
-        "start" : 1765205179339,
-        "stop" : 1765205179737,
-        "duration" : 398
+        "start" : 1765259594265,
+        "stop" : 1765259594735,
+        "duration" : 470
       }
     } ]
   },
   "9e3f5d4eab2b3b97c3e39b7ba434519c" : {
     "statistic" : {
-      "failed" : 1,
+      "failed" : 0,
       "broken" : 0,
       "skipped" : 0,
-      "passed" : 0,
+      "passed" : 1,
       "unknown" : 0,
       "total" : 1
     },
     "items" : [ {
-      "uid" : "ee8c2c409040e614",
-      "status" : "failed",
-      "statusDetails" : "AssertionError: 飞书接口调用失败:\n[错误码 190005] 应用请求频率超限\n排查建议: 当前请求过于频繁，已达到API限流阈值。建议：1) 降低请求频率，在测试用例之间添加适当的延迟；2) 检查是否有其他进程同时调用相同接口；3) 等待一段时间后重试\n原始错误信息: app rate limited",
+      "uid" : "c7bc88abb3916dee",
+      "status" : "passed",
       "time" : {
-        "start" : 1765205183523,
-        "stop" : 1765205183811,
-        "duration" : 288
+        "start" : 1765259598463,
+        "stop" : 1765259599035,
+        "duration" : 572
       }
     } ]
   },
@@ -182,12 +180,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "fdf7a4ba7dda2bf0",
+      "uid" : "47e75ade18740500",
       "status" : "passed",
       "time" : {
-        "start" : 1765205187126,
-        "stop" : 1765205187858,
-        "duration" : 732
+        "start" : 1765259602565,
+        "stop" : 1765259603188,
+        "duration" : 623
       }
     } ]
   },
@@ -201,12 +199,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "35538384479cc624",
+      "uid" : "6ba88295633f9fb",
       "status" : "passed",
       "time" : {
-        "start" : 1765205184313,
-        "stop" : 1765205184557,
-        "duration" : 244
+        "start" : 1765259599565,
+        "stop" : 1765259599926,
+        "duration" : 361
       }
     } ]
   },
@@ -220,12 +218,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "27760c5a26688525",
+      "uid" : "a83e827da7b94d08",
       "status" : "passed",
       "time" : {
-        "start" : 1765205189434,
-        "stop" : 1765205189925,
-        "duration" : 491
+        "start" : 1765259604494,
+        "stop" : 1765259605091,
+        "duration" : 597
       }
     } ]
   },
@@ -239,12 +237,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "7246b2908e9fd995",
+      "uid" : "e58157dabefa0bf3",
       "status" : "passed",
       "time" : {
-        "start" : 1765205186346,
-        "stop" : 1765205187126,
-        "duration" : 780
+        "start" : 1765259601880,
+        "stop" : 1765259602565,
+        "duration" : 685
       }
     } ]
   },
@@ -258,12 +256,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "cc6418b032f90aad",
+      "uid" : "e0b9973f10f8c900",
       "status" : "passed",
       "time" : {
-        "start" : 1765205184078,
-        "stop" : 1765205184312,
-        "duration" : 234
+        "start" : 1765259599445,
+        "stop" : 1765259599558,
+        "duration" : 113
       }
     } ]
   },
@@ -277,12 +275,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "92ee903c6906162a",
+      "uid" : "238aff71a172a084",
       "status" : "passed",
       "time" : {
-        "start" : 1765205187866,
-        "stop" : 1765205188916,
-        "duration" : 1050
+        "start" : 1765259603194,
+        "stop" : 1765259604092,
+        "duration" : 898
       }
     } ]
   },
@@ -296,12 +294,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "fe1ec8947620ec62",
+      "uid" : "3cf2de4c4b0bb4cc",
       "status" : "passed",
       "time" : {
-        "start" : 1765205179167,
-        "stop" : 1765205179330,
-        "duration" : 163
+        "start" : 1765259594045,
+        "stop" : 1765259594259,
+        "duration" : 214
       }
     } ]
   },
@@ -315,31 +313,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "91e6c7418cb02da1",
+      "uid" : "4adafc07b40d5c70",
       "status" : "passed",
       "time" : {
-        "start" : 1765205178759,
-        "stop" : 1765205179159,
-        "duration" : 400
-      }
-    } ]
-  },
-  "c6d9b63eae7eb2e41564344ac1440ca4" : {
-    "statistic" : {
-      "failed" : 0,
-      "broken" : 0,
-      "skipped" : 0,
-      "passed" : 1,
-      "unknown" : 0,
-      "total" : 1
-    },
-    "items" : [ {
-      "uid" : "f80687c4056da61f",
-      "status" : "passed",
-      "time" : {
-        "start" : 1765205190541,
-        "stop" : 1765205190698,
-        "duration" : 157
+        "start" : 1765259593525,
+        "stop" : 1765259594045,
+        "duration" : 520
       }
     } ]
   },
@@ -353,12 +332,31 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "346715732cc295e9",
+      "uid" : "e49db8fc3afdf189",
       "status" : "passed",
       "time" : {
-        "start" : 1765205184855,
-        "stop" : 1765205185051,
-        "duration" : 196
+        "start" : 1765259600298,
+        "stop" : 1765259600468,
+        "duration" : 170
+      }
+    } ]
+  },
+  "c6d9b63eae7eb2e41564344ac1440ca4" : {
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 1,
+      "unknown" : 0,
+      "total" : 1
+    },
+    "items" : [ {
+      "uid" : "805ccef099cd2893",
+      "status" : "passed",
+      "time" : {
+        "start" : 1765259605508,
+        "stop" : 1765259605655,
+        "duration" : 147
       }
     } ]
   },
@@ -372,12 +370,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "87c1faf977f3f20e",
+      "uid" : "eab6c9675d34a91f",
       "status" : "passed",
       "time" : {
-        "start" : 1765205191192,
-        "stop" : 1765205191537,
-        "duration" : 345
+        "start" : 1765259606157,
+        "stop" : 1765259606945,
+        "duration" : 788
       }
     } ]
   },
@@ -391,12 +389,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "b2c5d3898289114f",
+      "uid" : "48c50ebf820f8e0a",
       "status" : "passed",
       "time" : {
-        "start" : 1765205185848,
-        "stop" : 1765205186346,
-        "duration" : 498
+        "start" : 1765259601285,
+        "stop" : 1765259601865,
+        "duration" : 580
       }
     } ]
   },
@@ -410,52 +408,50 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "435c2ec1510a52d2",
+      "uid" : "7f2f04c5f8cb5a1e",
       "status" : "passed",
       "time" : {
-        "start" : 1765205189933,
-        "stop" : 1765205190535,
-        "duration" : 602
+        "start" : 1765259605095,
+        "stop" : 1765259605502,
+        "duration" : 407
       }
     } ]
   },
   "d8b84767d5162181b05eeab025b4eed5" : {
     "statistic" : {
-      "failed" : 1,
+      "failed" : 0,
       "broken" : 0,
       "skipped" : 0,
-      "passed" : 0,
+      "passed" : 1,
       "unknown" : 0,
       "total" : 1
     },
     "items" : [ {
-      "uid" : "faf76e173fc2d71a",
-      "status" : "failed",
-      "statusDetails" : "AssertionError: 飞书接口调用失败:\n[错误码 190005] 应用请求频率超限\n排查建议: 当前请求过于频繁，已达到API限流阈值。建议：1) 降低请求频率，在测试用例之间添加适当的延迟；2) 检查是否有其他进程同时调用相同接口；3) 等待一段时间后重试\n原始错误信息: app rate limited",
+      "uid" : "95be0534b0f5a125",
+      "status" : "passed",
       "time" : {
-        "start" : 1765205183269,
-        "stop" : 1765205183509,
-        "duration" : 240
+        "start" : 1765259597944,
+        "stop" : 1765259598457,
+        "duration" : 513
       }
     } ]
   },
   "1dab1455b0bdd42ce9d3ba5e11cc2e41" : {
     "statistic" : {
-      "failed" : 1,
+      "failed" : 0,
       "broken" : 0,
       "skipped" : 0,
-      "passed" : 0,
+      "passed" : 1,
       "unknown" : 0,
       "total" : 1
     },
     "items" : [ {
-      "uid" : "7a4f428a0ce7bdca",
-      "status" : "failed",
-      "statusDetails" : "AssertionError: 飞书接口调用失败:\n[错误码 190005] 应用请求频率超限\n排查建议: 当前请求过于频繁，已达到API限流阈值。建议：1) 降低请求频率，在测试用例之间添加适当的延迟；2) 检查是否有其他进程同时调用相同接口；3) 等待一段时间后重试\n原始错误信息: app rate limited",
+      "uid" : "16203fb68e1c8190",
+      "status" : "passed",
       "time" : {
-        "start" : 1765205183828,
-        "stop" : 1765205184062,
-        "duration" : 234
+        "start" : 1765259599045,
+        "stop" : 1765259599435,
+        "duration" : 390
       }
     } ]
   },
@@ -469,31 +465,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "b440ef5fe2514bb",
+      "uid" : "f3079471ace8a83d",
       "status" : "passed",
       "time" : {
-        "start" : 1765205180013,
-        "stop" : 1765205180431,
-        "duration" : 418
-      }
-    } ]
-  },
-  "c6ac8fb8079432427fdbc5c77a55e801" : {
-    "statistic" : {
-      "failed" : 0,
-      "broken" : 0,
-      "skipped" : 0,
-      "passed" : 1,
-      "unknown" : 0,
-      "total" : 1
-    },
-    "items" : [ {
-      "uid" : "3f068462bf82f42f",
-      "status" : "passed",
-      "time" : {
-        "start" : 1765205185615,
-        "stop" : 1765205185838,
-        "duration" : 223
+        "start" : 1765259594981,
+        "stop" : 1765259595315,
+        "duration" : 334
       }
     } ]
   },
@@ -507,12 +484,31 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "8af8e5dda357afa2",
+      "uid" : "da0fc4f2d41a6321",
       "status" : "passed",
       "time" : {
-        "start" : 1765205185066,
-        "stop" : 1765205185374,
-        "duration" : 308
+        "start" : 1765259600475,
+        "stop" : 1765259600800,
+        "duration" : 325
+      }
+    } ]
+  },
+  "c6ac8fb8079432427fdbc5c77a55e801" : {
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 1,
+      "unknown" : 0,
+      "total" : 1
+    },
+    "items" : [ {
+      "uid" : "4204562ac74c5e0e",
+      "status" : "passed",
+      "time" : {
+        "start" : 1765259601065,
+        "stop" : 1765259601280,
+        "duration" : 215
       }
     } ]
   },
@@ -526,32 +522,31 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "cbf261194825da48",
+      "uid" : "49c4a2f297c8bafe",
       "status" : "passed",
       "time" : {
-        "start" : 1765205179737,
-        "stop" : 1765205179997,
-        "duration" : 260
+        "start" : 1765259594745,
+        "stop" : 1765259594979,
+        "duration" : 234
       }
     } ]
   },
   "335e3a8de18d65e43312973db603c5c1" : {
     "statistic" : {
-      "failed" : 1,
+      "failed" : 0,
       "broken" : 0,
       "skipped" : 0,
-      "passed" : 0,
+      "passed" : 1,
       "unknown" : 0,
       "total" : 1
     },
     "items" : [ {
-      "uid" : "57ed3effc9a3dea2",
-      "status" : "failed",
-      "statusDetails" : "AssertionError: 飞书接口调用失败:\n[错误码 190005] 应用请求频率超限\n排查建议: 当前请求过于频繁，已达到API限流阈值。建议：1) 降低请求频率，在测试用例之间添加适当的延迟；2) 检查是否有其他进程同时调用相同接口；3) 等待一段时间后重试\n原始错误信息: app rate limited",
+      "uid" : "7502254dd5c4b305",
+      "status" : "passed",
       "time" : {
-        "start" : 1765205183062,
-        "stop" : 1765205183257,
-        "duration" : 195
+        "start" : 1765259597519,
+        "stop" : 1765259597938,
+        "duration" : 419
       }
     } ]
   },
@@ -565,12 +560,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "68c8567c1518176d",
+      "uid" : "5243815ab6a3de58",
       "status" : "passed",
       "time" : {
-        "start" : 1765205180439,
-        "stop" : 1765205180652,
-        "duration" : 213
+        "start" : 1765259595315,
+        "stop" : 1765259595559,
+        "duration" : 244
       }
     } ]
   },
@@ -584,12 +579,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "cdab739ff43fdb56",
+      "uid" : "12ebfab6044f4be",
       "status" : "passed",
       "time" : {
-        "start" : 1765205185380,
-        "stop" : 1765205185612,
-        "duration" : 232
+        "start" : 1765259600805,
+        "stop" : 1765259601064,
+        "duration" : 259
       }
     } ]
   },
@@ -603,12 +598,12 @@
       "total" : 1
     },
     "items" : [ {
-      "uid" : "2ce19b68555d633a",
+      "uid" : "ac4dc810ac1abe4b",
       "status" : "passed",
       "time" : {
-        "start" : 1765205180668,
-        "stop" : 1765205181120,
-        "duration" : 452
+        "start" : 1765259595565,
+        "stop" : 1765259596001,
+        "duration" : 436
       }
     } ]
   }

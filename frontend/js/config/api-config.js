@@ -31,6 +31,12 @@ const API_CONFIG = {
             FETCH_FEISHU: '/api/docs/fetch-feishu'
         },
         
+        // 飞书相关
+        FEISHU: {
+            GENERATE_AND_TEST: '/api/feishu/generate-and-test',
+            GENERATE_AND_TEST_SINGLE_FILE: '/api/feishu/generate-and-test-single-file'
+        },
+        
         // 测试用例相关
     TEST_CASES: {
         LIST: '/api/test-cases',
