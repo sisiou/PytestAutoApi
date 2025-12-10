@@ -455,17 +455,21 @@ def generate_api_relation_file(openapi_file_paths, output_relation_path):
         openapi_filename = os.path.basename(openapi_path)
         with open(openapi_path, "r", encoding="utf-8") as f:
             try:
-                data = yaml.safe_load(f)
+                # 支持yaml和json格式的OpenAPI文件
+                if openapi_path.endswith(('.yaml', '.yml')):
+                    data = yaml.safe_load(f)
+                else:
+                    data = json.load(f)
                 openapi_data.append({
                     "openapi_file": openapi_filename,  # 仅保留文件名
                     "api_paths": list(data.get("paths", {}).keys()) if data else [],
                     "content": data
                 })
-            except yaml.YAMLError as e:
+            except (yaml.YAMLError, json.JSONDecodeError) as e:
                 print(f"读取OpenAPI文件 {openapi_path} 失败：{e}")
                 continue
 
-    # 构建关联分析提示，强调仅保留文件名
+    # 构建关联分析提示，强调参数描述中的关联信息
     prompt = f"""请分析以下OpenAPI文件列表，找出其中存在关联的接口，并输出简化的关联关系：
 {json.dumps(openapi_data, ensure_ascii=False, indent=2)}
 
@@ -475,7 +479,7 @@ def generate_api_relation_file(openapi_file_paths, output_relation_path):
   "total_related_pairs": N,
   "related_pairs": [
     {{
-      "source_openapi_file": "源OpenAPI文件名（仅保留文件名，如openapi_server-docs_im-v1_image_create_4293d832.yaml）",
+      "source_openapi_file": "源OpenAPI文件名（仅保留文件名）",
       "source_api_path": "源接口路径",
       "target_openapi_file": "目标OpenAPI文件名（仅保留文件名）",
       "target_api_path": "目标接口路径",
@@ -483,7 +487,7 @@ def generate_api_relation_file(openapi_file_paths, output_relation_path):
         {{
           "source_param": "源接口输出参数（如image_id）",
           "target_param": "目标接口输入参数（如image_id）",
-          "param_location": "参数位置（body/query/header）",
+          "param_location": "参数位置（body/query/header/path）",
           "relation_type": "依赖类型（全局/条件）"
         }}
       ],
@@ -493,19 +497,19 @@ def generate_api_relation_file(openapi_file_paths, output_relation_path):
   "unrelated_files": ["无关联的OpenAPI文件名列表（仅保留文件名）"]
 }}
 
-关键要求：
-1. 仅输出存在关联的接口对，无关联的放入unrelated_files；
-2. relation_params仅保留核心关联参数，不要冗余；
-3. relation_type仅区分"全局"（必须依赖）和"条件"（特定场景依赖）；
-4. source_openapi_file/target_openapi_file/unrelated_files 仅保留文件名，不要任何目录路径（如../../openApi\\）；
-5. 仅返回标准JSON，无任何额外文字、注释。"""
+关键分析规则：
+1. 必须优先识别参数描述中明确引用的关联（如参数描述包含“ID获取方式：调用XX接口后从响应的YY参数获取”）；
+2. 当参数名（如message_id）在不同接口的输入输出中匹配，且类型一致时，视为潜在关联；
+3. 若接口A的输出参数X是接口B的必填输入参数，则relation_type为"全局"；若为可选输入参数，则为"条件"；
+4. param_location需包含path类型（针对路径参数）；
+5. 即使只有单个OpenAPI文件，只要内部接口间存在参数关联（如A接口输出作为B接口输入），也必须识别并输出；
+6. 文件名仅保留纯文件名，不包含任何路径；
+7. 仅返回标准JSON，无额外文字。"""
 
-    system_prompt = """你是API关联分析专家，需简化分析接口间的关联关系，仅保留：
-1. 关联的OpenAPI文件名（仅保留文件名，去除所有目录路径）
-2. 关联的接口路径
-3. 核心关联参数（输入输出映射）
-4. 依赖类型（全局/条件）
-要求输出极简，仅保留上述核心信息，不要多余描述，且文件名必须仅保留纯文件名（无目录前缀）。"""
+    system_prompt = """你是API关联分析专家，擅长从接口定义中挖掘参数关联，包括：
+1. 显式关联：参数描述中明确引用其他接口的输出参数（如“从XX接口的YY参数获取”）；
+2. 隐式关联：同名同类型参数在不同接口的输入输出中形成的映射关系。
+分析时需特别关注路径参数（in:path）的关联，确保单个文件内的接口关联也能被识别。输出必须极简，仅保留核心关联信息，文件名仅含纯文件名。"""
 
     # 调用API生成简化关联关系
     relation_content = call_bailian_api(prompt, system_prompt)
@@ -523,6 +527,10 @@ def generate_api_relation_file(openapi_file_paths, output_relation_path):
                     pair["source_openapi_file"] = os.path.basename(pair["source_openapi_file"])
                 if "target_openapi_file" in pair:
                     pair["target_openapi_file"] = os.path.basename(pair["target_openapi_file"])
+                # 补充path类型到param_location选项中
+                for param in pair.get("relation_params", []):
+                    if "param_location" in param and param["param_location"] not in ["body", "query", "header", "path"]:
+                        param["param_location"] = "path"  # 兜底修正路径参数类型
 
         # 处理unrelated_files中的文件名
         if "unrelated_files" in relation_json:
@@ -1112,5 +1120,6 @@ if __name__ == "__main__":
     print("\n=== 生成完成 ===")
     print(f"OpenAPI文件：{openapi_output_path}")
     print(f"接口关联关系文件：{relation_output_path}")
+
 
     print(f"业务场景文件：{scene_output_path}")
