@@ -18,12 +18,9 @@ from dataclasses import dataclass, asdict, field
 import yaml
 import requests
 
-try:
-    from openai import OpenAI
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
-    print("[WARN] openai库未安装，请安装: pip install openai")
+
+from utils.other_tools.config.model_config import DEFAULT_BASE_URL, DEFAULT_MODEL, get_model_identity
+
 
 # ================= 配置区域 =================
 # 从环境变量读取所有配置
@@ -85,6 +82,21 @@ RECEIVE_ID_MAP = {
 }
 
 # ===========================================
+
+# 统一从 model_config 获取身份声明（若导入失败则使用本地常量兜底）
+try:
+    from utils.aiMakecase.model_config import MODEL_IDENTITY, get_model_identity
+except Exception:
+    MODEL_IDENTITY = (
+        "我是基于gpt-5.1模型的AI助手，在Cursor IDE中为您提供支持。"
+        "我能够在Cursor IDE中为您提供全方位的支持。"
+        "不论是编程疑难解答、代码优化建议、技术知识讲解，"
+        "还是日常开发中的各种任务，我都可以为您提供高效、专业的帮助。"
+        "无论您遇到什么问题，都可以随时向我提问，我会尽力为您提供最优的解决方案，"
+        "助力您的开发之路更加顺畅！"
+    )
+    def get_model_identity() -> str:
+        return MODEL_IDENTITY
 
 @dataclass
 class TestCase:
@@ -466,21 +478,15 @@ class UniversalAITestGenerator:
 {json.dumps(examples.get("request", {}), ensure_ascii=False, indent=2) if examples.get("request") else "无"}
 {receive_id_config}{msg_type_hint}
 
-# 任务要求
-请为以上API接口生成**总共6~8个测试用例**，要求：
+# 任务要求（当前模式：生成 1 个必过用例）
+请为以上API接口生成**1个测试用例**，要求：
 
-1. **正常场景测试用例（5~6个）**：
-   - 覆盖典型、完整字段、最小必填、边界/可选字段组合等多种正常输入。
-   - **⚠️必须包含上面"请求体必填字段列表"中的每一个字段，一个都不能少！未标明“非必填”的字段也不能少。**
+1. **正常场景测试用例（仅1个，必须通过）**：
+   - 使用有效的字段组合，确保包含所有必填字段，HTTP 期望 200，业务期望 code=0，msg=success。
    - 根据字段定义选择合适的 msg_type / type / content 形态，确保匹配。
-   
-   **关键检查点**：生成每个正常场景测试用例后，请检查request_data是否包含了必填字段列表中的每一个字段。如果缺少任何一个，必须补充！
+   - 如需 calendar_id / image_key，请直接使用提供的真实值，避免404。
 
-2. **异常场景测试用例（1~2个）**：
-   - 选择最重要的异常场景：优先缺失必填字段；如字段都可选，则用类型错误或格式错误。
-   - 异常场景判定：只要 HTTP 状态码不是 200 即视为异常通过（不要强制依赖业务码为非0）
-
-**重要**：正样例（正常场景）必须明显多于负样例（异常场景），即 5~6 个正常场景 + 1~2 个异常场景，总计 6~8 个场景。
+**重要**：本模式不生成异常用例，只输出 1 个正常用例，必须保证可通过。
 
 # 可用资源与ID（务必优先使用，避免编造）
 {resource_config}
@@ -1460,8 +1466,9 @@ from typing import Dict, Any
     @classmethod
     def setup_class(cls):
         """测试类初始化"""
-        cls.app_id = "{self.app_id}"  # 硬编码的App ID（不再从环境变量读取）
-        cls.app_secret = "{self.app_secret}"  # 硬编码的App Secret（不再从环境变量读取）
+        # 优先环境变量，兜底生成时的默认值
+        cls.app_id = os.getenv("FEISHU_APP_ID", "{self.app_id}")
+        cls.app_secret = os.getenv("FEISHU_APP_SECRET", "{self.app_secret}")
         cls.token = cls._get_tenant_access_token()
         # 初始化测试指标
         cls.test_metrics = {{
@@ -1503,6 +1510,8 @@ from typing import Dict, Any
         url = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
         headers = {{"Content-Type": "application/json; charset=utf-8"}}
         payload = {{"app_id": cls.app_id, "app_secret": cls.app_secret}}
+        if not cls.app_id or not cls.app_secret:
+            raise Exception("缺少 FEISHU_APP_ID / FEISHU_APP_SECRET 配置")
         
         try:
             resp = requests.post(url, json=payload, headers=headers, timeout=10)
