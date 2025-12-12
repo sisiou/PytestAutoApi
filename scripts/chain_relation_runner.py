@@ -81,13 +81,7 @@ def build_graph(rel_dir: Path, api_dir: Path):
                 # 2) 尝试根据 relation 文件名匹配 openapi 文件
                 candidates = match_by_relation_filename(rf)
                 if len(candidates) == 1:
-                    # 只匹配到一个文件时，如果 source 和 target 都是 data.json，说明可能是自环
-                    # 这种情况下，如果 relation 描述中提到需要从其他接口获取参数，应该跳过
-                    if src == "data.json" and tgt == "data.json":
-                        print(f"[WARN] 跳过可能的自环依赖: relation文件 {rf.name} 中 source 和 target 都是 data.json")
-                        print(f"      匹配到的文件: {candidates[0]}")
-                        print(f"      提示: 请检查 relation 文件配置，确保 source_openapi_file 和 target_openapi_file 指向不同的接口")
-                        continue
+                    # 只匹配到一个文件时，先设置为自环，后续在自环检测阶段尝试推断正确的依赖关系
                     src_file = tgt_file = candidates[0]
                 elif len(candidates) == 2:
                     # 若存在 create + reply 的组合，则默认 create -> reply
@@ -107,21 +101,50 @@ def build_graph(rel_dir: Path, api_dir: Path):
             pair["source_openapi_file"] = src_file
             pair["target_openapi_file"] = tgt_file
 
-            # 如果是自环，尝试应用启发式：reply 默认依赖 create
+            # 如果是自环，尝试应用启发式规则推断正确的依赖关系
             if src_file == tgt_file:
-                if "reply" in tgt_file:
-                    create_candidate = tgt_file.replace("reply", "create")
-                    if (api_dir / create_candidate).exists():
-                        src_file = create_candidate  # rewrite edge create -> reply
-                        # tgt_file remains reply
+                # 获取 relation 描述和 API 路径，用于推断依赖关系
+                relation_desc = pair.get("relation_desc", "").lower()
+                target_api_path = pair.get("target_api_path", "").lower()
+                source_api_path = pair.get("source_api_path", "").lower()
+                
+                # 检查是否提到"发送消息"接口（create）
+                mentions_create = "发送消息" in relation_desc or "create" in relation_desc
+                
+                # 检查 target 是否是 reply/forward/update，这些通常依赖 create
+                is_reply = "reply" in tgt_file or "/reply" in target_api_path
+                is_forward = "forward" in tgt_file or "/forward" in target_api_path
+                is_update = "update" in tgt_file or "/update" in target_api_path or "(put)" in target_api_path
+                
+                # 如果满足条件，尝试将 source 设置为 create
+                if (is_reply or is_forward or is_update) and mentions_create:
+                    create_candidate = None
+                    # 尝试不同的 create 文件名模式
+                    if is_reply:
+                        create_candidate = tgt_file.replace("reply", "create")
+                    elif is_forward:
+                        create_candidate = tgt_file.replace("forward", "create")
+                    elif is_update:
+                        create_candidate = tgt_file.replace("update", "create")
+                    
+                    # 如果找不到，尝试通用的 create 文件名
+                    if not create_candidate or not (api_dir / create_candidate).exists():
+                        # 查找所有包含 create 的文件
+                        create_files = [f for f in api_files if "create" in f and "message" in f]
+                        if create_files:
+                            create_candidate = create_files[0]
+                    
+                    if create_candidate and (api_dir / create_candidate).exists():
+                        src_file = create_candidate  # rewrite edge create -> target
                         pair["source_openapi_file"] = src_file
+                        print(f"[INFO] 自动推断依赖关系: {src_file} -> {tgt_file} (基于 relation 描述)")
                     else:
-                        # 无法推断，跳过自环依赖（接口不应该依赖自己）
+                        # 无法推断，跳过自环依赖
                         print(f"[WARN] 跳过自环依赖: {src_file} -> {tgt_file} (relation文件: {rf.name})")
-                        print(f"      提示: reply 接口应该依赖 create 接口获取 message_id")
+                        print(f"      提示: 应该依赖 create 接口，但未找到对应的 create 文件")
                         continue
                 else:
-                    # 非 reply 的自环，直接跳过（接口不应该依赖自己）
+                    # 无法推断，跳过自环依赖（接口不应该依赖自己）
                     print(f"[WARN] 跳过自环依赖: {src_file} -> {tgt_file} (relation文件: {rf.name})")
                     print(f"      提示: 请检查 relation 文件配置，确保 source_openapi_file 和 target_openapi_file 指向不同的接口")
                     continue
