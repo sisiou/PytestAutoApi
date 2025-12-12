@@ -120,6 +120,10 @@ def build_message_prompt(openapi_content: str, extra_hint: str = "", external_pa
 {task_requirements if external_params else ''}
 可用的接收人/群示例（不要乱编，优先使用这些样例,不要选择email和chat_id）：
 {json.dumps(RECEIVE_ID_MAP, ensure_ascii=False)}
+【严禁编造】：
+- 绝对不要凭空生成 receive_id/open_id/user_id/union_id/chat_id/message_id 等 ID
+- 若需 ID，请仅从上方 RECEIVE_ID_MAP 选择或使用外部传入的参数值
+- 不要造不存在的消息、用户或群 ID
 
 当前接口的 OpenAPI 内容：
 {openapi_content}
@@ -129,6 +133,7 @@ def build_message_prompt(openapi_content: str, extra_hint: str = "", external_pa
 - 必填字段全部给出合理值；msg_type/content 要匹配。
 {f'- 【强制要求】如果上方显示了"外部传入的参数"，你必须严格按照参数列表中的值来设置用例，绝对不要使用占位符、示例值或从 RECEIVE_ID_MAP 中选择的值。' if external_params else ''}
 {f'- 【再次强调】外部传入的参数值必须直接使用。' if external_params else ''}
+- 如果需要 receive_id/open_id/user_id/union_id/chat_id/message_id 且未提供外部参数，必须从 RECEIVE_ID_MAP 选择，严禁自行编造
 - 如果需要模型自行构造 id/uuid/open_id/chat_id/message_id/receive_id 等字段且无外部参数，请确保长度与 OpenAPI 示例值长度一致，不要生成比示例更长的值（例如 uuid 长度必须与示例一致）。
 - Base URL 必须使用环境变量或默认值：`BASE_URL = os.getenv("FEISHU_BASE_URL", DEFAULT_BASE_Feishu_URL)`，不要使用 OpenAPI 文档中的示例域名（如 http://api.example.com/v1）。
 - 输出 JSON 对象：{{"name","description","test_type","request_data","expected_status_code","expected_response","tags","is_success"}}。
