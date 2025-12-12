@@ -81,6 +81,13 @@ def build_graph(rel_dir: Path, api_dir: Path):
                 # 2) 尝试根据 relation 文件名匹配 openapi 文件
                 candidates = match_by_relation_filename(rf)
                 if len(candidates) == 1:
+                    # 只匹配到一个文件时，如果 source 和 target 都是 data.json，说明可能是自环
+                    # 这种情况下，如果 relation 描述中提到需要从其他接口获取参数，应该跳过
+                    if src == "data.json" and tgt == "data.json":
+                        print(f"[WARN] 跳过可能的自环依赖: relation文件 {rf.name} 中 source 和 target 都是 data.json")
+                        print(f"      匹配到的文件: {candidates[0]}")
+                        print(f"      提示: 请检查 relation 文件配置，确保 source_openapi_file 和 target_openapi_file 指向不同的接口")
+                        continue
                     src_file = tgt_file = candidates[0]
                 elif len(candidates) == 2:
                     # 若存在 create + reply 的组合，则默认 create -> reply
@@ -109,15 +116,14 @@ def build_graph(rel_dir: Path, api_dir: Path):
                         # tgt_file remains reply
                         pair["source_openapi_file"] = src_file
                     else:
-                        # 无法推断，则按自环处理
-                        nodes.add(src_file)
-                        rel_map[tgt_file].append(pair)
-                        printed_relations.append((src_file, tgt_file, pair.get("relation_params", [])))
+                        # 无法推断，跳过自环依赖（接口不应该依赖自己）
+                        print(f"[WARN] 跳过自环依赖: {src_file} -> {tgt_file} (relation文件: {rf.name})")
+                        print(f"      提示: reply 接口应该依赖 create 接口获取 message_id")
                         continue
                 else:
-                    nodes.add(src_file)
-                    rel_map[tgt_file].append(pair)
-                    printed_relations.append((src_file, tgt_file, pair.get("relation_params", [])))
+                    # 非 reply 的自环，直接跳过（接口不应该依赖自己）
+                    print(f"[WARN] 跳过自环依赖: {src_file} -> {tgt_file} (relation文件: {rf.name})")
+                    print(f"      提示: 请检查 relation 文件配置，确保 source_openapi_file 和 target_openapi_file 指向不同的接口")
                     continue
 
             nodes.add(src_file)
