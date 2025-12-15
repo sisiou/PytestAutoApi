@@ -1,0 +1,236 @@
+{
+  "apis": [
+    {
+      "name": "创建消息",
+      "url": "https://open.feishu.cn/document/server-docs/im-v1/message/create",
+      "method": "POST",
+      "description": "向指定会话发送消息",
+      "pathParameters": [],
+      "queryParameters": [],
+      "bodyParameters": [
+        {
+          "name": "receive_id_type",
+          "type": "string",
+          "required": true,
+          "enumValues": [
+            "open_id",
+            "user_id",
+            "union_id",
+            "chat_id"
+          ],
+          "description": "接收者ID类型"
+        },
+        {
+          "name": "receive_id",
+          "type": "string",
+          "required": true,
+          "description": "接收者ID，与receive_id_type对应"
+        },
+        {
+          "name": "msg_type",
+          "type": "string",
+          "required": true,
+          "enumValues": [
+            "text",
+            "image",
+            "post",
+            "file",
+            "audio",
+            "media",
+            "sticker",
+            "interactive",
+            "share_chat",
+            "share_user"
+          ],
+          "description": "消息类型"
+        },
+        {
+          "name": "content",
+          "type": "string",
+          "required": true,
+          "description": "消息内容，JSON格式，不同msg_type对应不同内容结构"
+        },
+        {
+          "name": "uuid",
+          "type": "string",
+          "required": false,
+          "description": "消息唯一标识，用于幂等性校验，不超过50字符"
+        },
+        {
+          "name": "send_type",
+          "type": "string",
+          "required": false,
+          "enumValues": [
+            "normal",
+            "merge_forward",
+            "forward"
+          ],
+          "description": "发送类型，默认为normal"
+        },
+        {
+          "name": "allow_quote",
+          "type": "boolean",
+          "required": false,
+          "description": "是否允许消息被引用回复，默认为true"
+        },
+        {
+          "name": "payload_encode",
+          "type": "boolean",
+          "required": false,
+          "description": "content是否为base64编码，默认为false"
+        }
+      ]
+    },
+    {
+      "name": "回复消息",
+      "url": "https://open.feishu.cn/document/server-docs/im-v1/message/reply",
+      "method": "POST",
+      "description": "回复指定消息",
+      "pathParameters": [
+        {
+          "name": "message_id",
+          "type": "string",
+          "required": true,
+          "description": "要回复的消息ID"
+        }
+      ],
+      "queryParameters": [],
+      "bodyParameters": [
+        {
+          "name": "msg_type",
+          "type": "string",
+          "required": true,
+          "enumValues": [
+            "text",
+            "image",
+            "post",
+            "file",
+            "audio",
+            "media",
+            "sticker",
+            "interactive",
+            "share_chat",
+            "share_user"
+          ],
+          "description": "消息类型"
+        },
+        {
+          "name": "content",
+          "type": "string",
+          "required": true,
+          "description": "消息内容，JSON格式"
+        },
+        {
+          "name": "uuid",
+          "type": "string",
+          "required": false,
+          "description": "消息唯一标识，用于幂等性校验"
+        },
+        {
+          "name": "payload_encode",
+          "type": "boolean",
+          "required": false,
+          "description": "content是否为base64编码，默认为false"
+        }
+      ]
+    },
+    {
+      "name": "更新消息",
+      "url": "https://open.feishu.cn/document/server-docs/im-v1/message/update",
+      "method": "PATCH",
+      "description": "更新指定消息内容",
+      "pathParameters": [
+        {
+          "name": "message_id",
+          "type": "string",
+          "required": true,
+          "description": "要更新的消息ID"
+        }
+      ],
+      "queryParameters": [],
+      "bodyParameters": [
+        {
+          "name": "msg_type",
+          "type": "string",
+          "required": true,
+          "enumValues": [
+            "text",
+            "post",
+            "interactive"
+          ],
+          "description": "消息类型，仅支持text、post和interactive"
+        },
+        {
+          "name": "content",
+          "type": "string",
+          "required": true,
+          "description": "更新后的消息内容，JSON格式"
+        },
+        {
+          "name": "update_mask",
+          "type": "string",
+          "required": false,
+          "defaultValue": "content",
+          "description": "更新字段，当前仅支持content"
+        },
+        {
+          "name": "payload_encode",
+          "type": "boolean",
+          "required": false,
+          "description": "content是否为base64编码，默认为false"
+        }
+      ]
+    },
+    {
+      "name": "转发消息",
+      "url": "https://open.feishu.cn/document/server-docs/im-v1/message/forward",
+      "method": "POST",
+      "description": "转发消息到指定会话",
+      "pathParameters": [],
+      "queryParameters": [],
+      "bodyParameters": [
+        {
+          "name": "message_id",
+          "type": "string",
+          "required": true,
+          "description": "要转发的消息ID"
+        },
+        {
+          "name": "receive_id_type",
+          "type": "string",
+          "required": true,
+          "enumValues": [
+            "open_id",
+            "user_id",
+            "union_id",
+            "chat_id"
+          ],
+          "description": "接收者ID类型"
+        },
+        {
+          "name": "receive_id",
+          "type": "string",
+          "required": true,
+          "description": "接收者ID，与receive_id_type对应"
+        },
+        {
+          "name": "uuid",
+          "type": "string",
+          "required": false,
+          "description": "消息唯一标识，用于幂等性校验"
+        },
+        {
+          "name": "send_type",
+          "type": "string",
+          "required": false,
+          "enumValues": [
+            "merge_forward",
+            "forward"
+          ],
+          "defaultValue": "forward",
+          "description": "转发类型"
+        }
+      ]
+    }
+  ]
+}

@@ -1,26 +1,15 @@
 {
-  "total" : 2,
+  "total" : 1,
   "items" : [ {
-    "uid" : "5844d3392acae4c2ef3fccbec2180a0e",
-    "name" : "创建共享日历",
+    "uid" : "bed4b2666ac633e0f03625be5998f048",
+    "name" : "日历服务API",
     "statistic" : {
       "failed" : 0,
       "broken" : 0,
       "skipped" : 0,
-      "passed" : 1,
+      "passed" : 2,
       "unknown" : 0,
-      "total" : 1
-    }
-  }, {
-    "uid" : "e3a0068e2366fcb46af4e89e7524e5e7",
-    "name" : "消息发送与管理API",
-    "statistic" : {
-      "failed" : 0,
-      "broken" : 0,
-      "skipped" : 0,
-      "passed" : 1,
-      "unknown" : 0,
-      "total" : 1
+      "total" : 2
     }
   } ]
 }

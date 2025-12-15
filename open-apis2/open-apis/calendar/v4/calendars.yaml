@@ -1,6 +1,6 @@
 case_common:
   allureEpic: 日历服务API
-  allureFeature: Calendar
+  allureFeature: 创建共享日历
   allureStory: 创建共享日历
 01_open-apis_calendar_v4_calendars:
   host: https://open.feishu.cn/open-apis
@@ -9,15 +9,10 @@ case_common:
   detail: 测试创建共享日历
   headers:
     Content-Type: application/json
-    Authorization: Bearer t-g104c6np5I7IFKRZBIZCHRNJL6ESXXVURYPHQFPZ
+    Authorization: Bearer t-g104cfiBZPSDQ6CTA3HO2PPUKYVVMWWG3TV25KXH
   requestType: json
   is_run:
-  data:
-    summary: 测试日历
-    description: 使用开放接口创建日历
-    permissions: private
-    color: -1
-    summary_alias: 日历备注名
+  data: {}
   dependence_case: false
   dependence_case_data:
   current_request_set_cache:

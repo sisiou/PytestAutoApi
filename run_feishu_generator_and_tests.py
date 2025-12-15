@@ -20,14 +20,30 @@ import sys
 import argparse
 import traceback
 import json
+import io
+from contextlib import redirect_stdout, redirect_stderr
+import glob
+import time
 import importlib.util
 from pathlib import Path
-from typing import List, Dict, Optional, Set
+from typing import List, Dict, Optional, Set, Any
 import yaml
 
-# 添加项目根目录到路径
+# 添加项目根目录到路径，并优先加载 .env（与其它工具保持一致）
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
+
+try:
+    from dotenv import load_dotenv  # type: ignore
+
+    env_path = project_root / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+    else:
+        load_dotenv()
+except Exception:
+    # 未安装 python-dotenv 不影响运行
+    ...
 
 try:
     import pytest
@@ -197,6 +213,29 @@ class TestCaseDependencyResolver:
                     pass
         
         return test_files
+
+    def map_case_to_test_file(self, case_id: str) -> Optional[Path]:
+        """
+        根据 case_id 反推出测试文件路径。
+        逻辑与 get_test_files_in_order 一致：优先 YAML 同目录的 test_{stem}.py，其次 test_case 目录。
+        """
+        case_info = self.test_cases.get(case_id)
+        if not case_info:
+            return None
+        yaml_file = Path(case_info["yaml_file"])
+        # 优先 YAML 同目录
+        test_file_path = yaml_file.parent / f"test_{yaml_file.stem}.py"
+        if test_file_path.exists():
+            return test_file_path
+        # 其次 test_case 目录
+        try:
+            relative_path = yaml_file.parent.relative_to(self.data_output_dir)
+            test_case_path = Path("test_case") / relative_path / f"test_{yaml_file.stem}.py"
+            if test_case_path.exists():
+                return test_case_path
+        except ValueError:
+            return None
+        return None
 
 
 class FeishuGeneratorAndTestRunner:
@@ -445,15 +484,15 @@ def pytest_collection_modifyitems(items):
             print(f"⚠ 警告: 创建 conftest.py 时出错: {e}")
             return False
     
-    def step3_run_tests(self, test_files: List[Path]) -> int:
-        """步骤3.3: 按顺序执行测试用例"""
+    def step3_run_tests(self, test_files: List[Path]) -> Optional[tuple]:
+        """步骤3.3: 按顺序执行测试用例，返回 exit_code 和 pytest 输出"""
         print("\n" + "=" * 60)
         print("步骤 3.3/5: 执行测试用例")
         print("=" * 60)
         
         if not test_files:
             print("✗ 错误: 没有可执行的测试用例")
-            return 1
+            return None
         
         # 确保 Allure 配置文件存在
         try:
@@ -477,27 +516,113 @@ def pytest_collection_modifyitems(items):
         pytest_args.extend([str(f) for f in test_files])
         
         try:
-            # 执行 pytest
-            exit_code = pytest.main(pytest_args)
-            return exit_code
+            buf = io.StringIO()
+            with redirect_stdout(buf), redirect_stderr(buf):
+                exit_code = pytest.main(pytest_args)
+            pytest_output = buf.getvalue()
+            return exit_code, pytest_output
         except Exception as e:
             print(f"\n✗ 执行测试时出错: {e}")
             traceback.print_exc()
-            return 1
+            return None
+
+    def load_latest_results(self) -> Optional[Any]:
+        """
+        尝试读取 uploads/results 下最新的 results_*.json，返回解析后的数据。
+        这是现有框架的落盘结果（通常包含请求/响应等执行详情）。
+        """
+        try:
+            results_dir = Path("uploads") / "results"
+            if not results_dir.exists():
+                return None
+            files = list(results_dir.glob("results_*.json"))
+            if not files:
+                return None
+            latest_file = max(files, key=lambda p: p.stat().st_mtime)
+            with latest_file.open("r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _parse_log_blocks_to_cases(log_text: str, cases_data: List[Dict[str, Any]]) -> Optional[List[Dict[str, Any]]]:
+        """
+        从 stdout 的日志块中解析用例的请求/响应详情，格式形如：
+        用例标题: ...
+        请求路径: ...
+        请求方式: ...
+        请求头:   {...}
+        请求内容: {...}
+        接口响应内容: {...}
+        接口响应时长: xxx ms
+        Http状态码: 200
+        """
+        import re
+        import ast
+        import json as _json
+
+        if not log_text:
+            return None
+
+        # 用例标题 -> case_id 映射
+        case_map: Dict[str, Any] = {}
+        if isinstance(cases_data, list):
+            for c in cases_data:
+                detail = c.get("detail")
+                if detail:
+                    case_map[detail] = c.get("case_id")
+
+        pattern = re.compile(
+            r"用例标题:\s*(?P<title>.+?)\n"
+            r"请求路径:\s*(?P<url>.+?)\n"
+            r"请求方式:\s*(?P<method>\S+)\n"
+            r"请求头:\s*(?P<headers>\{.*?\})\n"
+            r"请求内容:\s*(?P<body>\{.*?\})\n"
+            r"接口响应内容:\s*(?P<resp_body>\{.*?\})\n"
+            r"接口响应时长:\s*(?P<elapsed>[\d\.]+)\s*ms\n"
+            r"Http状态码:\s*(?P<status>\d+)",
+            re.S
+        )
+
+        def _parse_obj(text):
+            for parser in (
+                lambda t: _json.loads(t),
+                lambda t: ast.literal_eval(t),
+            ):
+                try:
+                    return parser(text)
+                except Exception:
+                    continue
+            return text
+
+        results: List[Dict[str, Any]] = []
+        for m in pattern.finditer(log_text):
+            detail = m.group("title").strip()
+            results.append({
+                "case_id": case_map.get(detail),
+                "detail": detail,
+                "request": {
+                    "method": m.group("method").strip(),
+                    "url": m.group("url").strip(),
+                    "body": _parse_obj(m.group("body")),
+                    "headers": _parse_obj(m.group("headers")),
+                },
+                "response": {
+                    "status_code": int(m.group("status")),
+                    "body": _parse_obj(m.group("resp_body")),
+                    "headers": None,  # 日志中无响应头，无法获取
+                    "elapsed_ms": float(m.group("elapsed")),
+                }
+            })
+        return results or None
     
     def step4_generate_report(self) -> None:
-        """步骤4: 生成 Allure HTML 报告"""
+        """步骤4: 跳过 Allure 报告生成（按需可自行生成）"""
         print("\n" + "=" * 60)
-        print("步骤 4/5: 生成 Allure HTML 报告")
+        print("步骤 4/5: 跳过 Allure HTML 报告生成")
         print("=" * 60)
-        
-        try:
-            os.system(r"allure generate ./report/tmp -o ./report/html --clean")
-            print("✓ Allure HTML 报告生成成功")
-            print("  报告路径: ./report/html/index.html")
-        except Exception as e:
-            print(f"⚠ 警告: 生成 Allure 报告时出错: {e}")
-            print("   请确认已安装 allure 命令行工具")
+        print("已禁用自动生成 Allure 报告，如需报告请手动执行：")
+        print("  allure generate ./report/tmp -o ./report/html --clean")
     
     def _check_allure_available(self) -> bool:
         """检查 Allure 命令是否可用"""
@@ -515,40 +640,12 @@ def pytest_collection_modifyitems(items):
             return False
     
     def step5_start_allure_server(self) -> None:
-        """步骤5: 启动 Allure 报告服务器（与 run.py 保持一致）"""
+        """步骤5: 跳过 Allure 预览服务器（API 调用场景不启动）"""
         print("\n" + "=" * 60)
-        print("步骤 5/5: 启动 Allure 报告服务器")
+        print("步骤 5/5: 跳过 Allure 报告服务器启动")
         print("=" * 60)
-        
-        # 检查是否在非交互式环境中运行（如通过 API 调用）
-        import os
-        import sys
-        if os.environ.get('NON_INTERACTIVE') == '1' or not sys.stdin.isatty():
-            print("检测到非交互式环境，跳过启动 Allure 服务器")
-            print("Allure 报告已生成在: ./report/html")
-            print("如需查看报告，请访问: ./report/html/index.html")
-            return
-        
-        # 与 run.py 保持一致：直接启动 Allure 服务器，不进行预检查
-        # 如果 Allure 未安装，os.system 会返回错误码，但不会抛出异常
-        print("Allure 报告将在浏览器中自动打开")
-        print("访问地址: http://127.0.0.1:9999")
-        print("按 Ctrl+C 可停止服务器\n")
-        
-        # 程序运行之后，自动启动报告，如果不想启动报告，可注释这段代码
-        # 与 run.py 第 74 行保持一致
-        result = os.system("allure serve ./report/tmp -h 127.0.0.1 -p 9999")
-        
-        # 如果启动失败（返回码非0），给出提示
-        if result != 0:
-            print(f"\n⚠ 警告: 启动 Allure 服务器失败（返回码: {result}）")
-            print("   请确认已安装 allure 命令行工具")
-            print("   Windows: 下载并安装 https://github.com/allure-framework/allure2/releases")
-            print("   或使用: scoop install allure")
-            print("   Mac: brew install allure")
-            print("   Linux: 参考 https://docs.qameta.io/allure/#_get_started")
-            print("\n   报告已生成在: ./report/html/index.html")
-            print("   可以直接打开该文件查看报告")
+        print("已禁用自动启动 Allure 预览，如需预览请手动执行：")
+        print("  allure serve ./report/tmp -h 127.0.0.1 -p 9999")
     
     def run_all(self) -> int:
         """执行完整流程"""
@@ -572,13 +669,14 @@ def pytest_collection_modifyitems(items):
             self.step3_ensure_conftest()
             
             # 步骤3.3: 执行测试
-            exit_code = self.step3_run_tests(test_files)
-            
-            # 步骤4: 生成报告
-            self.step4_generate_report()
-            
-            # 步骤5: 启动 Allure 服务器（如果不是非交互式模式）
-            self.step5_start_allure_server()
+            run_ret = self.step3_run_tests(test_files)
+            if run_ret is None:
+                exit_code, pytest_output = 1, ""
+            else:
+                exit_code, pytest_output = run_ret
+            # 跳过 Allure 报告生成和预览
+            # self.step4_generate_report()
+            # self.step5_start_allure_server()
             
             # 输出总结
             print("\n" + "=" * 60)
@@ -589,7 +687,95 @@ def pytest_collection_modifyitems(items):
             else:
                 print(f"⚠ 部分测试用例失败，退出码: {exit_code}")
             print("=" * 60)
-            
+            # 从 pytest 输出中解析简单指标（总数、通过数、失败数、耗时）
+            def _parse_pytest_metrics(text: str) -> Dict[str, Any]:
+                import re
+                metrics: Dict[str, Any] = {
+                    "total": None,
+                    "passed": None,
+                    "failed": None,
+                    "skipped": None,
+                    "duration_seconds": None,
+                    "success_rate": None,
+                }
+                lines = text.splitlines()
+                summary_line = ""
+                for line in reversed(lines):
+                    line = line.strip()
+                    if " passed" in line and " in " in line:
+                        summary_line = line
+                        break
+                if not summary_line:
+                    return metrics
+
+                # 例如： "2 passed in 1.82s" 或 "1 passed, 1 failed in 3.01s"
+                m = re.search(r"(?P<passed>\d+)\s+passed", summary_line)
+                if m:
+                    metrics["passed"] = int(m.group("passed"))
+                m = re.search(r"(?P<failed>\d+)\s+failed", summary_line)
+                if m:
+                    metrics["failed"] = int(m.group("failed"))
+                m = re.search(r"(?P<skipped>\d+)\s+skipped", summary_line)
+                if m:
+                    metrics["skipped"] = int(m.group("skipped"))
+                m = re.search(r"in\s+(?P<duration>[\d\.]+)s", summary_line)
+                if m:
+                    try:
+                        metrics["duration_seconds"] = float(m.group("duration"))
+                    except ValueError:
+                        pass
+
+                # 计算总数和成功率
+                total = 0
+                for key in ("passed", "failed", "skipped"):
+                    if isinstance(metrics.get(key), int):
+                        total += metrics[key]  # type: ignore[operator]
+                metrics["total"] = total or None
+                if total and isinstance(metrics.get("passed"), int):
+                    metrics["success_rate"] = round(metrics["passed"] * 100.0 / total, 2)  # type: ignore[operator]
+                return metrics
+
+            metrics = _parse_pytest_metrics(pytest_output)
+
+            # 以机器可读的 JSON 形式输出结果，便于 api_server.py 获取
+            # 附加每个用例的明细（case_id、detail、yaml_file、test_file）
+            cases = []
+            if self.dependency_resolver and self.dependency_resolver.test_cases:
+                for cid, info in self.dependency_resolver.test_cases.items():
+                    cases.append({
+                        "case_id": cid,
+                        "detail": info.get("detail"),
+                        "yaml_file": info.get("yaml_file"),
+                        "test_file": str(self.dependency_resolver.map_case_to_test_file(cid) or "")
+                    })
+
+            # 加载最新的测试执行结果（包含 stdout 日志）并尝试结构化请求/响应
+            latest_responses = self.load_latest_results()
+            structured_responses = None
+            if isinstance(latest_responses, dict):
+                stdout_text = latest_responses.get("stdout") if isinstance(latest_responses.get("stdout"), str) else ""
+                stderr_text = latest_responses.get("stderr") if isinstance(latest_responses.get("stderr"), str) else ""
+                combined_text = f"{stdout_text}\n{stderr_text}"
+                if combined_text.strip():
+                    structured_responses = self._parse_log_blocks_to_cases(combined_text, cases)
+                # 如果已有结构化列表，则直接透传
+                if structured_responses is None and isinstance(latest_responses.get("responses"), list):
+                    structured_responses = latest_responses.get("responses")
+
+            result = {
+                "success": exit_code == 0,
+                "exit_code": exit_code,
+                "test_files": [str(f) for f in test_files],
+                "cases": cases,
+                "metrics": metrics,
+                "pytest_output": pytest_output,
+                "pytest_output_length": len(pytest_output) if pytest_output else 0,
+                # 返回结构化的请求/响应
+                "responses": structured_responses,
+                "app_id": self.app_id,
+                "folder": str(self.folder_path),
+            }
+            print(json.dumps(result, ensure_ascii=False))
             return exit_code
             
         except KeyboardInterrupt:
@@ -630,23 +816,27 @@ def main():
         "--app-id",
         type=str,
         default=None,
-        help="飞书应用 App ID (默认使用配置中的值)"
+        help="飞书应用 App ID (默认读取环境变量 FEISHU_APP_ID 或配置)"
     )
     
     parser.add_argument(
         "--app-secret",
         type=str,
         default=None,
-        help="飞书应用 App Secret (默认使用配置中的值)"
+        help="飞书应用 App Secret (默认读取环境变量 FEISHU_APP_SECRET 或配置)"
     )
     
     args = parser.parse_args()
     
+    # 优先使用命令行参数，其次环境变量
+    app_id = args.app_id or os.getenv("FEISHU_APP_ID")
+    app_secret = args.app_secret or os.getenv("FEISHU_APP_SECRET")
+    
     try:
         runner = FeishuGeneratorAndTestRunner(
             folder_path=args.folder,
-            app_id=args.app_id,
-            app_secret=args.app_secret
+            app_id=app_id,
+            app_secret=app_secret
         )
         exit_code = runner.run_all()
         sys.exit(exit_code)

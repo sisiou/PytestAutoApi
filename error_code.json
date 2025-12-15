@@ -1,0 +1,390 @@
+{
+    "error_codes": [
+      {
+        "code": 20024,
+        "description": "code app_id not match",
+        "solution": "appID不匹配，请确保生成code的appID与请求header里app access token对应的appID保持一致"
+      },
+      {
+        "code": 23001,
+        "description": "Your request contains an invalid request parameter.",
+        "solution": "参数错误，建议检查输入的参数是否有不符合 API 要求的内容。"
+      },
+      
+     {
+        "code": 40001,
+        "description": "param error",
+        "solution": "请求参数非法，请检查请求参数 (注：通讯录V3版本接口出现该错误码时取该含义)"
+      },
+    {
+        "code": 40007,
+        "description": "user_id %v is not exist",
+        "solution": "提供的用户ID不存在，请检查用户ID来源，是否为当前租户下用户"
+      },
+      {
+        "code": 40008,
+        "description": "open_id %v is not exist",
+        "solution": "提供的用户open_id不存在，请检查用户open_id来源"
+      },
+     {
+        "code": 40051,
+        "description": "open_id %v is not valid",
+        "solution": "用户的open_id非法，检查用户open_id来源，是否为当前应用下的open_id"
+      },
+      {
+        "code": 40052,
+        "description": "department id %v is not exist",
+        "solution": "部门ID不存在，请检查部门ID来源"
+      },
+      {
+        "code": 40054,
+        "description": "user_id or open_id is needed",
+        "solution": "没有有效的用户ID，user_id或者open_id至少提供其中之一"
+      },
+      {
+        "code": 90003087,
+        "description": "You are currently using the Frontline Professional account and have reached the usage limit for this feature. Please contact the administrator to request access.",
+        "solution": "你当前正在使用一线专业版账号，已经达到使用上线，请联系企业管理员获取权益。"
+      },
+      {
+        "code": 90003088,
+        "description": "Feature unavailable due to changes in your organization's subscription. Please contact the administrator to request access.",
+        "solution": "由于组织的订阅类型发生变化，功能暂不可用。请联系企业管理员获取权益。"
+      },
+      {
+        "code": 99991201,
+        "description": "resource not find",
+        "solution": "请求路径错误(404)，检查路径是否填写正确"
+      },
+      {
+        "code": 99991300,
+        "description": "invalid next parameter:%s",
+        "solution": "callback url中next参数有问题，请检查并携带正确的next参数"
+      },
+      {
+        "code": 99991301,
+        "description": "request method doesn’t match",
+        "solution": "请求方法的类型与接口设置的不一致，检查接口设置的请求方法(POST/GET/…)与请求时使用的是否一致"
+      },
+      {
+        "code": 99991400,
+        "description": "request trigger frequency limit",
+        "solution": "请求过于频繁，请降低请求频次。建议使用指数退避算法或其它频控策略降低对 API 的调用速率。详情参考 [频控策略](https://open.feishu.cn/document/ukTMukTMukTM/uUzN04SN3QjL1cDN)。"
+      },
+      {
+        "code": 99991401,
+        "description": "ip %s is denied by app setting",
+        "solution": "IP 被应用白名单限制。你需要检查应用是否开启了 IP 白名单，如果开启，则仅白名单中的 IP 地址可以正常调用 API。详情参见[设置 IP 白名单](https://open.feishu.cn/document/ukTMukTMukTM/ucTMxYjL3ETM24yNxEjN)。<br>你可以通过以下方式获取你的服务器出口 IP，并将这些 IP 地址设置在应用的 IP 白名单内，即可正常调用 API。<br>- 咨询企业内 IT 部门的运维人员或云服务提供商。<br>- 登录你的服务器，在命令行里执行以下命令获取：`curl ifconfig.me` 或 `curl cip.cc` 或 `curl myip.ipip.net` 或 `curl ipinfo.io`。"
+      },
+      {
+        "code": 99991403,
+        "description": "This month's API call quota has been exceeded",
+        "solution": "本月 API 调用次数已达上限，请联系企业管理员升级飞书版本。详情参见[自建应用 API 调用量上限调整说明](https://open.feishu.cn/document/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/platform-updates-/custom-app-api-call-limit)。"
+      },
+      {
+        "code": 99991501,
+        "description": "auth login invalid code",
+        "solution": "无登录code，请重新登录，仍然出现可以[咨询客服](https://applink.feishu.cn/client/helpdesk/open?id=6626260912531570952&extra=%7B%22channel%22%3A14%2C%22created_at%22%3A1614493146%2C%22scenario_id%22%3A6885151765134622721%2C%22signature%22%3A%22ca94c408b966dc1de2083e5bbcd418294c146e98%22%7D)"
+      },
+      {
+        "code": 99991503,
+        "description": "invalid next parameter: invalid host",
+        "solution": "callback url中next参数有问题，next和callback的host不相同"
+      },
+      {
+        "code": 99991543,
+        "description": "login_user invalid",
+        "solution": "app_id或app_secret不存在，请检查参数"
+      },
+      {
+        "code": 99991611,
+        "description": "get session fail",
+        "solution": "小程序请求获取session失败，请检查请求是否带了相应的cookie(lobsession)"
+      },
+      {
+        "code": 99991612,
+        "description": "session invalid",
+        "solution": "小程序请求鉴权失败，请求的session无效"
+      },
+      {
+        "code": 99991621,
+        "description": "get session fail",
+        "solution": "开放平台sso请求获取session失败，请检查请求是否带了相应的cookie(lobsession)"
+      },
+      {
+        "code": 99991622,
+        "description": "session invalid",
+        "solution": "开放平台sso请求鉴权失败，请求的session无效"
+      },
+      {
+        "code": 99991631,
+        "description": "get session fail",
+        "solution": "lark sso请求获取session失败，请检查请求是否带了相应的cookie(lobsession)"
+      },
+      {
+        "code": 99991632,
+        "description": "session invalid",
+        "solution": "lark sso请求 session 校验失败"
+      },
+      {
+        "code": 99991641,
+        "description": "auth open invalid session",
+        "solution": "当前登录态session无效，请重新登录后使用"
+      },
+      {
+        "code": 99991642,
+        "description": "auth open invalid session mina",
+        "solution": "当前登录态session已过期，请重新登录后使用"
+      },
+      {
+        "code": 99991643,
+        "description": "auth open invalid session sso",
+        "solution": "open id或refresh token无效，请重新登录，仍然出现可以[咨询客服](https://applink.feishu.cn/client/helpdesk/open?id=6626260912531570952&extra=%7B%22channel%22%3A14%2C%22created_at%22%3A1614493146%2C%22scenario_id%22%3A6885151765134622721%2C%22signature%22%3A%22ca94c408b966dc1de2083e5bbcd418294c146e98%22%7D)"
+      },
+      {
+        "code": 99991644,
+        "description": "auth open invalid config",
+        "solution": "内部错误，详情请[咨询客服](https://applink.feishu.cn/client/helpdesk/open?id=6626260912531570952&extra=%7B%22channel%22%3A14%2C%22created_at%22%3A1614493146%2C%22scenario_id%22%3A6885151765134622721%2C%22signature%22%3A%22ca94c408b966dc1de2083e5bbcd418294c146e98%22%7D)"
+      },
+      {
+        "code": 99991645,
+        "description": "auth open invalid user",
+        "solution": "当前登录态user无效，请重新登录，仍然出现可以[咨询客服](https://applink.feishu.cn/client/helpdesk/open?id=6626260912531570952&extra=%7B%22channel%22%3A14%2C%22created_at%22%3A1614493146%2C%22scenario_id%22%3A6885151765134622721%2C%22signature%22%3A%22ca94c408b966dc1de2083e5bbcd418294c146e98%22%7D)"
+      },
+      {
+        "code": 99991661,
+        "description": "Need a token",
+        "solution": "请求需要使用 token 认证。请检查请求 Header 参数 Authorization 中是否填了正确的 token。填写格式为 Bearer access_token，详情参考 [API访问凭证概述](https://open.feishu.cn/document/ukTMukTMukTM/uMTNz4yM1MjLzUzM)。"
+      },
+      {
+        "code": 99991662,
+        "description": "app not in use",
+        "solution": "检查该应用是否处于停用状态"
+      },
+      {
+        "code": 99991663,
+        "description": "Invalid access token for authorization. Please make a request with token attached",
+        "solution": "请求所使用的访问凭证无效。原因可能是 tenant_access_token 已过期，或当前接口不支持使用 tenant_access_token 进行身份鉴权。请参考以下排查建议进行解决。<br>查看当前调用的 API 是否支持 tenant_access_token：<br>- 如果 API 不支持 tenant_access_token，请使用 user_access_token 调用 API。<br>- 如果 API 支持 tenant_access_token，则表示 tenant_access_token 已过期，你需参考以下步骤重新获取：<br>- 使用 API 调试台时：<br>- 进入[API 调试台](https://open.feishu.cn/api-explorer?from=op_doc_tab)，找到需要调用的 API，在 **请求头** > **Authorization** 输入框右侧重新获取 Token。<br>![image.png](//sf3-cn.feishucdn.com/obj/open-platform-opendoc/9bcc24b0c7bbcc2574280ec9f72ecf73_pekb0lH2Oz.png?height=278&maxWidth=550&width=1383)<br>- API 文档有内嵌调试台，需要点击 **Authorization** 输入框旁的 **刷新 token**（如果接口支持 tenant_access_token 和 user_access_token，注意需要切换为 tenant_access_token 再刷新）。刷新完成后，即可直接调用接口，API 调试台将会把请求中的 Token 替换为最新获取的 Token。<br>![](//sf3-cn.feishucdn.com/obj/open-platform-opendoc/8d1ee9745a086047c4ae5cb51b7de452_SpcrNZOBMf.png?height=278&maxWidth=550&width=1383)<br>- 编写代码调用 API 时：<br>你可以参考[获取访问凭证](https://open.feishu.cn/document/ukTMukTMukTM/uMTNz4yM1MjLzUzM#1f8b587c)提供的方法，再次获取 tenant_access_token，并使用最新的 tenant_access_token 请求 OpenAPI。该接口需要使用 tenant_access_token 调用，请确认使用正确 token 类型。<br>**说明**：飞书开放平台服务端 SDK 提供了完整的访问凭证（access token）生命周期管理能力，无需开发者自己获取并刷新访问凭证。参考[服务端 SDK](https://open.feishu.cn/document/ukTMukTMukTM/uETO1YjLxkTN24SM5UjN)。"
+      },
+      {
+        "code": 99991664,
+        "description": "invalid app token",
+        "solution": "app_access_token 非法，详情可参考[API访问凭证概述](https://open.feishu.cn/document/ukTMukTMukTM/uMTNz4yM1MjLzUzM)"
+      },
+      {
+        "code": 99991665,
+        "description": "invalid tenant code",
+        "solution": "tenant_access_token 非法，详情可参考[API访问凭证概述](https://open.feishu.cn/document/ukTMukTMukTM/uMTNz4yM1MjLzUzM)"
+      },
+      {
+        "code": 99991668,
+        "description": "Invalid access token for authorization. Please make a request with token attached.",
+        "solution": "user_access_token 异常，你需要根据实际返回的报错信息确认问题原因：<br>- 如果返回的 msg 为 token 无效（Invalid access token for authorization），则表示当前使用的 user_access_token 已经失效了，你需要根据实际情况选择[获取 user_access_token](https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/authentication-management/access-token/get-user-access-token) 或者 [刷新 user_access_token](https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/authentication-management/access-token/refresh-user-access-token)。<br>- 如果返回的 msg 为不支持 user_access_token（user access token not support），则表示当前接口不支持使用 user_access_token 进行身份鉴权，你需要参考具体接口的文档使用正确的 token。例如部分接口仅支持通过应用身份（tenant_aceess_token）调用。"
+      },
+      {
+        "code": 99991669,
+        "description": "invalid user refresh token",
+        "solution": "用户 refresh token 非法"
+      },
+      {
+        "code": 99991670,
+        "description": "invalid sso token",
+        "solution": "SSO Access Token非法"
+      },
+      {
+        "code": 99991671,
+        "description": "Invalid token: must start with t-/u-",
+        "solution": "当前请求使用的token格式错误，请检查后重试。详情可参考[API访问凭证概述](https://open.feishu.cn/document/ukTMukTMukTM/uMTNz4yM1MjLzUzM)"
+      },
+      {
+        "code": 99991672,
+        "description": "Access denied. One of the following scopes is required",
+        "solution": "当前请求所属的应用未申请 API 权限。你可以通过返回结果确认缺失的权限，也可以参考相应的 API 文档排查缺失的权限，然后为应用申请所需权限。具体操作参见[如何为应用申请所需权限](https://open.feishu.cn/document/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-fix-the-99991672-error)。"
+      },
+      {
+        "code": 99991673,
+        "description": "unauthorized app",
+        "solution": "app状态不可用, 请检查当前租户应用安装状态"
+      },
+      {
+        "code": 99991674,
+        "description": "user type not support",
+        "solution": "当前请求使用的user type无效，请检查后重试"
+      },
+      {
+        "code": 99991675,
+        "description": "parse user error",
+        "solution": "当前请求使用的user_id格式错误，请检查后重试"
+      },
+      {
+        "code": 99991676,
+        "description": "token no permission",
+        "solution": "token没有对应的权限，请检查token的权限"
+      },
+      {
+        "code": 99991677,
+        "description": "token expire",
+        "solution": "当前 user token 已过期，请更新 token。详情可参考 [刷新 user_access_token](https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/authentication-management/access-token/refresh-user-access-token)。"
+      },
+      {
+        "code": 99991679,
+        "description": "Unauthorized. You do not have permission to perform the requested operation on the resource. Please request user re-authorization and try again.",
+        "solution": "未经用户授权，请根据错误信息中提示的缺失权限，申请用户授予对应权限后重试。参考[如何解决 99991679 错误](https://open.feishu.cn/document/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-resolve-error-99991679)。"
+      },
+      {
+        "code": 99991681,
+        "description": "auth fail",
+        "solution": "第三方鉴权返回错误, 请参考message进行排查"
+      },
+      {
+        "code": 99991691,
+        "description": "get session fail",
+        "solution": "获取 session 失败，请求未带cookie"
+      },
+      {
+        "code": 99991692,
+        "description": "auth fail",
+        "solution": "鉴权失败, 请参考message进行排查"
+      },
+      {
+        "code": 99991693,
+        "description": "session not exist",
+        "solution": "鉴权失败，当前session不存在"
+      },
+      {
+        "code": 99992351,
+        "description": "these open ids not existed: %v",
+        "solution": "open_id 无效，请参考报错信息中的提示修改参数后重试。open_id 格式为 `ou_` 开头的字符串，获取方式如下：<br>- **方式一**：通过 [API 调试台](https://open.feishu.cn/api-explorer) 一键获取用户 open_id<br>1. 在当前接口的 user_id_type、member_id_type 这类查询参数中，设置为 **open_id**，并快速复制 open_id。<br>![](//sf3-cn.feishucdn.com/obj/open-platform-opendoc/68c180e6c7238a1bda3b716dceb6a59e_KJDslSYYay.png?height=278&maxWidth=550&width=1383)<br>2. 在组织架构中选择指定用户，并点击 **复制成员 ID**，获取用户的 open_id。<br>![](//sf3-cn.feishucdn.com/obj/open-platform-opendoc/952f44046aa51a5aef3a940688e4508c_eT8zxl6oEX.png?height=278&maxWidth=550&width=1383)<br>- **方式二**：调用[通过手机号或邮箱获取用户 ID](https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/user/batch_get_id)接口获取<br>1. 应用需要申请 [通过手机号或邮箱获取用户 ID 权限（`contact:user.id:readonly`）](https://open.feishu.cn/document/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-fix-the-99991672-error) 权限。<br>2. 查询参数 user_id_type 设置为 open_id。<br>3. 传入用户的手机号码或者邮箱地址。<br>4. 发送请求，在返回结果中获取用户的 open_id。<br>**注意**：该接口返回参数 user_id 的值与查询参数 user_id_type 的取值相匹配。例如，user_id_type 取值为 open_id，则返回参数 user_id 实际值是用户的 open_id。<br>相关文档参见[如何获取 Open ID](https://open.feishu.cn/document/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-obtain-openid)。"
+      },
+      {
+        "code": 99992352,
+        "description": "these lark ids not existed: %v",
+        "solution": "部分open_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992353,
+        "description": "these lark ids not existed: %v",
+        "solution": "部分open_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992354,
+        "description": "these ids not existed: %v",
+        "solution": "message_id 不存在，请参考报错信息中的提示修改并重试。 示例值：om_934be5776f5a87239a298af9e74c0f72，参考 [如何获取 message_id](https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/message/intro#44c58e1c)。"
+      },
+      {
+        "code": 99992355,
+        "description": "these lark ids not existed: %v",
+        "solution": "当前chat_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992356,
+        "description": "these open_chat ids not existed: %v",
+        "solution": "当前chat_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992357,
+        "description": "these open_department ids not existed: %v",
+        "solution": "当前open_department_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992358,
+        "description": "these ids not existed: %v",
+        "solution": "当前open_department_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992359,
+        "description": "these user ids not existed: %v",
+        "solution": "当前user_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992360,
+        "description": "these ids not existed: %v",
+        "solution": "user_id 不存在，请参考报错信息中的提示修改并重试。示例值：4c87bec3， 参考 [如何获取 User ID](https://open.feishu.cn/document/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-obtain-user-id)。"
+      },
+      {
+        "code": 99992361,
+        "description": "open_id cross app",
+        "solution": "传入的 open_id 不属于当前应用，请检查后重试。参考 [如何获取 Open ID](https://open.feishu.cn/document/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-obtain-openid)。<br>- 同一用户在不同应用下的  open_id 不同，请勿将 A 应用中获取的 open_id 在 B 应用中使用。<br>- 测试应用和正式应用是两个不同的应用，同一用户的 open_id 也不相同。请勿将测试应用中获取的 open_id 在正式应用中使用。<br>![image.png](//sf3-cn.feishucdn.com/obj/open-platform-opendoc/0b5ae651ed34a99ae2c48e02659c7841_fuc7tlnnPp.png?height=278&maxWidth=550&width=1383)"
+      },
+      {
+        "code": 99992363,
+        "description": "these ids not existed: %v",
+        "solution": "当前union_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992364,
+        "description": "these ids not existed: %v",
+        "solution": "当前union_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992364,
+        "description": "user id cross tenant",
+        "solution": "不能使用其他租户下的user_id，请检查后重试"
+      },
+      {
+        "code": 99992370,
+        "description": "these ids not existed: %v",
+        "solution": "当前open_app_version_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992375,
+        "description": "these open_room ids not existed: %v",
+        "solution": "当前open_room_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992376,
+        "description": "these ids not existed: %v",
+        "solution": "当前open_room_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992378,
+        "description": "these open_room ids not existed: %v",
+        "solution": "当前open_app_version_id不存在，请检查后重试"
+      },
+      {
+        "code": 99992379,
+        "description": "these ids not existed: %v",
+        "solution": "内部部门 ID 不存在。请确保你所使用的内部部门 ID 正确。如仍有问题请咨询[技术支持](https://applink.feishu.cn/TLJpeNdW)。"
+      },
+      {
+        "code": 99992380,
+        "description": "these ids not existed: %v",
+        "solution": "部门 ID 不存在，请检查你传入的部门 ID 是否正确。了解部门 ID 参见[部门资源介绍](https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/contact-v3/department/field-overview)。"
+      },
+      {
+        "code": 99992381,
+        "description": "union_id cross tenant",
+        "solution": "union_id 不属于当前租户。使用union_id时，需要注意union_id是否属于当前租户。请检查并重试。"
+      },
+      {
+        "code": 99992402,
+        "description": "具体错误信息",
+        "solution": "请求参数缺失或者有误，更多错误信息请参考请求返回的error message"
+      },
+      {
+        "code": 99992500,
+        "description": "these ids not existed: %v",
+        "solution": "当前tenant_key不存在，请检查后重试"
+      },
+      {
+        "code": 99992501,
+        "description": "these ids not existed: %v",
+        "solution": "当前tenant_key不存在，请检查后重试"
+      },
+      {
+        "code": 99993201,
+        "description": "method don't support batch",
+        "solution": "请确认批量API文档是否包含该API。"
+      },
+      {
+        "code": 99993202,
+        "description": "the id of subrequest can't be empty",
+        "solution": "请参考文档的示例，补充子请求的id"
+      },
+      {
+        "code": 99993203,
+        "description": "the id of subrequest is duplicated",
+        "solution": "请确认子请求的id是否重复"
+      }
+    ]
+  }

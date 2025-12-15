@@ -16,9 +16,31 @@
 import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
+import json
+import os
 
+# 先定义项目根目录，再加载 .env，避免未定义 project_root
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
+
+# 优先读取项目根目录下的 .env
+try:
+    from dotenv import load_dotenv  # type: ignore
+
+    env_path = project_root / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+    else:
+        load_dotenv()  # fallback: 默认位置
+except Exception:
+    # 未安装 python-dotenv 不中断，继续用环境变量
+    ...
+
+# 优先使用 .env / 环境变量；若缺失再回退到 model_config 的默认值
+from utils.other_tools.config.model_config import (
+    DEFAULT_APP_ID as CONFIG_APP_ID,
+    DEFAULT_APP_SECRET as CONFIG_APP_SECRET,
+)
 
 try:
     import requests
@@ -31,21 +53,24 @@ from utils.other_tools.allure_config_helper import ensure_allure_properties_file
 
 # ================ 配置 ================
 
-DEFAULT_APP_ID = os.getenv("FEISHU_APP_ID")
-DEFAULT_APP_SECRET = os.getenv("FEISHU_APP_SECRET")
-DEFAULT_USER_ID = os.getenv("FEISHU_USER_ID")
-
+DEFAULT_APP_ID = os.getenv("FEISHU_APP_ID") or CONFIG_APP_ID
+DEFAULT_APP_SECRET = os.getenv("FEISHU_APP_SECRET") or CONFIG_APP_SECRET
+ENV_USER_ID = os.getenv("FEISHU_USER_ID")
+ENV_OPEN_ID = os.getenv("FEISHU_OPEN_ID")
+ENV_UNION_ID = os.getenv("FEISHU_UNION_ID")
+ENV_EMAIL = os.getenv("FEISHU_EMAIL")
+ENV_CHAT_ID = os.getenv("FEISHU_CHAT_ID")
 
 OPENAPI_PATH = Path("multiuploads/split_openapi/openapi_API/related_group_2/sendMessage.yaml")
 DEFAULT_RECEIVE_ID_TYPE = "user_id"
-DEFAULT_RECEIVE_ID = DEFAULT_USER_ID  # 使用配置文件中的user_id
-# 不同 receive_id_type 对应的 receive_id（请根据实际情况修改）
+DEFAULT_RECEIVE_ID = ENV_USER_ID  # 优先用 .env 中的 user_id
+# 不同 receive_id_type 对应的 receive_id（用 .env 值覆盖示例）
 RECEIVE_ID_MAP = {
-    "user_id": DEFAULT_USER_ID,  # 使用配置文件中的user_id
-    "open_id": "ou_0d83637fb561cdc1e0562991339c713b",  # open_id 格式示例
-    "union_id": "on_17df3bf51632401d3ab42d6c7a6e32d8",  # union_id 格式示例
-    "email": "user@example.com",  # email 格式示例
-    "chat_id": "oc_5ad11d72b830411d72b836c20",  # chat_id 格式示例
+    "user_id": ENV_USER_ID,
+    "open_id": ENV_OPEN_ID or "ou_0d83637fb561cdc1e0562991339c713b",
+    "union_id": ENV_UNION_ID or "on_17df3bf51632401d3ab42d6c7a6e32d8",
+    "email": ENV_EMAIL or "user@example.com",
+    "chat_id": ENV_CHAT_ID or "oc_5ad11d72b830411d72b836c20",
 }
 # =====================================
 
@@ -295,7 +320,7 @@ class MessageSendSwaggerForYaml(SwaggerForYaml):
                 # 使用更长的字符串确保超过30KB限制，考虑JSON转义，需要更多内容
                 large_card_content = "测试卡片内容" * 8000  # 约80KB+，确保JSON序列化后超过30KB限制
                 # 转义JSON字符串中的特殊字符
-                import json
+
                 card_json = {"elements": [{"tag": "markdown", "content": large_card_content}]}
                 scene_content3_long_body["content"] = json.dumps(card_json, ensure_ascii=False)
                 
