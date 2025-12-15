@@ -17,7 +17,7 @@ MODEL_IDENTITY = (
 # 统一的模型与网关配置
 DEFAULT_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 DEFAULT_MODEL = "deepseek-v3.2"
-DEFAULT_API_KEY = "sk-07556b3d48b14933b79b8ef16d85ea11"
+DEFAULT_API_KEY = "sk-558bd1444e4648fe964457bfaa99091f"
 DEFAULT_APP_ID = "cli_a9ac1b6a23b99bc2"  # 飞书应用App ID
 DEFAULT_APP_SECRET = "kfPsUJmZiCco8DyGGslAufc7tTuNjiVe"  # 飞书应用App Secret
 DEFAULT_BASE_Feishu_URL = "https://open.feishu.cn/open-apis"

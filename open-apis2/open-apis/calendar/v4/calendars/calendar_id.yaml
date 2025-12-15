@@ -8,7 +8,7 @@ case_common:
   method: get
   detail: 测试查询日历信息
   headers:
-    Authorization: Bearer t-g104c7gtTVZWEHYFFESA62S7AQNSOUJLCRSJHM2K
+    Authorization: Bearer t-g104cfiBZPSDQ6CTA3HO2PPUKYVVMWWG3TV25KXH
   requestType: data
   is_run:
   data: {}

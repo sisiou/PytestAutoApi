@@ -17,7 +17,7 @@ import os
 import sys
 from collections import defaultdict, deque
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional
 
 def load_relation_file(path: Path) -> Dict[str, Any]:
     try:
@@ -66,6 +66,92 @@ def build_graph(rel_dir: Path, api_dir: Path):
         candidates = [f for f in api_files if stem_mid in f]
         return candidates
 
+    def find_create_file_for_target(target_file: str, api_files: List[str]) -> str:
+        """
+        为目标接口查找对应的 create 接口文件。
+        
+        策略：
+        1. 通过文件名替换（reply -> create, forward -> create, update -> create）
+        2. 如果替换失败，搜索包含 create 和相同业务模块的文件
+        """
+        # 策略1: 文件名替换
+        replacements = [
+            ("reply", "create"),
+            ("forward", "create"),
+            ("update", "create"),
+        ]
+        for old, new in replacements:
+            if old in target_file:
+                candidate = target_file.replace(old, new)
+                if candidate in api_files:
+                    return candidate
+        
+        # 策略2: 提取业务模块前缀，搜索 create 文件
+        # 例如: openapi_feishu_server-docs_im-v1_message_reply.yaml
+        # 提取: feishu_server-docs_im-v1_message
+        parts = target_file.replace("openapi_", "").replace(".yaml", "").split("_")
+        if len(parts) >= 2:
+            # 找到最后一个包含操作类型的部分（reply/forward/update）
+            module_parts = []
+            for part in parts:
+                if part in ["reply", "forward", "update", "create"]:
+                    break
+                module_parts.append(part)
+            if module_parts:
+                module_prefix = "_".join(module_parts)
+                create_files = [f for f in api_files if module_prefix in f and "create" in f]
+                if create_files:
+                    return create_files[0]
+        
+        # 策略3: 通用搜索（包含 create 和 message 的文件）
+        create_files = [f for f in api_files if "create" in f and "message" in f]
+        if create_files:
+            return create_files[0]
+        
+        return None
+
+    def infer_dependency_from_self_loop(src_file: str, tgt_file: str, pair: Dict[str, Any], 
+                                       rf: Path, api_files: List[str], api_dir: Path) -> Tuple[Optional[str], bool]:
+        """
+        从自环推断正确的依赖关系。
+        
+        返回: (corrected_source_file, success)
+        - corrected_source_file: 修正后的源文件（如果推断成功）
+        - success: 是否成功推断
+        """
+        # 获取 relation 描述和 API 路径，用于推断依赖关系
+        relation_desc = pair.get("relation_desc", "")
+        target_api_path = pair.get("target_api_path", "").lower()
+        
+        # 检查是否提到"发送消息"接口（create）
+        mentions_create = "发送消息" in relation_desc or "create" in relation_desc.lower()
+        
+        # 检查 target 是否是 reply/forward/update，这些通常依赖 create
+        is_reply = "reply" in tgt_file.lower() or "/reply" in target_api_path
+        is_forward = "forward" in tgt_file.lower() or "/forward" in target_api_path
+        is_update = "update" in tgt_file.lower() or "/update" in target_api_path or "(put)" in target_api_path
+        
+        # 如果满足条件，尝试将 source 设置为 create
+        if (is_reply or is_forward or is_update) and mentions_create:
+            create_candidate = find_create_file_for_target(tgt_file, api_files)
+            
+            if create_candidate and (api_dir / create_candidate).exists():
+                print(f"[INFO] 自动推断依赖关系: {create_candidate} -> {tgt_file} (基于 relation 描述)")
+                return create_candidate, True
+            else:
+                # 无法推断，跳过自环依赖
+                print(f"[WARN] 跳过自环依赖: {src_file} -> {tgt_file} (relation文件: {rf.name})")
+                print(f"      提示: 应该依赖 create 接口，但未找到对应的 create 文件")
+                return None, False
+        else:
+            # 无法推断，跳过自环依赖（接口不应该依赖自己）
+            print(f"[WARN] 跳过自环依赖: {src_file} -> {tgt_file} (relation文件: {rf.name})")
+            if not mentions_create:
+                print(f"      提示: relation 描述中未提到'发送消息'接口，无法推断依赖关系")
+            else:
+                print(f"      提示: 请检查 relation 文件配置，确保 source_openapi_file 和 target_openapi_file 指向不同的接口")
+            return None, False
+
     for rf in rel_files:
         data = load_relation_file(rf)
         for pair in data.get("related_pairs", []):
@@ -103,57 +189,40 @@ def build_graph(rel_dir: Path, api_dir: Path):
 
             # 如果是自环，尝试应用启发式规则推断正确的依赖关系
             if src_file == tgt_file:
-                # 获取 relation 描述和 API 路径，用于推断依赖关系
-                relation_desc = pair.get("relation_desc", "").lower()
-                target_api_path = pair.get("target_api_path", "").lower()
-                source_api_path = pair.get("source_api_path", "").lower()
-                
-                # 检查是否提到"发送消息"接口（create）
-                mentions_create = "发送消息" in relation_desc or "create" in relation_desc
-                
-                # 检查 target 是否是 reply/forward/update，这些通常依赖 create
-                is_reply = "reply" in tgt_file or "/reply" in target_api_path
-                is_forward = "forward" in tgt_file or "/forward" in target_api_path
-                is_update = "update" in tgt_file or "/update" in target_api_path or "(put)" in target_api_path
-                
-                # 如果满足条件，尝试将 source 设置为 create
-                if (is_reply or is_forward or is_update) and mentions_create:
-                    create_candidate = None
-                    # 尝试不同的 create 文件名模式
-                    if is_reply:
-                        create_candidate = tgt_file.replace("reply", "create")
-                    elif is_forward:
-                        create_candidate = tgt_file.replace("forward", "create")
-                    elif is_update:
-                        create_candidate = tgt_file.replace("update", "create")
-                    
-                    # 如果找不到，尝试通用的 create 文件名
-                    if not create_candidate or not (api_dir / create_candidate).exists():
-                        # 查找所有包含 create 的文件
-                        create_files = [f for f in api_files if "create" in f and "message" in f]
-                        if create_files:
-                            create_candidate = create_files[0]
-                    
-                    if create_candidate and (api_dir / create_candidate).exists():
-                        src_file = create_candidate  # rewrite edge create -> target
-                        pair["source_openapi_file"] = src_file
-                        print(f"[INFO] 自动推断依赖关系: {src_file} -> {tgt_file} (基于 relation 描述)")
-                    else:
-                        # 无法推断，跳过自环依赖
-                        print(f"[WARN] 跳过自环依赖: {src_file} -> {tgt_file} (relation文件: {rf.name})")
-                        print(f"      提示: 应该依赖 create 接口，但未找到对应的 create 文件")
-                        continue
+                corrected_source, success = infer_dependency_from_self_loop(
+                    src_file, tgt_file, pair, rf, api_files, api_dir
+                )
+                if success:
+                    src_file = corrected_source
+                    pair["source_openapi_file"] = src_file
                 else:
-                    # 无法推断，跳过自环依赖（接口不应该依赖自己）
-                    print(f"[WARN] 跳过自环依赖: {src_file} -> {tgt_file} (relation文件: {rf.name})")
-                    print(f"      提示: 请检查 relation 文件配置，确保 source_openapi_file 和 target_openapi_file 指向不同的接口")
+                # 推断失败，跳过自环依赖
                     continue
+
+            # 判断是否是有效的依赖关系：必须同时有 source_param（输出参数）和 target_param（输入参数）
+            relation_params = pair.get("relation_params", [])
+            has_valid_params = False
+            if relation_params:
+                for rp in relation_params:
+                    source_param = rp.get("source_param")
+                    target_param = rp.get("target_param")
+                    # source_param 是输出参数（从 source 接口响应中获取）
+                    # target_param 是输入参数（作为 target 接口的输入）
+                    if source_param and target_param:
+                        has_valid_params = True
+                        break
+            
+            if not has_valid_params:
+                # 没有有效的参数映射，跳过这条依赖关系
+                print(f"[WARN] 跳过无效依赖关系: {src_file} -> {tgt_file} (relation文件: {rf.name})")
+                print(f"      提示: relation_params 中缺少有效的 source_param（输出参数）或 target_param（输入参数）")
+                continue
 
             nodes.add(src_file)
             nodes.add(tgt_file)
             edges[src_file].append(tgt_file)
             rel_map[tgt_file].append(pair)
-            printed_relations.append((src_file, tgt_file, pair.get("relation_params", [])))
+            printed_relations.append((src_file, tgt_file, relation_params))
 
     # 将 api_dir 下所有 openapi_*.yaml 加入节点（仅为保证节点完整性，不再添加兜底边）
     for n in api_files:

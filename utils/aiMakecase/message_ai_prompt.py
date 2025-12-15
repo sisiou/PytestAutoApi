@@ -136,6 +136,10 @@ def build_message_prompt(openapi_content: str, extra_hint: str = "", external_pa
 - 如果需要 receive_id/open_id/user_id/union_id/chat_id/message_id 且未提供外部参数，必须从 RECEIVE_ID_MAP 选择，严禁自行编造
 - 如果需要模型自行构造 id/uuid/open_id/chat_id/message_id/receive_id 等字段且无外部参数，请确保长度与 OpenAPI 示例值长度一致，不要生成比示例更长的值（例如 uuid 长度必须与示例一致）。
 - Base URL 必须使用环境变量或默认值：`BASE_URL = os.getenv("FEISHU_BASE_URL", DEFAULT_BASE_Feishu_URL)`，不要使用 OpenAPI 文档中的示例域名（如 http://api.example.com/v1）。
+- **URL格式要求**：
+  - 如果使用 url 字段，应该使用相对路径，如 "/im/v1/messages"，不要使用 "BASE_URL + '/im/v1/messages'" 这样的Python表达式
+  - 如果使用 path 字段，也应该使用相对路径，如 "/im/v1/messages"
+  - 绝对不要使用包含Python表达式的字符串（如 "BASE_URL + '/path'"），这会导致URL解析错误
 - 输出 JSON 对象：{{"name","description","test_type","request_data","expected_status_code","expected_response","tags","is_success"}}。
 - request_data 的结构应该包含：method、url（或 path）、headers、body（或 payload）、query_params、path_params 等字段。
 {extra_hint}
@@ -172,6 +176,22 @@ def _extract_json(text: str) -> Optional[Union[Dict[str, Any], List[Any]]]:
     从大模型输出中尽量提取首个 JSON 对象/数组。
     """
     import json, re
+
+    def _sanitize(s: str) -> str:
+        """
+        尝试修复常见的小错误：
+        - 布尔/ null / 数字后多余的引号
+        - 结尾多余逗号
+        """
+        # 去掉 true/false/null/数字 后误加的引号
+        s = re.sub(r'\btrue"\b', 'true', s, flags=re.IGNORECASE)
+        s = re.sub(r'\bfalse"\b', 'false', s, flags=re.IGNORECASE)
+        s = re.sub(r'\bnull"\b', 'null', s, flags=re.IGNORECASE)
+        s = re.sub(r'(-?\d+(?:\.\d+)?)"', r'\1', s)
+        # 去掉对象/数组尾部多余的逗号
+        s = re.sub(r',(\s*[}\]])', r'\1', s)
+        return s
+
     # 尝试定位第一个 { 或 [
     start = None
     for i, ch in enumerate(text):
@@ -187,6 +207,12 @@ def _extract_json(text: str) -> Optional[Union[Dict[str, Any], List[Any]]]:
             return json.loads(chunk[:end])
         except Exception:
             continue
+    # 尝试修复后再解析
+    chunk_fixed = _sanitize(chunk)
+    try:
+        return json.loads(chunk_fixed)
+    except Exception:
+        return None
     return None
 
 
@@ -202,7 +228,7 @@ def generate_pytest_from_cases(cases: List[Dict[str, Any]], api_info: Dict[str, 
     :param external_params: 外部传入的参数值（如 {'message_id': 'om_xxx'}），如果传入则优先使用，否则从环境变量获取
     """
     lines = []
-    lines.append("import pytest, requests, json, os, sys")
+    lines.append("import pytest, requests, json, os, sys, time")
     lines.append("from pathlib import Path")
     lines.append("")
     lines.append("# 确保项目根目录在 sys.path，避免相对导入失败")
@@ -220,6 +246,19 @@ def generate_pytest_from_cases(cases: List[Dict[str, Any]], api_info: Dict[str, 
     lines.append("    raise RuntimeError('缺少 FEISHU_APP_ID / FEISHU_APP_SECRET 环境变量，且未在 model_config 中配置默认值')")
     lines.append("")
     lines.append("redis_handler = RedisHandler()")
+    lines.append("")
+    lines.append("CASE_LOGS = []")
+    lines.append("MP_LOG_PATH = os.getenv('MP_LOG_PATH')")
+    lines.append("")
+    lines.append("def _record_case_log(entry):")
+    lines.append("    CASE_LOGS.append(entry)")
+    lines.append("    if MP_LOG_PATH:")
+    lines.append("        try:")
+    lines.append("            Path(MP_LOG_PATH).parent.mkdir(parents=True, exist_ok=True)")
+    lines.append("            with open(MP_LOG_PATH, 'w', encoding='utf-8') as f:")
+    lines.append("                json.dump(CASE_LOGS, f, ensure_ascii=False, indent=2)")
+    lines.append("        except Exception as e:")
+    lines.append("            print(f\"[WARN] 写入日志文件失败: {e}\")")
     lines.append("")
     # 外部传入的参数值（如果传入则优先使用，否则从环境变量获取）
     if external_params:
@@ -333,11 +372,24 @@ def generate_pytest_from_cases(cases: List[Dict[str, Any]], api_info: Dict[str, 
         lines.append("    # 如果模型返回了模板占位符（如 {{FEISHU_BASE_URL}} 或 {BASE_URL}），去掉占位符，仅保留相对路径部分")
         lines.append("    if isinstance(req_url, str):")
         lines.append("        if 'FEISHU_BASE_URL' in req_url or '{BASE_URL}' in req_url or 'BASE_URL' in req_url:")
-        lines.append("            # 去掉花括号与占位符本身")
-        lines.append("            req_url = req_url.replace('{{', '').replace('}}', '')")
-        lines.append("            req_url = req_url.replace('{BASE_URL}', '')")
-        lines.append("            req_url = req_url.replace('BASE_URL', '')")
-        lines.append("            req_url = req_url.replace('FEISHU_BASE_URL', '')")
+        lines.append("            # 处理Python表达式（如 \"BASE_URL + '/path'\" 或 \"'BASE_URL' + '/path'\"）")
+        lines.append("            # 先提取路径部分（在 + 之后的部分）")
+        lines.append("            if \" + '\" in req_url or \" + \\\"\" in req_url:")
+        lines.append("                # 提取引号内的路径部分")
+        lines.append("                import re")
+        lines.append("                match = re.search(r\"[+\\s]+['\\\"]([^'\\\"]+)\", req_url)")
+        lines.append("                if match:")
+        lines.append("                    req_url = match.group(1)")
+        lines.append("                else:")
+        lines.append("                    # 如果正则匹配失败，使用简单替换")
+        lines.append("                    req_url = req_url.split(\" + '\")[-1] if \" + '\" in req_url else req_url.split(\" + \\\"\")[-1]")
+        lines.append("                    req_url = req_url.rstrip(\"'\").rstrip('\"')")
+        lines.append("            else:")
+        lines.append("                # 去掉花括号与占位符本身")
+        lines.append("                req_url = req_url.replace('{{', '').replace('}}', '')")
+        lines.append("                req_url = req_url.replace('{BASE_URL}', '')")
+        lines.append("                req_url = req_url.replace('BASE_URL', '')")
+        lines.append("                req_url = req_url.replace('FEISHU_BASE_URL', '')")
         lines.append("            # 去掉可能的协议前缀")
         lines.append("            for prefix in ['https://', 'http://']:")
         lines.append("                if req_url.startswith(prefix):")
@@ -416,18 +468,31 @@ def generate_pytest_from_cases(cases: List[Dict[str, Any]], api_info: Dict[str, 
         lines.append("                url_params['message_id'] = match.group(1)")
         lines.append("    req_body, req_query, url_params = _apply_overrides(req_body, req_query, url_params)")
         lines.append("    # 如果 req_body 有 receive_id 但 req_query 没有 receive_id_type，根据 receive_id 格式推断")
+        lines.append("    # 注意：仅在正常场景时自动补充，异常场景需要保持缺失状态以触发错误")
         lines.append("    if isinstance(req_body, dict) and req_body.get('receive_id') and not req_query.get('receive_id_type'):")
-        lines.append("        receive_id = str(req_body.get('receive_id', ''))")
-        lines.append("        if receive_id.startswith('ou_'):")
-        lines.append("            req_query['receive_id_type'] = 'open_id'")
-        lines.append("        elif receive_id.startswith('oc_'):")
-        lines.append("            req_query['receive_id_type'] = 'chat_id'")
-        lines.append("        elif receive_id.startswith('on_'):")
-        lines.append("            req_query['receive_id_type'] = 'union_id'")
-        lines.append("        elif '@' in receive_id:")
-        lines.append("            req_query['receive_id_type'] = 'email'")
-        lines.append("        else:")
-        lines.append("            req_query['receive_id_type'] = 'user_id'")
+        lines.append("        # 检查是否是异常场景：如果 expected_status 不是 200 或 expected_resp 中的 code 不是 0，说明是异常测试")
+        lines.append("        is_exception_test = False")
+        lines.append("        if isinstance(expected_resp, dict):")
+        lines.append("            # 如果 expected_resp 中的 code 不是 0，说明是异常场景")
+        lines.append("            if expected_resp.get('code', 0) != 0:")
+        lines.append("                is_exception_test = True")
+        lines.append("        # 如果 expected_status 不是 200，说明是异常场景")
+        lines.append("        if expected_status != 200:")
+        lines.append("            is_exception_test = True")
+        lines.append("        ")
+        lines.append("        # 仅在正常场景时自动补充参数")
+        lines.append("        if not is_exception_test:")
+        lines.append("            receive_id = str(req_body.get('receive_id', ''))")
+        lines.append("            if receive_id.startswith('ou_'):")
+        lines.append("                req_query['receive_id_type'] = 'open_id'")
+        lines.append("            elif receive_id.startswith('oc_'):")
+        lines.append("                req_query['receive_id_type'] = 'chat_id'")
+        lines.append("            elif receive_id.startswith('on_'):")
+        lines.append("                req_query['receive_id_type'] = 'union_id'")
+        lines.append("            elif '@' in receive_id:")
+        lines.append("                req_query['receive_id_type'] = 'email'")
+        lines.append("            else:")
+        lines.append("                req_query['receive_id_type'] = 'user_id'")
         lines.append(f"    method_use = (req_method or '{method}').upper()")
         lines.append("    # 支持路径参数替换（如 {message_id}）")
         lines.append(f"    _path = '{path}'")
@@ -478,7 +543,9 @@ def generate_pytest_from_cases(cases: List[Dict[str, Any]], api_info: Dict[str, 
         lines.append("        query_string = urlencode(req_query)")
         lines.append("        url = f'{url}?{query_string}'")
         lines.append("    headers = _headers(req_headers)")
+        lines.append("    start_ts = time.time()")
         lines.append("    resp = requests.request(method_use, url, json=req_body, headers=headers)")
+        lines.append("    elapsed_ms = (time.time() - start_ts) * 1000")
         lines.append("    assert resp.status_code == expected_status, f'HTTP期望{expected_status} 实际{resp.status_code} 响应:{resp.text[:200]}'")
         lines.append("    try:")
         lines.append("        data = resp.json()")
@@ -493,7 +560,28 @@ def generate_pytest_from_cases(cases: List[Dict[str, Any]], api_info: Dict[str, 
         lines.append("        redis_handler.set_string(Path(__file__).name, resp.text)")
         lines.append("    except Exception as e:")
         lines.append("        print(f\"[WARN] 写入 Redis 失败: {e}\")")
-        lines.append("    print(f\"用例: " + case.get('name','') + " -> status {resp.status_code}, code {data.get('code','N/A')}\")")
+        lines.append("    # 记录结构化日志，供接口直接返回，不依赖 stdout 解析")
+        lines.append("    try:")
+        case_name_literal = f"test_ai_case_{idx}"
+        lines.append("        log_entry = {")
+        lines.append(f"            'case_id': f\"{{Path(__file__).name}}:{case_name_literal}\",")
+        lines.append(f"            'detail': {repr(case.get('name',''))},")
+        lines.append("            'request': {")
+        lines.append("                'method': method_use,")
+        lines.append("                'url': url,")
+        lines.append("                'headers': headers,")
+        lines.append("                'body': req_body,")
+        lines.append("                'query': req_query if req_query else None")
+        lines.append("            },")
+        lines.append("            'response': {")
+        lines.append("                'status_code': resp.status_code,")
+        lines.append("                'body': data if isinstance(data, dict) else {'raw': resp.text},")
+        lines.append("                'elapsed_ms': elapsed_ms")
+        lines.append("            }")
+        lines.append("        }")
+        lines.append("        _record_case_log(log_entry)")
+        lines.append("    except Exception as log_err:")
+        lines.append("        print(f\"[WARN] 记录请求/响应日志失败: {log_err}\")")
 
     out_path.write_text("\n".join(lines), encoding="utf-8")
     print(f"[OK] 生成 pytest 文件: {out_path}")

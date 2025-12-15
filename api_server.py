@@ -1723,6 +1723,556 @@ def parse_api_docs():
         logger.error(f"解析API文档失败: {str(e)}")
         return jsonify({'error': 'API文档解析失败', 'message': str(e)}), 500
 
+@app.route('/api/chain/run', methods=['POST'])
+def run_chain_test():
+    """
+    执行链式测试接口
+    从请求体中接收group_name参数（如 related_group_4），拼接路径后执行chain_full_runner
+    
+    :return: 执行结果
+    """
+    try:
+        # 检查请求体是否为 JSON
+        if not request.is_json:
+            return jsonify({
+                'error': '请求格式错误',
+                'message': '请求体必须是 JSON 格式'
+            }), 400
+        
+        # 从请求体中获取 group_name（必需参数）
+        group_name = request.json.get('group_name')
+        if not group_name:
+            return jsonify({
+                'error': '参数缺失',
+                'message': '请求体中必须包含 group_name 参数'
+            }), 400
+        
+        # 基础路径（写死在接口中，相对于项目根目录）
+        base_api_dir = "multiuploads/split_openapi/openapi_API"
+        
+        # 获取项目根目录
+        project_root = Path(__file__).parent
+        
+        # 拼接完整路径（相对于项目根目录）
+        api_dir = os.path.join(base_api_dir, group_name)
+        api_dir_path = project_root / api_dir
+        
+        # 检查路径是否存在
+        if not api_dir_path.exists():
+            return jsonify({
+                'error': 'API目录不存在',
+                'message': f'路径不存在: {api_dir}',
+                'api_dir': api_dir
+            }), 404
+        
+        # 默认参数（确保所有值都是字符串，不能为 None）
+        relation_dir = "uploads/relation"
+        redis_url = request.json.get('redis_url') if request.is_json else os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')
+        tmp_dir = request.json.get('tmp_dir') if request.is_json else ".chain_out"
+        
+        # 确保参数不为 None，并转换为字符串
+        if redis_url is None:
+            redis_url = 'redis://127.0.0.1:6379/0'
+        redis_url = str(redis_url)
+        
+        if tmp_dir is None:
+            tmp_dir = ".chain_out"
+        tmp_dir = str(tmp_dir)
+        
+        # 构建命令
+        script_path = Path(__file__).parent / "scripts" / "chain_full_runner.py"
+        if not script_path.exists():
+            return jsonify({
+                'error': '脚本文件不存在',
+                'message': f'找不到脚本: {script_path}'
+            }), 500
+        
+        # 准备命令参数（确保所有值都是字符串）
+        cmd = [
+            str(sys.executable),
+            str(script_path),
+            '--api-dir', str(api_dir_path),
+            '--relation-dir', str(relation_dir),
+            '--redis-url', str(redis_url),
+            '--tmp-dir', str(tmp_dir)
+        ]
+        
+        # 可选参数（只添加非空值）
+        if request.is_json:
+            api_key = request.json.get('api_key')
+            if api_key and str(api_key).strip():
+                cmd.extend(['--api-key', str(api_key).strip()])
+            
+            model = request.json.get('model')
+            if model and str(model).strip():
+                cmd.extend(['--model', str(model).strip()])
+            
+            base_url = request.json.get('base_url')
+            if base_url and str(base_url).strip():
+                cmd.extend(['--base-url', str(base_url).strip()])
+            
+            only_file = request.json.get('only_file')
+            if only_file and str(only_file).strip():
+                cmd.extend(['--only-file', str(only_file).strip()])
+            
+            if request.json.get('skip_pytest'):
+                cmd.append('--skip-pytest')
+            
+            if request.json.get('stream'):
+                cmd.append('--stream')
+        
+        # 确保 cmd 中所有元素都是字符串（最终检查）
+        cmd = [str(item) for item in cmd if item is not None]
+        
+        logger.info(f"执行链式测试: group_name={group_name}, api_dir={api_dir}")
+        logger.info(f"命令: {' '.join(cmd)}")
+        
+        # 准备环境变量，确保 Python 路径正确
+        env = os.environ.copy()
+        project_root = Path(__file__).parent
+        project_root_str = str(project_root)
+        
+        # 设置 PYTHONPATH，确保可以导入项目模块
+        pythonpath = env.get('PYTHONPATH', '')
+        if pythonpath:
+            # 如果已有 PYTHONPATH，追加项目根目录
+            env['PYTHONPATH'] = f"{project_root_str}{os.pathsep}{pythonpath}"
+        else:
+            # 如果没有 PYTHONPATH，直接设置
+            env['PYTHONPATH'] = project_root_str
+        
+        logger.info(f"PYTHONPATH: {env['PYTHONPATH']}")
+        
+        # 执行命令
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            cwd=project_root,  # 确保工作目录是项目根目录
+            env=env
+        )
+        
+        # 等待执行完成（可以设置超时）
+        timeout = request.json.get('timeout', 3600) if request.is_json else 3600  # 默认1小时
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            return jsonify({
+                'error': '执行超时',
+                'message': f'命令执行超过 {timeout} 秒',
+                'api_dir': api_dir
+            }), 500
+        
+        # 收集生成的测试用例文件信息
+        test_files = []
+        tmp_dir_path = project_root / tmp_dir
+        test_file_paths = []
+        if tmp_dir_path.exists():
+            # 查找所有生成的测试文件
+            for test_file in sorted(tmp_dir_path.glob("test_chain_*.py")):
+                test_file_paths.append(test_file)
+                try:
+                    test_file_info = _extract_test_case_info(test_file)
+                    if test_file_info:
+                        test_files.append(test_file_info)
+                except Exception as e:
+                    logger.warning(f"提取测试文件信息失败 {test_file}: {str(e)}")
+                    # 即使提取失败，也记录文件存在
+                    test_files.append({
+                        'file_path': str(test_file.relative_to(project_root)),
+                        'file_name': test_file.name,
+                        'test_count': 0,
+                        'test_cases': [],
+                        'error': f'提取信息失败: {str(e)}'
+                    })
+        
+        # 如果生成了测试文件，执行一次汇总的 pytest 获取完整结果
+        # 注意：即使 chain_full_runner 返回码不为0，只要生成了测试文件，也执行汇总 pytest
+        aggregated_stdout = stdout
+        aggregated_stderr = stderr
+        skip_pytest = request.json.get('skip_pytest', False) if request.is_json else False
+        
+        if test_file_paths and not skip_pytest:
+            logger.info(f"执行汇总 pytest，包含 {len(test_file_paths)} 个测试文件")
+            logger.info(f"测试文件列表: {[f.name for f in test_file_paths]}")
+            
+            # 验证所有测试文件是否存在
+            existing_test_files = []
+            for test_file in test_file_paths:
+                if test_file.exists():
+                    existing_test_files.append(test_file)
+                    logger.info(f"✓ 测试文件存在: {test_file}")
+                else:
+                    logger.warning(f"✗ 测试文件不存在: {test_file}")
+            
+            if not existing_test_files:
+                logger.warning("没有可执行的测试文件，跳过汇总 pytest")
+            else:
+                try:
+                    # 先执行收集命令，查看能找到多少测试用例
+                    collect_cmd = [
+                        str(sys.executable),
+                        "-m", "pytest",
+                        str(tmp_dir_path.resolve()),
+                        "--collect-only",
+                        "-q"  # 安静模式，只显示收集到的测试数量
+                    ]
+                    
+                    logger.info(f"汇总 pytest 收集命令: {' '.join(collect_cmd)}")
+                    
+                    collect_process = subprocess.Popen(
+                        collect_cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        cwd=project_root,
+                        env=env
+                    )
+                    collect_stdout, collect_stderr = collect_process.communicate(timeout=60)
+                    logger.info(f"收集到的测试用例:\n{collect_stdout}")
+                    
+                    # 构建汇总 pytest 执行命令
+                    # 方式1：使用目录方式（推荐，pytest 会自动发现所有测试）
+                    pytest_cmd = [
+                        str(sys.executable),
+                        "-m", "pytest",
+                        str(tmp_dir_path.resolve()),  # 使用目录，pytest 会自动发现所有 test_*.py 文件
+                        "-v",
+                        "--tb=short"
+                    ]
+                    
+                    # 方式2：如果方式1不行，可以显式指定所有文件
+                    # pytest_cmd = [str(sys.executable), "-m", "pytest", "-v", "--tb=short"]
+                    # pytest_cmd.extend([str(f.resolve()) for f in existing_test_files])
+                    
+                    logger.info(f"汇总 pytest 执行命令: {' '.join(pytest_cmd)}")
+                    logger.info(f"将执行 {len(existing_test_files)} 个测试文件")
+                    
+                    # 执行汇总 pytest
+                    pytest_process = subprocess.Popen(
+                        pytest_cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        cwd=project_root,
+                        env=env
+                    )
+                    
+                    pytest_stdout, pytest_stderr = pytest_process.communicate(timeout=timeout)
+                    # 使用汇总的 pytest 输出
+                    aggregated_stdout = pytest_stdout
+                    aggregated_stderr = pytest_stderr
+                    logger.info(f"汇总 pytest 执行完成，返回码: {pytest_process.returncode}")
+                    logger.info(f"汇总 pytest stdout 长度: {len(pytest_stdout) if pytest_stdout else 0}")
+                    if pytest_stdout:
+                        # 显示最后几行，通常包含测试结果摘要
+                        lines = pytest_stdout.split('\n')
+                        logger.info(f"汇总 pytest 最后10行:\n{chr(10).join(lines[-10:])}")
+                    if pytest_stderr:
+                        logger.warning(f"汇总 pytest stderr: {pytest_stderr[:500]}")
+                except subprocess.TimeoutExpired:
+                    logger.warning("汇总 pytest 执行超时，使用原始输出")
+                    pytest_process.kill()
+                except Exception as e:
+                    logger.warning(f"执行汇总 pytest 失败: {str(e)}，使用原始输出")
+                    logger.error(traceback.format_exc())
+        
+        # 解析 pytest 执行结果（使用汇总的输出）
+        test_metrics = None
+        if aggregated_stdout:
+            try:
+                test_metrics = _parse_pytest_output(aggregated_stdout)
+            except Exception as e:
+                logger.warning(f"解析 pytest 输出失败: {str(e)}")
+        
+        # 解析失败的测试用例详情（使用汇总的输出）
+        failed_tests = []
+        try:
+            failed_tests = _extract_failed_tests(aggregated_stdout, aggregated_stderr)
+        except Exception as e:
+            logger.warning(f"提取失败测试用例详情失败: {str(e)}")
+        
+        # 检查返回码
+        # 如果生成了测试文件并执行了汇总 pytest，以汇总 pytest 的结果为准
+        # 否则以 chain_full_runner 的返回码为准
+        if test_file_paths and not skip_pytest and aggregated_stdout != stdout:
+            # 使用了汇总 pytest 的输出，以汇总 pytest 的结果为准
+            # pytest 返回码 0 表示全部通过，1 表示有失败但执行成功，其他表示执行错误
+            execution_success = True  # 汇总 pytest 执行成功就认为整体成功
+        else:
+            # 使用 chain_full_runner 的结果
+            execution_success = process.returncode == 0 or (process.returncode != 0 and test_metrics and test_metrics.get('total', 0) > 0)
+        
+        # 如果 chain_full_runner 执行失败且没有生成测试文件，才返回错误
+        if not execution_success and process.returncode != 0 and not test_file_paths:
+            logger.error(f"链式测试执行失败: {stderr}")
+            return jsonify({
+                'error': '执行失败',
+                'message': stderr or '未知错误',
+                'return_code': process.returncode,
+                'stdout': stdout[-5000:] if stdout else '',  # 只返回最后5000字符
+                'stderr': stderr[-5000:] if stderr else '',  # 只返回最后5000字符
+                'api_dir': api_dir,
+                'test_files': test_files,
+                'test_metrics': test_metrics,
+                'failed_tests': failed_tests
+            }), 500
+        
+        # 执行成功
+        logger.info(f"链式测试执行成功: group_name={group_name}")
+        
+        # 构建响应数据
+        response_data = {
+            'success': True,
+            'message': '链式测试执行成功',
+            'group_name': group_name,
+            'api_dir': api_dir,
+            'return_code': process.returncode,
+            'test_files': test_files,
+            'test_metrics': test_metrics or {
+                'total': 0,
+                'passed': 0,
+                'failed': 0,
+                'skipped': 0,
+                'error': 0,
+                'duration_ms': None,
+                'duration_human': None
+            },
+            'failed_tests': failed_tests,
+            'stdout_tail': aggregated_stdout[-2000:] if aggregated_stdout else '',  # 只返回最后2000字符
+            'stderr_tail': aggregated_stderr[-2000:] if aggregated_stderr else ''  # 只返回最后2000字符
+        }
+        
+        # 如果有测试指标，添加汇总信息
+        if test_metrics:
+            total = test_metrics.get('total', 0)
+            passed = test_metrics.get('passed', 0)
+            failed = test_metrics.get('failed', 0)
+            response_data['summary'] = {
+                'total_cases': total,
+                'passed_cases': passed,
+                'failed_cases': failed,
+                'success_rate': f"{(passed/total*100):.1f}%" if total > 0 else "0%",
+                'duration': test_metrics.get('duration_human', 'N/A')
+            }
+        
+        return jsonify(response_data)
+    
+    except Exception as e:
+        logger.error(f"执行链式测试失败: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({
+            'error': '执行链式测试失败',
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/chain/relation-run', methods=['POST'])
+def run_chain_relation():
+    """
+    对外接口：执行 relation 解析脚本
+    等价于:
+    python scripts/chain_relation_runner.py --api-dir multiuploads/split_openapi/openapi_API/<group_name> --relation-dir uploads/relation
+    """
+    try:
+        if not request.is_json:
+            return jsonify({'error': '请求格式错误', 'message': '请求体必须是 JSON 格式'}), 400
+
+        group_name = request.json.get('group_name')
+        if not group_name:
+            return jsonify({'error': '参数缺失', 'message': '请求体中必须包含 group_name 参数'}), 400
+
+        base_api_dir = "multiuploads/split_openapi/openapi_API"
+        project_root = Path(__file__).parent
+        api_dir_path = project_root / base_api_dir / group_name
+        if not api_dir_path.exists():
+            return jsonify({'error': 'API目录不存在', 'message': f'路径不存在: {api_dir_path}'}), 404
+
+        relation_dir = request.json.get('relation_dir') or "uploads/relation"
+        relation_dir_path = project_root / relation_dir
+        if not relation_dir_path.exists():
+            return jsonify({'error': 'relation目录不存在', 'message': f'路径不存在: {relation_dir_path}'}), 404
+
+        timeout = request.json.get('timeout', 600)
+
+        # 优先直接调用内部函数获取结构化依赖数据
+        try:
+            from scripts.chain_relation_runner import build_graph, topo_sort
+
+            nodes, edges, rel_map = build_graph(relation_dir_path, api_dir_path)
+            order = topo_sort(nodes, edges)
+
+            dependencies = [
+                {"source": src, "target": tgt}
+                for src, tgts in edges.items()
+                for tgt in tgts
+            ]
+
+            return jsonify({
+                'success': True,
+                'group_name': group_name,
+                'api_dir': str(api_dir_path.relative_to(project_root)),
+                'relation_dir': str(relation_dir_path.relative_to(project_root)),
+                'execution_order': order,
+                'dependencies': dependencies,
+            }), 200
+        except Exception as inner_exc:
+            logger.warning(f"直接调用解析失败，回退到子进程执行: {inner_exc}")
+
+        # 回退方案：使用子进程执行脚本，返回原始输出
+        script_path = project_root / "scripts" / "chain_relation_runner.py"
+        if not script_path.exists():
+            return jsonify({'error': '脚本文件不存在', 'message': f'找不到脚本: {script_path}'}), 500
+
+        cmd = [
+            str(sys.executable),
+            str(script_path),
+            "--api-dir", str(api_dir_path),
+            "--relation-dir", str(relation_dir_path),
+        ]
+
+        # 环境变量，确保可导入项目模块
+        env = os.environ.copy()
+        pythonpath = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = f"{project_root}{os.pathsep}{pythonpath}" if pythonpath else str(project_root)
+
+        logger.info(f"执行 relation 解析(子进程): {' '.join(cmd)}")
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            cwd=project_root,
+            env=env
+        )
+
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            return jsonify({'error': '执行超时', 'message': f'命令执行超过 {timeout} 秒'}), 500
+
+        return jsonify({
+            'success': process.returncode == 0,
+            'return_code': process.returncode,
+            'group_name': group_name,
+            'api_dir': str(api_dir_path.relative_to(project_root)),
+            'relation_dir': str(relation_dir_path.relative_to(project_root)),
+            'stdout_tail': stdout[-2000:] if stdout else '',
+            'stderr_tail': stderr[-2000:] if stderr else '',
+        }), (200 if process.returncode == 0 else 500)
+
+    except Exception as e:
+        logger.error(f"执行 relation 解析失败: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({'error': '执行失败', 'message': str(e), 'traceback': traceback.format_exc()}), 500
+
+def _extract_test_case_info(test_file_path: Path) -> Optional[Dict[str, Any]]:
+    """
+    从生成的测试文件中提取测试用例信息
+    
+    :param test_file_path: 测试文件路径
+    :return: 测试用例信息字典
+    """
+    try:
+        import ast
+        import re
+        
+        content = test_file_path.read_text(encoding='utf-8')
+        
+        # 提取所有测试函数
+        test_cases = []
+        tree = ast.parse(content)
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
+                # 提取函数文档字符串
+                docstring = ast.get_docstring(node) or ""
+                
+                # 提取用例名称和描述
+                name = node.name
+                description = docstring.strip() if docstring else ""
+                
+                test_cases.append({
+                    'name': name,
+                    'description': description,
+                    'line_number': node.lineno
+                })
+        
+        return {
+            'file_path': str(test_file_path.relative_to(Path(__file__).parent)),
+            'file_name': test_file_path.name,
+            'test_count': len(test_cases),
+            'test_cases': test_cases
+        }
+    except Exception as e:
+        logger.warning(f"提取测试用例信息失败 {test_file_path}: {str(e)}")
+        # 如果解析失败，至少返回文件名
+        return {
+            'file_path': str(test_file_path.relative_to(Path(__file__).parent)),
+            'file_name': test_file_path.name,
+            'test_count': 0,
+            'test_cases': [],
+            'error': str(e)
+        }
+
+
+def _extract_failed_tests(stdout: str, stderr: str) -> List[Dict[str, Any]]:
+    """
+    从 pytest 输出中提取失败的测试用例详情
+    
+    :param stdout: pytest 标准输出
+    :param stderr: pytest 标准错误输出
+    :return: 失败测试用例列表
+    """
+    import re
+    
+    failed_tests = []
+    combined_output = (stdout or "") + "\n" + (stderr or "")
+    
+    if not combined_output:
+        return failed_tests
+    
+    # 匹配失败测试用例的模式
+    # 格式: "FAILED test_file.py::test_function_name - AssertionError: ..."
+    failed_pattern = r'FAILED\s+([^\s]+)::([^\s]+)\s*-\s*(.+)'
+    matches = re.finditer(failed_pattern, combined_output, re.MULTILINE)
+    
+    for match in matches:
+        file_path = match.group(1)
+        test_name = match.group(2)
+        error_msg = match.group(3).strip()
+        
+        # 截断过长的错误信息
+        if len(error_msg) > 500:
+            error_msg = error_msg[:500] + "..."
+        
+        failed_tests.append({
+            'file': file_path,
+            'test_name': test_name,
+            'error': error_msg
+        })
+    
+    # 如果没有匹配到，尝试从其他格式提取
+    if not failed_tests:
+        # 尝试匹配 "test_name FAILED" 格式
+        alt_pattern = r'([^\s]+::test_[^\s]+)\s+FAILED'
+        alt_matches = re.finditer(alt_pattern, combined_output, re.MULTILINE)
+        for match in alt_matches:
+            test_full_name = match.group(1)
+            parts = test_full_name.split('::')
+            failed_tests.append({
+                'file': parts[0] if len(parts) > 0 else '',
+                'test_name': parts[-1] if len(parts) > 1 else test_full_name,
+                'error': '测试失败（详细信息请查看完整输出）'
+            })
+    
+    return failed_tests
+
+
 def progress_callback_wrapper(current, total, message):
     """进度回调函数包装器"""
     logger.info(f"多线程解析进度: {current}/{total} - {message}")
@@ -4442,7 +4992,7 @@ def generate_and_test_feishu():
                 'return_code': return_code
             }), 500
         
-        # 保存执行结果
+        # 将执行结果保存
         result = {
             'task_id': task_id,
             'script': str(script_path),
@@ -4455,115 +5005,192 @@ def generate_and_test_feishu():
         }
         save_result(task_id, result)
         
-        # ========== 修改：启动 Allure 报告服务器（后台运行） ==========
-        allure_url = None
-        allure_process = None
-        
-        # 检查多个可能的Allure结果目录
-        possible_allure_dirs = [
-            project_root / "uploads" / "allure-results",
-            project_root / "uploads" / "report" / "tmp",
-            project_root / "uploads" / "reports" / "allure-results",
-            project_root / "uploads" / "test-results" / "allure",
-            project_root / folder_path / "allure-results"  # 特定文件夹下的结果
-        ]
-        
-        allure_results_dir = None
-        for dir_path in possible_allure_dirs:
-            if dir_path.exists() and any(dir_path.iterdir()):
-                allure_results_dir = dir_path
-                logger.info(f"找到Allure结果目录: {allure_results_dir}")
-                break
-        
-        if allure_results_dir:
-            try:
-                # 动态查找可用端口（从9999开始尝试）
-                allure_port = find_available_port(9999, 10)
-                if allure_port:
-                    # 获取本机IP地址
-                    local_ip = get_local_ip()
-                    
-                    # 启动Allure服务器（异步，不阻塞）
-                    allure_process = start_allure_server_async(
-                        allure_results_dir, 
-                        port=allure_port, 
-                        host='0.0.0.0'
-                    )
-                    
-                    if allure_process:
-                        allure_url = f"http://{local_ip}:{allure_port}"
-                        logger.info(f"Allure报告服务器已启动: {allure_url}")
-                    else:
-                        logger.warning("启动Allure服务器失败")
-                else:
-                    logger.warning("找不到可用端口启动Allure报告")
-            except Exception as e:
-                logger.error(f"启动Allure报告失败: {e}")
-        else:
-            logger.warning(f"未找到Allure测试结果目录，检查了: {possible_allure_dirs}")
-        # ========== 修改代码结束 ==========
-        
-        # 返回完整输出（限制长度避免响应过大）
-        max_output_length = 5000  # 增加到5000字符
-        
+        # 从 stdout 中提取脚本输出的 JSON 结果（run_feishu_generator_and_tests.py 会在末尾打印）
+        def _extract_last_json_line(text: str):
+            for line in reversed(text.splitlines()):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    return json.loads(line)
+                except Exception:
+                    continue
+            return None
+
+        parsed = _extract_last_json_line(stdout)
+        # 将 parsed_result.responses 提升到顶层的 test_responses，并只保留纯列表
+        test_responses = None
+        if isinstance(parsed, dict):
+            # 提取后删除，避免重复
+            raw_responses = parsed.pop('responses', None)
+            # 如果是列表，直接返回；如果是字典且包含列表字段，也尝试透传
+            if isinstance(raw_responses, list):
+                test_responses = raw_responses
+            elif isinstance(raw_responses, dict):
+                # 优先使用其中名为 responses 的列表；否则直接透传字典，避免返回 null
+                inner_list = raw_responses.get('responses') if isinstance(raw_responses.get('responses'), list) else None
+                test_responses = inner_list if inner_list is not None else raw_responses
+
+        def _parse_log_blocks_to_cases(log_text: str, cases_data):
+            """
+            将日志里的“用例标题/请求/响应”块解析为结构化列表:
+            [
+                {
+                    "case_id": "01_open-apis_im_v1_images",
+                    "detail": "测试上传图片",
+                    "request": {...},
+                    "response": {...}
+                },
+                ...
+            ]
+            """
+            import re, ast, json as _json
+
+            case_map = {}
+            if isinstance(cases_data, list):
+                for c in cases_data:
+                    detail = c.get("detail")
+                    if detail:
+                        case_map[detail] = c.get("case_id")
+
+            pattern = re.compile(
+                r"用例标题:\s*(?P<title>.+?)\n"
+                r"请求路径:\s*(?P<url>.+?)\n"
+                r"请求方式:\s*(?P<method>\S+)\n"
+                r"请求头:\s*(?P<headers>\{.*?\})\n"
+                r"请求内容:\s*(?P<body>\{.*?\})\n"
+                r"接口响应内容:\s*(?P<resp_body>\{.*?\})\n"
+                r"接口响应时长:\s*(?P<elapsed>[\d\.]+)\s*ms\n"
+                r"Http状态码:\s*(?P<status>\d+)",
+                re.S
+            )
+
+            def _parse_obj(text):
+                for parser in (
+                    lambda t: _json.loads(t),
+                    lambda t: ast.literal_eval(t),
+                ):
+                    try:
+                        return parser(text)
+                    except Exception:
+                        continue
+                return text
+
+            results = []
+            for m in pattern.finditer(log_text or ""):
+                detail = m.group("title").strip()
+                results.append({
+                    "case_id": case_map.get(detail),
+                    "detail": detail,
+                    "request": {
+                        "method": m.group("method").strip(),
+                        "url": m.group("url").strip(),
+                        "body": _parse_obj(m.group("body")),
+                        "headers": _parse_obj(m.group("headers")),
+                    },
+                    "response": {
+                        "status_code": int(m.group("status")),
+                        "body": _parse_obj(m.group("resp_body")),
+                        "headers": None,
+                        "elapsed_ms": float(m.group("elapsed")),
+                    }
+                })
+            return results or None
+
+        # 若 test_responses 仍为 dict 且包含 stdout 文本，则尝试解析为结构化列表
+        if test_responses is None and isinstance(parsed, dict):
+            stdout_in_responses = parsed.get("responses") if isinstance(parsed.get("responses"), dict) else None
+            if stdout_in_responses and isinstance(stdout_in_responses.get("stdout"), str):
+                parsed_list = _parse_log_blocks_to_cases(stdout_in_responses["stdout"], parsed.get("cases"))
+                if parsed_list:
+                    test_responses = parsed_list
+
+        def _parse_log_blocks_to_cases(log_text: str, cases_data):
+            """
+            解析 stdout 中的日志块为结构化的请求/响应列表。
+            """
+            import re, ast, json as _json
+            if not log_text:
+                return None
+            case_map = {}
+            if isinstance(cases_data, list):
+                for c in cases_data:
+                    detail = c.get("detail")
+                    if detail:
+                        case_map[detail] = c.get("case_id")
+            pattern = re.compile(
+                r"用例标题:\s*(?P<title>.+?)\n"
+                r"请求路径:\s*(?P<url>.+?)\n"
+                r"请求方式:\s*(?P<method>\S+)\n"
+                r"请求头:\s*(?P<headers>\{.*?\})\n"
+                r"请求内容:\s*(?P<body>\{.*?\})\n"
+                r"接口响应内容:\s*(?P<resp_body>\{.*?\})\n"
+                r"接口响应时长:\s*(?P<elapsed>[\d\.]+)\s*ms\n"
+                r"Http状态码:\s*(?P<status>\d+)",
+                re.S
+            )
+            def _parse_obj(text):
+                for parser in (lambda t: _json.loads(t), lambda t: ast.literal_eval(t)):
+                    try:
+                        return parser(text)
+                    except Exception:
+                        continue
+                return text
+            results = []
+            for m in pattern.finditer(log_text):
+                detail = m.group("title").strip()
+                results.append({
+                    "case_id": case_map.get(detail),
+                    "detail": detail,
+                    "request": {
+                        "method": m.group("method").strip(),
+                        "url": m.group("url").strip(),
+                        "body": _parse_obj(m.group("body")),
+                        "headers": _parse_obj(m.group("headers")),
+                    },
+                    "response": {
+                        "status_code": int(m.group("status")),
+                        "body": _parse_obj(m.group("resp_body")),
+                        "headers": None,
+                        "elapsed_ms": float(m.group("elapsed")),
+                    }
+                })
+            return results or None
+
+        # 尝试从 stdout/stderr 解析结构化请求/响应
+        combined_text = f"{stdout}\n{stderr}"
+        stdout_parsed = _parse_log_blocks_to_cases(
+            combined_text,
+            parsed.get("cases") if isinstance(parsed, dict) else None
+        )
+        if test_responses is None and stdout_parsed:
+            test_responses = stdout_parsed
+
+        # 返回精简且可消费的执行结果（去掉 stdout/stderr）
         response_data = {
             'task_id': task_id,
             'folder': folder_name,
             'folder_path': folder_path,
             'return_code': return_code,
-            'stdout': stdout[-max_output_length:] if len(stdout) > max_output_length else stdout,
-            'stderr': stderr[-max_output_length:] if len(stderr) > max_output_length else stderr,
-            'stdout_length': len(stdout),
-            'stderr_length': len(stderr)
+            'parsed_result': parsed,
+            'test_responses': test_responses
         }
-        
-        # ========== 修改：添加 Allure 报告信息 ==========
-        if allure_url:
-            response_data['allure_report'] = {
-                'url': allure_url,
-                'status': 'running',
-                'port': allure_port if 'allure_port' in locals() else None,
-                'pid': allure_process.pid if allure_process else None
-            }
-        # 读取 Allure 报告摘要数据
-        summary, summary_path = _find_allure_summary(project_root)
-        if summary:
-            response_data['allure_summary'] = {'path': summary_path, 'data': summary}
-            metrics = _extract_allure_metrics(summary)
-            if metrics:
-                response_data['allure_metrics'] = metrics
-        # ========== 修改代码结束 ==========
         
         if return_code == 0:
             response_data['message'] = '脚本执行成功'
-            if allure_url:
-                response_data['message'] += f'，Allure报告地址: {allure_url}'
             return jsonify(response_data)
         else:
-            # 即使返回码不为0，也返回200状态码，但包含错误信息
-            # 这样前端可以根据 return_code 判断是否成功
-            response_data['error'] = '脚本执行完成，但有错误或警告'
+            response_data['error'] = '脚本执行完成，但返回码非0'
             response_data['message'] = f'脚本返回码: {return_code}（0表示成功，非0表示有错误或警告）'
-            
-            # 尝试从输出中提取关键错误信息
+            # 尝试提取错误摘要
+            error_keywords = ['错误', 'Error', 'Exception', 'Traceback', '失败', 'Failed']
+            error_lines = []
             if stderr:
-                # 查找常见的错误关键词
-                error_keywords = ['错误', 'Error', 'Exception', 'Traceback', '失败', 'Failed']
-                error_lines = [line for line in stderr.split('\n') 
-                             if any(keyword in line for keyword in error_keywords)]
-                if error_lines:
-                    response_data['error_summary'] = error_lines[-10:]  # 最后10行错误信息
-            
-            # 也从 stdout 中查找错误信息（有些错误可能输出到 stdout）
+                error_lines.extend([line for line in stderr.split('\n') if any(k in line for k in error_keywords)])
             if stdout:
-                error_keywords = ['错误', 'Error', 'Exception', 'Traceback', '失败', 'Failed']
-                error_lines = [line for line in stdout.split('\n') 
-                             if any(keyword in line for keyword in error_keywords)]
-                if error_lines:
-                    if 'error_summary' not in response_data:
-                        response_data['error_summary'] = []
-                    response_data['error_summary'].extend(error_lines[-10:])
-            
+                error_lines.extend([line for line in stdout.split('\n') if any(k in line for k in error_keywords)])
+            if error_lines:
+                response_data['error_summary'] = error_lines[-10:]
             return jsonify(response_data)
     
     except Exception as e:
@@ -7129,6 +7756,299 @@ def sync_test_results_endpoint():
     except Exception as e:
         logger.error(f"测试结果同步失败: {str(e)}")
         return jsonify({'error': '测试结果同步失败', 'message': str(e)}), 500
+
+
+def _parse_log_blocks_to_cases(log_text: str, cases_data):
+    """解析日志块为结构化请求/响应列表。"""
+    if not log_text:
+        return None
+    case_map = {}
+    if isinstance(cases_data, list):
+        for c in cases_data:
+            detail = c.get("detail")
+            if detail:
+                case_map[detail] = c.get("case_id")
+    pattern = re.compile(
+        r"用例标题:\s*(?P<title>.+?)\n"
+        r"请求路径:\s*(?P<url>.+?)\n"
+        r"请求方式:\s*(?P<method>\S+)\n"
+        r"请求头:\s*(?P<headers>\{.*?\})\n"
+        r"请求内容:\s*(?P<body>\{.*?\})\n"
+        r"接口响应内容:\s*(?P<resp_body>\{.*?\})\n"
+        r"接口响应时长:\s*(?P<elapsed>[\d\.]+)\s*ms\n"
+        r"Http状态码:\s*(?P<status>\d+)",
+        re.S
+    )
+    def _parse_obj(text):
+        for parser in (lambda t: json.loads(t), lambda t: ast.literal_eval(t)):
+            try:
+                return parser(text)
+            except Exception:
+                continue
+        return text
+    results = []
+    for m in pattern.finditer(log_text):
+        detail = m.group("title").strip()
+        results.append({
+            "case_id": case_map.get(detail),
+            "detail": detail,
+            "request": {
+                "method": m.group("method").strip(),
+                "url": m.group("url").strip(),
+                "body": _parse_obj(m.group("body")),
+                "headers": _parse_obj(m.group("headers")),
+            },
+            "response": {
+                "status_code": int(m.group("status")),
+                "body": _parse_obj(m.group("resp_body")),
+                "headers": None,
+                "elapsed_ms": float(m.group("elapsed")),
+            }
+        })
+    return results or None
+
+
+@app.route('/api/ai/message-prompt', methods=['POST'])
+def run_message_prompt():
+    """
+    通用 message_ai_prompt 执行入口
+    output_pytest 由后台自动生成，命名: tests/generated/test_ai_<openapi_stem>_<ts>.py
+    body 可选字段：
+      - openapi: str
+      - external_params: dict | null（为 null/缺省时不带此参数）
+      - no_stream: bool (默认 False，为 True 时追加 --no-stream)
+    """
+    try:
+        import ast
+        data = request.json or {}
+        project_root = Path(__file__).parent
+        uploads_openapi_dir = project_root / "uploads" / "openapi"
+
+        def _resolve_openapi_path(value: Optional[str]) -> str:
+            """
+            支持简写：如传入 "forward" 自动映射到 uploads/openapi/openapi_feishu_server-docs_im-v1_message_forward.yaml
+            规则：
+              - 无后缀且不含路径分隔符 -> 视为别名，尝试 alias_map
+              - 仅文件名 -> 默认拼接 uploads/openapi
+              - 其他 -> 原样返回
+            """
+            default_path = uploads_openapi_dir / "openapi_feishu_server-docs_im-v1_message_update.yaml"
+            if not value:
+                return str(default_path)
+
+            raw = value.strip()
+            path_obj = Path(raw)
+
+            # 别名映射（无路径、无后缀）
+            if not path_obj.suffix and "/" not in raw and "\\" not in raw:
+                alias = raw.lower()
+                alias_map = {
+                    "forward": uploads_openapi_dir / "openapi_feishu_server-docs_im-v1_message_forward.yaml",
+                    "create": uploads_openapi_dir / "openapi_feishu_server-docs_im-v1_message_create.yaml",
+                    "reply": uploads_openapi_dir / "openapi_feishu_server-docs_im-v1_message_reply.yaml",
+                    "update": uploads_openapi_dir / "openapi_feishu_server-docs_im-v1_message_update.yaml",
+                }
+                if alias in alias_map:
+                    return str(alias_map[alias])
+
+            # 仅文件名时，尝试 uploads/openapi 下是否存在
+            candidate = uploads_openapi_dir / raw
+            if candidate.exists():
+                return str(candidate)
+
+            # 否则直接返回原值（可能是绝对/相对路径）
+            return raw
+
+        openapi_path = _resolve_openapi_path(data.get("openapi"))
+        external_params = data.get("external_params", None)
+        no_stream = bool(data.get("no_stream", False))
+
+        task_id = generate_task_id()
+
+        # 自动生成输出路径
+        gen_dir = project_root / "tests" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        stem = Path(openapi_path).stem
+        output_pytest = str(gen_dir / f"test_ai_{stem}_{task_id}.py")
+
+        cmd = [
+            sys.executable,
+            "-m",
+            "utils.aiMakecase.message_ai_prompt",
+            "--openapi",
+            openapi_path,
+            "--output-pytest",
+            output_pytest,
+        ]
+
+        if external_params is not None:
+            cmd += ["--external-params", json.dumps(external_params, ensure_ascii=False)]
+
+        if no_stream:
+            cmd.append("--no-stream")
+
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["PYTHONUTF8"] = "1"
+        env["NON_INTERACTIVE"] = "1"
+
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
+            text=True,
+            cwd=str(project_root),
+            encoding="utf-8",
+            errors="replace",
+            env=env,
+        )
+
+        try:
+            stdout, stderr = process.communicate(timeout=600)
+            return_code = process.returncode
+        except subprocess.TimeoutExpired:
+            process.kill()
+            stdout, stderr = process.communicate()
+            return_code = -1
+
+        max_len = 5000
+        response_data = {
+            "task_id": task_id,
+            "return_code": return_code,
+            "openapi": openapi_path,
+            "output_pytest": output_pytest,
+            "external_params": external_params,
+            "no_stream": no_stream,
+            "cmd": cmd,
+            "stdout": stdout[-max_len:] if stdout else "",
+            "stderr": stderr[-max_len:] if stderr else "",
+            "stdout_length": len(stdout) if stdout else 0,
+            "stderr_length": len(stderr) if stderr else 0,
+        }
+
+        if return_code == 0:
+            response_data["message"] = "message_ai_prompt 执行成功"
+            return jsonify(response_data)
+        else:
+            response_data["error"] = "message_ai_prompt 执行失败"
+            return jsonify(response_data), 500
+
+    except Exception as e:
+        logger.error(f"执行 message_ai_prompt 失败: {e}")
+        return jsonify({
+            "error": "执行 message_ai_prompt 失败",
+            "message": str(e)
+        }), 500
+
+
+@app.route('/api/ai/message-prompt/run', methods=['POST'])
+def run_message_prompt_tests():
+    """
+    执行已生成的 message_ai_prompt pytest 用例
+    body:
+      - test_file: 可选，指定 pytest 文件路径；缺省则取 tests/generated 下最新文件
+    响应包含解析出的请求体与响应数据（从 pytest 输出日志解析）。
+    """
+    try:
+        import ast
+        data = request.json or {}
+        project_root = Path(__file__).parent
+
+        test_file = data.get("test_file")
+        if not test_file:
+            gen_dir = project_root / "tests" / "generated"
+            if not gen_dir.exists():
+                return jsonify({"error": "未找到生成的测试文件"}), 404
+            candidates = list(gen_dir.glob("test_ai_*.py"))
+            if not candidates:
+                return jsonify({"error": "未找到生成的测试文件"}), 404
+            candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+            test_file = str(candidates[0])
+
+        task_id = generate_task_id()
+        log_path = project_root / "uploads" / "results" / f"mp_run_{task_id}.json"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+
+        cmd = [
+            sys.executable,
+            "-m",
+            "pytest",
+            test_file
+        ]
+
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["PYTHONUTF8"] = "1"
+        env["NON_INTERACTIVE"] = "1"
+        env["MP_LOG_PATH"] = str(log_path)
+
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
+            text=True,
+            cwd=str(project_root),
+            encoding="utf-8",
+            errors="replace",
+            env=env,
+        )
+
+        try:
+            stdout, stderr = process.communicate(timeout=600)
+            return_code = process.returncode
+        except subprocess.TimeoutExpired:
+            process.kill()
+            stdout, stderr = process.communicate()
+            return_code = -1
+
+        # 优先读取测试写入的结构化日志文件
+        test_responses = None
+        log_read_error = None
+        if log_path.exists():
+            try:
+                with open(log_path, "r", encoding="utf-8") as f:
+                    loaded = json.load(f)
+                    if isinstance(loaded, list):
+                        test_responses = loaded
+            except Exception as e:
+                log_read_error = f"读取 MP_LOG_PATH 失败: {e}"
+                logger.warning(log_read_error)
+
+        # 回退：如无文件，则尝试从 stdout/stderr 解析
+        if test_responses is None:
+            combined = f"{stdout}\n{stderr}"
+            test_responses = _parse_log_blocks_to_cases(combined, None)
+
+        max_len = 5000
+        response_data = {
+            "task_id": task_id,
+            "return_code": return_code,
+            "test_file": test_file,
+            "stdout": stdout[-max_len:] if stdout else "",
+            "stderr": stderr[-max_len:] if stderr else "",
+            "stdout_length": len(stdout) if stdout else 0,
+            "stderr_length": len(stderr) if stderr else 0,
+            "test_responses": test_responses,
+            "log_path": str(log_path)
+        }
+        if log_read_error:
+            response_data["log_read_error"] = log_read_error
+
+        if return_code == 0:
+            response_data["message"] = "pytest 执行成功"
+            return jsonify(response_data)
+        else:
+            response_data["error"] = "pytest 执行失败"
+            return jsonify(response_data), 500
+
+    except Exception as e:
+        logger.error(f"执行 message_ai_prompt 测试失败: {e}")
+        return jsonify({
+            "error": "执行 message_ai_prompt 测试失败",
+            "message": str(e)
+        }), 500
 
 @app.route('/api/test-results/export', methods=['GET'])
 def export_test_results():

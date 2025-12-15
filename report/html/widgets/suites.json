@@ -1,26 +1,26 @@
 {
   "total" : 2,
   "items" : [ {
-    "uid" : "6f7f1e312af5d72fa68948c83487789f",
-    "name" : "test_case.open-apis.im.v1",
+    "uid" : "8f0e7d37aa13771d0f043e112f3167d7",
+    "name" : "open-apis2.open-apis.calendar.v4",
     "statistic" : {
       "failed" : 0,
       "broken" : 0,
       "skipped" : 0,
-      "passed" : 17,
+      "passed" : 1,
       "unknown" : 0,
-      "total" : 17
+      "total" : 1
     }
   }, {
-    "uid" : "3a796c065731882b54913caaacc2fd01",
-    "name" : "test_case.open-apis.calendar.v4",
+    "uid" : "6603ea49d1615b25bbc2e12da519485b",
+    "name" : "open-apis2.open-apis.calendar.v4.calendars",
     "statistic" : {
       "failed" : 0,
       "broken" : 0,
       "skipped" : 0,
-      "passed" : 15,
+      "passed" : 1,
       "unknown" : 0,
-      "total" : 15
+      "total" : 1
     }
   } ]
 }
