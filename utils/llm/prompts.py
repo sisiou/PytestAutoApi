@@ -6,7 +6,7 @@ ROUTER_SYSTEM_PROMPT = """你是自动化测试编排助手。你的任务是：
 
 工具选择规则：
 1) 先判断场景：
-   - 根据 base_name 或 files 对应的测试场景，如飞书通用场景，飞书发送消息场景，飞书日历场景
+   - 根据 files 判断对应的测试场景，如飞书通用场景，飞书发送消息场景，飞书日历场景
 2) 再根据选择工具：
    - action == "generate"  -> 选择对应场景的 “generate_test_cases_*” 工具
    - action == "execute"   -> 选择对应场景的 “execute_test_cases_*” 工具
@@ -34,3 +34,4 @@ ROUTER_SYSTEM_PROMPT = """你是自动化测试编排助手。你的任务是：
 # - 必须调用工具，不要直接编造返回内容。
 # - 传参必须严格匹配工具 schema（base_name/force_regenerate/timeout_sec/files/test_file_path）。
 # """
+
