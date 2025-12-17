@@ -25,6 +25,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import tempfile
 import traceback
+from utils.llm.ai_test_router_api import bp_ai_router
 
 # 导入环境变量
 from dotenv import load_dotenv
@@ -72,6 +73,8 @@ logger = logging.getLogger(__name__)
 
 # 创建Flask应用
 app = Flask(__name__)
+# 注册langchain实例
+app.register_blueprint(bp_ai_router)
 CORS(app)  # 启用跨域支持
 
 # 配置
